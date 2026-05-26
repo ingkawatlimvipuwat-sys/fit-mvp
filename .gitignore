@@ -1,0 +1,21 @@
+# Claude Code harness/session files
+.claude/
+
+# Node / Next.js (will start populating once we scaffold)
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# Environment & secrets — NEVER commit
+.env
+.env.*
+!.env.example
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/
