@@ -28,8 +28,14 @@ create policy "retailers_self_update"
   on public.retailers for update
   using (auth.uid() = id);
 
--- Public can read shop_name + shop_slug only (for /shop pages).
--- We expose this via a view to limit columns.
+-- Public shop directory: the `shops` view is the anon-facing surface over
+-- `retailers`. It exposes ONLY (id, shop_name, shop_slug) — column projection is
+-- the security boundary, not row-level. By default Postgres views run with the
+-- owner's privileges (security_definer-like), so they bypass `retailers` RLS.
+-- This is INTENTIONAL: every registered shop is enumerable to anon, like a
+-- public directory. CRITICAL: do not add columns to `retailers` that should be
+-- private without also updating this view's SELECT list or switching the view
+-- to `security_invoker = true` with a complementary anon policy.
 create view public.shops as
   select id, shop_name, shop_slug from public.retailers;
 grant select on public.shops to anon;
@@ -41,7 +47,7 @@ create table public.garments (
   name          text not null,
   category      text not null check (category in ('top','bottom','dress')),
   photo_url     text not null,
-  fit_profile   text not null default 'regular',
+  fit_profile   text not null default 'regular' check (fit_profile in ('regular','slim','relaxed')),
   measurements  jsonb not null default '{}'::jsonb,
   created_at    timestamptz not null default now()
 );
@@ -85,14 +91,10 @@ create policy "fit_sessions_public_insert"
   to anon
   with check (true);
 
--- Public can read fit_sessions back by customer_token (for return-visit pre-fill).
--- They can only see rows matching a token they hold. Token is opaque per-browser.
-create policy "fit_sessions_public_read_by_token"
-  on public.fit_sessions for select
-  to anon
-  using (customer_token is not null);
--- Note: this allows reading rows with non-null tokens; the client filters by its own token.
--- For MVP this is acceptable. Tightening would require a passing-token-as-filter scheme.
+-- Note: there is NO public SELECT policy on fit_sessions. Pre-fill of a returning
+-- customer's measurements is implemented server-side via /api/fit/last using the
+-- service-role client (bypasses RLS). This keeps customer biometric data out of
+-- direct anon read range.
 
 -- Retailers can read fit_sessions for their own garments (basic analytics later)
 create policy "fit_sessions_retailer_read"
