@@ -7,7 +7,7 @@ export default function HomePage() {
       <p className="mt-3 text-gray-600">หาขนาดที่ใช่สำหรับลูกค้าของคุณ</p>
       <div className="mt-8 flex gap-4">
         <Link href="/login" className="rounded bg-gray-900 px-4 py-2 text-white">เข้าสู่ระบบ</Link>
-        <Link href="/signup" className="rounded border border-gray-300 px-4 py-2">สมัครสมาชิก</Link>
+        <Link href="/signup" className="rounded border border-gray-300 px-4 py-2 text-gray-900">สมัครสมาชิก</Link>
       </div>
     </main>
   );
