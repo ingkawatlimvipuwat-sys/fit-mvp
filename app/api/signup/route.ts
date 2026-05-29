@@ -34,8 +34,18 @@ export async function POST(req: Request) {
     shop_slug,
   });
   if (insertError) {
-    // Slug collision is the common case
-    return NextResponse.json({ error: insertError.message }, { status: 400 });
+    // Best-effort cleanup: delete the orphaned auth user so the same email can
+    // be retried after the user fixes their input (e.g. picks a non-colliding slug).
+    // If the delete itself fails (e.g. transient network), the user is left with
+    // an orphan and will see "User already registered" on retry — degraded path.
+    await admin.auth.admin.deleteUser(signupData.user.id).catch(() => {});
+
+    // Postgres unique_violation (most commonly shop_slug collision) → friendly Thai.
+    const friendly =
+      'code' in insertError && insertError.code === '23505'
+        ? 'ลิงก์ร้านนี้ถูกใช้แล้ว กรุณาเลือกลิงก์อื่น'
+        : insertError.message;
+    return NextResponse.json({ error: friendly }, { status: 400 });
   }
 
   return NextResponse.json({ ok: true });
