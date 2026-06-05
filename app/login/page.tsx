@@ -19,7 +19,14 @@ export default function LoginPage() {
     const password = String(form.get('password') ?? '');
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) { setError(error.message); return; }
+    if (error) {
+      // Supabase returns English 'Invalid login credentials' for the common case
+      // (wrong email/password). Map to a Thai-friendly message for consistency
+      // with the signup page's friendly error handling.
+      const msg = error.message === 'Invalid login credentials' ? t.authError.th : error.message;
+      setError(msg);
+      return;
+    }
     router.push('/dashboard');
     router.refresh();
   }
@@ -30,11 +37,11 @@ export default function LoginPage() {
       <form className="mt-8 space-y-4" onSubmit={onSubmit}>
         <label className="block">
           <span className="text-sm text-gray-700">{t.email.th}</span>
-          <input required name="email" type="email" className="mt-1 block w-full rounded border border-gray-300 px-3 py-2" />
+          <input required name="email" type="email" autoComplete="email" className="mt-1 block w-full rounded border border-gray-300 px-3 py-2" />
         </label>
         <label className="block">
           <span className="text-sm text-gray-700">{t.password.th}</span>
-          <input required name="password" type="password" className="mt-1 block w-full rounded border border-gray-300 px-3 py-2" />
+          <input required name="password" type="password" autoComplete="current-password" className="mt-1 block w-full rounded border border-gray-300 px-3 py-2" />
         </label>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button
