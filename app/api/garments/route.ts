@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { dimensionsForCategory } from '@/lib/config/dimensions';
-import { fitProfileByKey, FIT_PROFILES } from '@/lib/config/fit-profiles';
+import { FIT_PROFILES } from '@/lib/config/fit-profiles';
 import type { Category, MeasurementBag } from '@/lib/supabase/types';
 
 const CATEGORY = z.enum(['top', 'bottom', 'dress']);
@@ -30,7 +30,6 @@ export async function POST(req: Request) {
   if (!z.enum(PROFILE_KEYS).safeParse(fit_profile).success) {
     return NextResponse.json({ error: 'invalid fit_profile' }, { status: 400 });
   }
-  fitProfileByKey(fit_profile); // resolves or falls back; OK
 
   // Collect measurements only for dimensions this category uses
   const measurements: MeasurementBag = {};
@@ -44,8 +43,11 @@ export async function POST(req: Request) {
     measurements[d.key] = num;
   }
 
-  // Upload photo to Storage
-  const ext = photo.name.split('.').pop()?.toLowerCase() ?? 'jpg';
+  // Upload photo to Storage. Sanitize ext to a short alphanumeric token so
+  // a hand-crafted filename can't introduce slashes or query strings into
+  // the Storage object key.
+  const rawExt = photo.name.split('.').pop()?.toLowerCase() ?? 'jpg';
+  const ext = rawExt.replace(/[^a-z0-9]/g, '').slice(0, 10) || 'jpg';
   const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
   const { error: upErr } = await supabase.storage.from('garment-photos').upload(path, photo, {
     cacheControl: '3600', upsert: false, contentType: photo.type || 'image/jpeg',
@@ -59,7 +61,14 @@ export async function POST(req: Request) {
     .insert({ retailer_id: user.id, name, category, fit_profile, photo_url: publicUrl, measurements })
     .select('id')
     .single();
-  if (insErr) return NextResponse.json({ error: insErr.message }, { status: 500 });
+  if (insErr) {
+    // Best-effort cleanup: remove the orphaned Storage file so the bucket
+    // doesn't accumulate dead photos. Mirrors the signup route's orphan
+    // cleanup at commit 13230c7. Failure of this cleanup is swallowed —
+    // the user-facing error is what we return regardless.
+    await supabase.storage.from('garment-photos').remove([path]).catch(() => {});
+    return NextResponse.json({ error: insErr.message }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true, id: row.id });
 }

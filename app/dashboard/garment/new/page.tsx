@@ -16,16 +16,23 @@ export default function NewGarmentPage() {
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null); setLoading(true);
-    const form = new FormData(e.currentTarget);
-    const res = await fetch('/api/garments', { method: 'POST', body: form });
-    setLoading(false);
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      setError(typeof data.error === 'string' ? data.error : t.authError.th);
-      return;
+    try {
+      const form = new FormData(e.currentTarget);
+      const res = await fetch('/api/garments', { method: 'POST', body: form });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(typeof data.error === 'string' ? data.error : t.authError.th);
+        return;
+      }
+      router.push('/dashboard');
+      router.refresh();
+    } catch {
+      // Network failure (offline, timeout, DNS). Surface the generic error
+      // so the user knows the form is recoverable.
+      setError(t.authError.th);
+    } finally {
+      setLoading(false);
     }
-    router.push('/dashboard');
-    router.refresh();
   }
 
   return (
