@@ -1,9 +1,8 @@
+import type { DimensionKey } from '@/lib/config/dimensions';
+
 export type Category = 'top' | 'bottom' | 'dress';
 
-export type MeasurementBag = Partial<Record<
-  'shoulder_cm' | 'chest_cm' | 'waist_cm' | 'hip_cm' | 'length_cm' | 'sleeve_cm',
-  number
->>;
+export type MeasurementBag = Partial<Record<DimensionKey, number>>;
 
 export interface Retailer {
   id: string;
