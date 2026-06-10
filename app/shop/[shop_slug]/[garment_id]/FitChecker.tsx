@@ -2,8 +2,13 @@
 import { useEffect, useState } from 'react';
 import { t } from '@/lib/i18n/strings';
 import { getOrCreateCustomerToken } from '@/lib/customer-token';
+import { useLanguage } from '@/lib/hooks/useLanguage';
 
-type DimInfo = { key: string; labelTh: string; hintTh: string };
+type DimInfo = {
+  key: string;
+  labelTh: string; hintTh: string;
+  labelEn: string; hintEn: string;
+};
 type Verdict = 'too_tight' | 'snug' | 'good_fit' | 'loose' | 'unknown';
 
 interface FitResult {
@@ -11,10 +16,6 @@ interface FitResult {
   dimensions: Record<string, { verdict: Verdict; customer: number | null; garment: number | null; diff: number | null }>;
 }
 
-const VERDICT_LABEL: Record<Verdict, string> = {
-  too_tight: t.verdictTooTight.th, snug: t.verdictSnug.th,
-  good_fit: t.verdictGood.th, loose: t.verdictLoose.th, unknown: t.verdictUnknown.th,
-};
 const VERDICT_COLOR: Record<Verdict, string> = {
   too_tight: 'bg-red-100 text-red-800',
   snug: 'bg-yellow-100 text-yellow-800',
@@ -28,12 +29,18 @@ export default function FitChecker({
 }: {
   garmentId: string; dimensions: DimInfo[];
 }) {
+  const [lang] = useLanguage();
   const [values, setValues] = useState<Record<string, string>>({});
   const [result, setResult] = useState<FitResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Pre-fill from the customer's last session (any garment of this shop is fine).
+  const verdictLabel: Record<Verdict, string> = {
+    too_tight: t.verdictTooTight[lang], snug: t.verdictSnug[lang],
+    good_fit: t.verdictGood[lang], loose: t.verdictLoose[lang], unknown: t.verdictUnknown[lang],
+  };
+
+  // Pre-fill from the customer's last session.
   useEffect(() => {
     const token = getOrCreateCustomerToken();
     fetch(`/api/fit/last?token=${encodeURIComponent(token)}`)
@@ -72,17 +79,21 @@ export default function FitChecker({
     const j = await res.json();
     setLoading(false);
     if (res.ok) setResult(j.result);
-    else setError(t.authError.th);
+    else setError(t.authError[lang]);
   }
 
   return (
     <section className="mt-8 space-y-6">
       <form className="space-y-4 rounded border bg-white p-4" onSubmit={onSubmit}>
-        <h2 className="text-lg font-medium">{t.yourMeasurements.th}</h2>
+        <h2 className="text-lg font-medium">{t.yourMeasurements[lang]}</h2>
         {dimensions.map(d => (
           <label key={d.key} className="block">
-            <span className="text-sm text-gray-700">{d.labelTh} (cm)</span>
-            <span className="block text-xs text-gray-500">{d.hintTh}</span>
+            <span className="text-sm text-gray-700">
+              {lang === 'th' ? d.labelTh : d.labelEn} (cm)
+            </span>
+            <span className="block text-xs text-gray-500">
+              {lang === 'th' ? d.hintTh : d.hintEn}
+            </span>
             <input
               type="number" step="0.1" min="1" max="300"
               value={values[d.key] ?? ''}
@@ -95,7 +106,7 @@ export default function FitChecker({
           type="submit" disabled={loading}
           className="w-full rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-60"
         >
-          {loading ? '…' : t.checkFit.th}
+          {loading ? '…' : t.checkFit[lang]}
         </button>
         {error && <p className="text-sm text-red-600">{error}</p>}
       </form>
@@ -103,7 +114,7 @@ export default function FitChecker({
       {result && (
         <div className="space-y-3 rounded border bg-white p-4">
           <div className={`inline-block rounded px-3 py-1 text-sm ${VERDICT_COLOR[result.overall]}`}>
-            {t.overall.th}: {VERDICT_LABEL[result.overall]}
+            {t.overall[lang]}: {verdictLabel[result.overall]}
           </div>
           <ul className="divide-y">
             {dimensions.map(d => {
@@ -111,9 +122,9 @@ export default function FitChecker({
               const v = r?.verdict ?? 'unknown';
               return (
                 <li key={d.key} className="flex items-center justify-between py-2 text-sm">
-                  <span>{d.labelTh}</span>
+                  <span>{lang === 'th' ? d.labelTh : d.labelEn}</span>
                   <span className={`rounded px-2 py-0.5 text-xs ${VERDICT_COLOR[v]}`}>
-                    {VERDICT_LABEL[v]}
+                    {verdictLabel[v]}
                     {r?.diff !== null && r?.diff !== undefined ? ` (${r.diff > 0 ? '+' : ''}${r.diff.toFixed(1)}cm)` : ''}
                   </span>
                 </li>

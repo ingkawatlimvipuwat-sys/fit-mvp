@@ -1,12 +1,12 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createSupabaseAdminClient } from '@/lib/supabase/server';
+import ShopHeader from './ShopHeader';
+import NoGarments from './NoGarments';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ShopPage({ params }: { params: { shop_slug: string } }) {
-  // Use admin client for public read because anon RLS is set up but using the
-  // admin client here keeps the server component simple. No secrets leak.
   const supabase = createSupabaseAdminClient();
   const { data: shop } = await supabase
     .from('shops')
@@ -22,10 +22,11 @@ export default async function ShopPage({ params }: { params: { shop_slug: string
     .order('created_at', { ascending: false });
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-8">
-      <h1 className="text-2xl font-semibold">{shop.shop_name}</h1>
+    <>
+      <ShopHeader shopName={shop.shop_name} />
+      <main className="mx-auto max-w-4xl px-6 py-8">
       {!garments || garments.length === 0 ? (
-        <p className="mt-6 text-gray-600">ยังไม่มีสินค้า</p>
+        <NoGarments />
       ) : (
         <ul className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
           {garments.map(g => (
@@ -41,6 +42,7 @@ export default async function ShopPage({ params }: { params: { shop_slug: string
           ))}
         </ul>
       )}
-    </main>
+      </main>
+    </>
   );
 }
