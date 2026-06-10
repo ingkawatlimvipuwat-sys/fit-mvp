@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { createSupabaseAdminClient } from '@/lib/supabase/server';
 import { dimensionsForCategory } from '@/lib/config/dimensions';
 import FitChecker from './FitChecker';
-import type { Category, MeasurementBag } from '@/lib/supabase/types';
+import type { Category } from '@/lib/supabase/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +32,6 @@ export default async function HeroPage({
         dimensions={dims.map(d => ({
           key: d.key, labelTh: d.labelTh, hintTh: d.measureHintTh,
         }))}
-        garmentMeasurements={garment.measurements as MeasurementBag}
       />
     </main>
   );

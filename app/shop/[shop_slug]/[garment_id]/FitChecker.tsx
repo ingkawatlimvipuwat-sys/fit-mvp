@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { t } from '@/lib/i18n/strings';
 import { getOrCreateCustomerToken } from '@/lib/customer-token';
-import type { MeasurementBag } from '@/lib/supabase/types';
 
 type DimInfo = { key: string; labelTh: string; hintTh: string };
 type Verdict = 'too_tight' | 'snug' | 'good_fit' | 'loose' | 'unknown';
@@ -25,9 +24,9 @@ const VERDICT_COLOR: Record<Verdict, string> = {
 };
 
 export default function FitChecker({
-  garmentId, dimensions, garmentMeasurements, // garmentMeasurements reserved for Phase 2 pre-compare display
+  garmentId, dimensions,
 }: {
-  garmentId: string; dimensions: DimInfo[]; garmentMeasurements: MeasurementBag;
+  garmentId: string; dimensions: DimInfo[];
 }) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [result, setResult] = useState<FitResult | null>(null);
