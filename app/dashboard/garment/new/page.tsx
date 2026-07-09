@@ -18,6 +18,14 @@ export default function NewGarmentPage() {
     setError(null); setLoading(true);
     try {
       const form = new FormData(e.currentTarget);
+      const hasMeasurement = dims.some(d => {
+        const v = form.get(d.key);
+        return typeof v === 'string' && v.trim() !== '';
+      });
+      if (!hasMeasurement) {
+        setError(t.garmentNeedsMeasurement.th);
+        return;
+      }
       const res = await fetch('/api/garments', { method: 'POST', body: form });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -75,7 +83,7 @@ export default function NewGarmentPage() {
           <label key={d.key} className="block">
             <span className="text-sm text-gray-700">{d.labelTh} (cm)</span>
             <input
-              name={d.key} type="number" step="0.1" min="1" max="300"
+              name={d.key} type="number" step="0.1" min="1" max="300" inputMode="decimal"
               className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
             />
           </label>

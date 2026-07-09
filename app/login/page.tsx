@@ -17,18 +17,22 @@ export default function LoginPage() {
     const form = new FormData(e.currentTarget);
     const email = String(form.get('email') ?? '');
     const password = String(form.get('password') ?? '');
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
-      // Supabase returns English 'Invalid login credentials' for the common case
-      // (wrong email/password). Map to a Thai-friendly message for consistency
-      // with the signup page's friendly error handling.
-      const msg = error.message === 'Invalid login credentials' ? t.authError.th : error.message;
-      setError(msg);
-      return;
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        // Supabase returns English messages (e.g. 'Invalid login credentials',
+        // 'Failed to fetch') — never surface raw English strings to the UI.
+        // Every auth error, known or not, maps to the same Thai-friendly message.
+        setError(t.authError.th);
+        return;
+      }
+      router.push('/dashboard');
+      router.refresh();
+    } catch {
+      setError(t.networkError.th);
+    } finally {
+      setLoading(false);
     }
-    router.push('/dashboard');
-    router.refresh();
   }
 
   return (

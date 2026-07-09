@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { dimensionsForCategory } from '@/lib/config/dimensions';
 import { FIT_PROFILES } from '@/lib/config/fit-profiles';
+import { t } from '@/lib/i18n/strings';
 import type { Category, MeasurementBag } from '@/lib/supabase/types';
 
 const CATEGORY = z.enum(['top', 'bottom', 'dress']);
@@ -38,9 +39,12 @@ export async function POST(req: Request) {
     if (raw === null || raw === '') continue;
     const num = Number(raw);
     if (!Number.isFinite(num) || num <= 0 || num > 300) {
-      return NextResponse.json({ error: `invalid value for ${d.key}` }, { status: 400 });
+      return NextResponse.json({ error: `ค่าไม่ถูกต้อง: ${d.labelTh}` }, { status: 400 });
     }
     measurements[d.key] = num;
+  }
+  if (Object.keys(measurements).length === 0) {
+    return NextResponse.json({ error: t.garmentNeedsMeasurement.th }, { status: 400 });
   }
 
   // Upload photo to Storage. Sanitize ext to a short alphanumeric token so

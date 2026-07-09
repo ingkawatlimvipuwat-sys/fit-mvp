@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { t } from '@/lib/i18n/strings';
 import CopyPublicLink from './CopyPublicLink';
+import GarmentCard from './GarmentCard';
 
 export default async function DashboardPage() {
   const supabase = createSupabaseServerClient();
@@ -31,18 +32,8 @@ export default async function DashboardPage() {
       ) : (
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           {garments.map(g => (
-            <li key={g.id} className="overflow-hidden rounded border bg-white">
-              <div className="relative aspect-square bg-gray-100">
-                {/* photo_url is a public Supabase Storage URL */}
-                {g.photo_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={g.photo_url} alt={g.name} className="h-full w-full object-cover" />
-                ) : null}
-              </div>
-              <div className="p-3">
-                <div className="text-sm font-medium">{g.name}</div>
-                <div className="text-xs text-gray-500">{g.category}</div>
-              </div>
+            <li key={g.id}>
+              <GarmentCard garment={g} shopSlug={retailer?.shop_slug ?? null} />
             </li>
           ))}
         </ul>

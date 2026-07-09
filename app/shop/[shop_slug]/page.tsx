@@ -8,11 +8,14 @@ export const dynamic = 'force-dynamic';
 
 export default async function ShopPage({ params }: { params: { shop_slug: string } }) {
   const supabase = createSupabaseAdminClient();
-  const { data: shop } = await supabase
+  const { data: shop, error } = await supabase
     .from('shops')
     .select('id, shop_name, shop_slug')
     .eq('shop_slug', params.shop_slug)
     .single();
+  if (error && error.code !== 'PGRST116') {
+    throw new Error('shop data unavailable: ' + error.message);
+  }
   if (!shop) notFound();
 
   const { data: garments } = await supabase

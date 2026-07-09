@@ -20,13 +20,13 @@ export interface Dimension {
   measureHintTh: string;
   measureHintEn: string;
   categories: Category[];
-  defaultBands: ThresholdBand[];   // ordered top-down by verdict severity
+  defaultBands: readonly ThresholdBand[];   // ordered top-down by verdict severity
 }
 
 const INF = Number.POSITIVE_INFINITY;
 
 /** Default bands per the design spec (§7). Most dimensions share these defaults. */
-const DEFAULT_BANDS: ThresholdBand[] = [
+const DEFAULT_BANDS: readonly ThresholdBand[] = [
   { min: 1,    max: INF,  verdict: 'too_tight' }, // customer > garment + 1
   { min: -1,   max: 1,    verdict: 'snug' },      // within ±1
   { min: -5,   max: -1,   verdict: 'good_fit' },  // 1–5cm smaller than garment

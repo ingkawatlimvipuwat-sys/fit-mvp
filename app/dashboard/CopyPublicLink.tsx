@@ -11,6 +11,7 @@ export default function CopyPublicLink({ slug }: { slug: string }) {
       <span className="text-gray-600">{t.publicLink.th}:</span>
       <code className="grow truncate">{link}</code>
       <button
+        type="button"
         onClick={async () => {
           await navigator.clipboard.writeText(link);
           setCopied(true);

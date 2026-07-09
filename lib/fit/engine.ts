@@ -20,7 +20,7 @@ const SEVERITY: Record<Verdict, number> = {
   too_tight: 4, loose: 3, snug: 2, good_fit: 1, unknown: 0,
 };
 
-function matchBand(diff: number, bands: ThresholdBand[]): Verdict {
+function matchBand(diff: number, bands: readonly ThresholdBand[]): Verdict {
   for (const b of bands) {
     if (diff >= b.min && diff < b.max) return b.verdict;
   }

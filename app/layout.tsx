@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Fit MVP',
+  title: 'Fit MVP — หาขนาดที่ใช่',
   description: 'หาขนาดที่ใช่สำหรับคุณ',
 };
 

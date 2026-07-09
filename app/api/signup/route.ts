@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createSupabaseServerClient, createSupabaseAdminClient } from '@/lib/supabase/server';
+import { t } from '@/lib/i18n/strings';
 
 const SignupSchema = z.object({
   email: z.string().email(),
@@ -21,7 +22,11 @@ export async function POST(req: Request) {
   const supabase = createSupabaseServerClient();
   const { data: signupData, error: signupError } = await supabase.auth.signUp({ email, password });
   if (signupError || !signupData.user) {
-    return NextResponse.json({ error: signupError?.message ?? 'signup failed' }, { status: 400 });
+    // Never surface raw English Supabase messages to the Thai UI.
+    const friendly = signupError?.message === 'User already registered'
+      ? t.emailTaken.th
+      : t.authError.th;
+    return NextResponse.json({ error: friendly }, { status: 400 });
   }
 
   // 2. Insert the retailer row using the admin client (bypasses RLS during insert
@@ -44,7 +49,7 @@ export async function POST(req: Request) {
     const friendly =
       'code' in insertError && insertError.code === '23505'
         ? 'ลิงก์ร้านนี้ถูกใช้แล้ว กรุณาเลือกลิงก์อื่น'
-        : insertError.message;
+        : t.authError.th; // raw Postgres messages must not reach the UI
     return NextResponse.json({ error: friendly }, { status: 400 });
   }
 

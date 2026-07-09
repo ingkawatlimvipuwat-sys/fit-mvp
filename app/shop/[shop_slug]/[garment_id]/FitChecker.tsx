@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { t } from '@/lib/i18n/strings';
 import { getOrCreateCustomerToken } from '@/lib/customer-token';
 import { useLanguage } from '@/lib/hooks/useLanguage';
@@ -20,7 +20,7 @@ const VERDICT_COLOR: Record<Verdict, string> = {
   too_tight: 'bg-red-100 text-red-800',
   snug: 'bg-yellow-100 text-yellow-800',
   good_fit: 'bg-green-100 text-green-800',
-  loose: 'bg-yellow-100 text-yellow-800',
+  loose: 'bg-blue-100 text-blue-800',
   unknown: 'bg-gray-100 text-gray-600',
 };
 
@@ -34,6 +34,7 @@ export default function FitChecker({
   const [result, setResult] = useState<FitResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
 
   const verdictLabel: Record<Verdict, string> = {
     too_tight: t.verdictTooTight[lang], snug: t.verdictSnug[lang],
@@ -57,8 +58,12 @@ export default function FitChecker({
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (result) resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [result]);
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault(); setLoading(true); setError(null);
+    e.preventDefault(); setError(null);
     const measurements: Record<string, number> = {};
     for (const d of dimensions) {
       const v = values[d.key];
@@ -67,19 +72,29 @@ export default function FitChecker({
         if (Number.isFinite(n) && n > 0) measurements[d.key] = n;
       }
     }
-    const res = await fetch('/api/fit/evaluate', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        garment_id: garmentId,
-        customer_token: getOrCreateCustomerToken(),
-        customer_measurements: measurements,
-      }),
-    });
-    const j = await res.json();
-    setLoading(false);
-    if (res.ok) setResult(j.result);
-    else setError(t.authError[lang]);
+    if (Object.keys(measurements).length === 0) {
+      setError(t.needOneMeasurement[lang]);
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch('/api/fit/evaluate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          garment_id: garmentId,
+          customer_token: getOrCreateCustomerToken(),
+          customer_measurements: measurements,
+        }),
+      });
+      const j = await res.json();
+      if (res.ok) setResult(j.result);
+      else setError(t.fitError[lang]);
+    } catch {
+      setError(t.networkError[lang]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -95,7 +110,7 @@ export default function FitChecker({
               {lang === 'th' ? d.hintTh : d.hintEn}
             </span>
             <input
-              type="number" step="0.1" min="1" max="300"
+              type="number" step="0.1" min="1" max="300" inputMode="decimal"
               value={values[d.key] ?? ''}
               onChange={e => setValues(v => ({ ...v, [d.key]: e.target.value }))}
               className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
@@ -112,7 +127,7 @@ export default function FitChecker({
       </form>
 
       {result && (
-        <div className="space-y-3 rounded border bg-white p-4">
+        <div ref={resultRef} className="space-y-3 rounded border bg-white p-4">
           <div className={`inline-block rounded px-3 py-1 text-sm ${VERDICT_COLOR[result.overall]}`}>
             {t.overall[lang]}: {verdictLabel[result.overall]}
           </div>

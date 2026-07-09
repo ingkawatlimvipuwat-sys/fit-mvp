@@ -9,6 +9,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
+  // TODO: an orphaned retailer row (auth user exists but has no matching
+  // `retailers` row — e.g. signup crashed after auth.signUp but before the
+  // retailers insert) shows up here as retailer === null. This is
+  // recoverable by manually inserting the missing row via Supabase Studio;
+  // it does not require re-creating the auth user.
   const { data: retailer } = await supabase
     .from('retailers')
     .select('shop_name, shop_slug')

@@ -8,13 +8,13 @@ export interface FitProfile {
   key: string;
   labelTh: string;
   labelEn: string;
-  overrides: Partial<Record<DimensionKey, ThresholdBand[]>>;
+  overrides: Partial<Record<DimensionKey, readonly ThresholdBand[]>>;
 }
 
 const INF = Number.POSITIVE_INFINITY;
 
 /** Slim: tighten "good fit" by 2cm — i.e. acceptable ease shrinks to 0..3cm. */
-const SLIM_DEFAULT: ThresholdBand[] = [
+const SLIM_DEFAULT: readonly ThresholdBand[] = [
   { min: 1,    max: INF, verdict: 'too_tight' },
   { min: -1,   max: 1,   verdict: 'snug' },
   { min: -3,   max: -1,  verdict: 'good_fit' },
@@ -22,7 +22,7 @@ const SLIM_DEFAULT: ThresholdBand[] = [
 ];
 
 /** Relaxed: widen "good fit" by 3cm — acceptable ease extends to 1..8cm. */
-const RELAXED_DEFAULT: ThresholdBand[] = [
+const RELAXED_DEFAULT: readonly ThresholdBand[] = [
   { min: 1,    max: INF, verdict: 'too_tight' },
   { min: -1,   max: 1,   verdict: 'snug' },
   { min: -8,   max: -1,  verdict: 'good_fit' },

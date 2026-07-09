@@ -14,18 +14,23 @@ export default function SignupPage() {
     setLoading(true);
     const form = new FormData(e.currentTarget);
     const payload = Object.fromEntries(form.entries()) as Record<string, string>;
-    const res = await fetch('/api/signup', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    setLoading(false);
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      setError(typeof data.error === 'string' ? data.error : t.authError.th);
-      return;
+    try {
+      const res = await fetch('/api/signup', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(typeof data.error === 'string' ? data.error : t.authError.th);
+        return;
+      }
+      router.push('/dashboard');
+    } catch {
+      setError(t.networkError.th);
+    } finally {
+      setLoading(false);
     }
-    router.push('/dashboard');
   }
 
   return (
