@@ -1,52 +1,50 @@
-import type { ThresholdBand, DimensionKey } from './dimensions';
+import type { EaseRule, FitRuleset } from '@/lib/fit/rules';
 
 /**
- * A profile is an OPTIONAL per-dimension override map. Missing keys mean
- * "use the dimension's default bands". Bands are full replacements, not deltas.
+ * A built-in profile is now just a named FitRuleset. `regular` carries an empty
+ * ruleset so every dimension falls through to its own default — see the comment
+ * on FitRuleset.base for why that matters.
  */
 export interface FitProfile {
   key: string;
   labelTh: string;
   labelEn: string;
-  overrides: Partial<Record<DimensionKey, readonly ThresholdBand[]>>;
+  ruleset: FitRuleset;
 }
 
-const INF = Number.POSITIVE_INFINITY;
-
-/** Slim: tighten "good fit" by 2cm — i.e. acceptable ease shrinks to 0..3cm. */
-const SLIM_DEFAULT: readonly ThresholdBand[] = [
-  { min: 1,    max: INF, verdict: 'too_tight' },
-  { min: -1,   max: 1,   verdict: 'snug' },
-  { min: -3,   max: -1,  verdict: 'good_fit' },
-  { min: -INF, max: -3,  verdict: 'loose' },
-];
-
-/** Relaxed: widen "good fit" by 3cm — acceptable ease extends to 1..8cm. */
-const RELAXED_DEFAULT: readonly ThresholdBand[] = [
-  { min: 1,    max: INF, verdict: 'too_tight' },
-  { min: -1,   max: 1,   verdict: 'snug' },
-  { min: -8,   max: -1,  verdict: 'good_fit' },
-  { min: -INF, max: -8,  verdict: 'loose' },
-];
+/** Slim: acceptable ease shrinks to 1-3cm. */
+const SLIM: EaseRule = { tightBelow: -1, goodFrom: 1, goodTo: 3 };
+/** Relaxed: acceptable ease extends to 1-8cm. */
+const RELAXED: EaseRule = { tightBelow: -1, goodFrom: 1, goodTo: 8 };
 
 export const FIT_PROFILES: FitProfile[] = [
-  { key: 'regular', labelTh: 'ทรงปกติ',  labelEn: 'Regular', overrides: {} },
+  {
+    key: 'regular', labelTh: 'ทรงปกติ', labelEn: 'Regular',
+    ruleset: { perDimension: {} },
+  },
   {
     key: 'slim', labelTh: 'ทรงเข้ารูป', labelEn: 'Slim',
-    overrides: {
-      shoulder_cm: SLIM_DEFAULT, chest_cm: SLIM_DEFAULT,
-      waist_cm: SLIM_DEFAULT, hip_cm: SLIM_DEFAULT,
+    ruleset: {
+      perDimension: {
+        shoulder_cm: SLIM, chest_cm: SLIM, waist_cm: SLIM, hip_cm: SLIM,
+      },
     },
   },
   {
     key: 'relaxed', labelTh: 'ทรงหลวม', labelEn: 'Relaxed',
-    overrides: {
-      shoulder_cm: RELAXED_DEFAULT, chest_cm: RELAXED_DEFAULT,
-      waist_cm: RELAXED_DEFAULT, hip_cm: RELAXED_DEFAULT,
+    ruleset: {
+      perDimension: {
+        shoulder_cm: RELAXED, chest_cm: RELAXED, waist_cm: RELAXED, hip_cm: RELAXED,
+      },
     },
   },
 ];
 
+/**
+ * Label/metadata lookup for the dashboard. Falls back to `regular` for an
+ * unrecognised key, preserving pre-change behaviour. The ruleset-resolution
+ * path uses `builtinRuleset()` in lib/fit/resolve.ts, which wraps this.
+ */
 export function fitProfileByKey(key: string): FitProfile {
   return FIT_PROFILES.find(p => p.key === key) ?? FIT_PROFILES[0]!;
 }
