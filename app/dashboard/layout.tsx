@@ -26,7 +26,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <Link href="/dashboard" className="font-semibold">
           {retailer?.shop_name ?? t.dashboardTitle.th}
         </Link>
-        <LogoutButton />
+        <nav className="flex items-center gap-4">
+          <Link href="/dashboard/fit-rules" className="text-sm text-gray-700 hover:text-gray-900">
+            {t.fitRulesNav.th}
+          </Link>
+          <LogoutButton />
+        </nav>
       </header>
       <main className="mx-auto max-w-4xl p-6">{children}</main>
     </div>
