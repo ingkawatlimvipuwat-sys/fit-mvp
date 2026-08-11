@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { easeRuleToBands, DEFAULT_RULE, type EaseRule } from './rules';
+import { easeRuleToBands, DEFAULT_RULE } from './rules';
 
 const INF = Number.POSITIVE_INFINITY;
 
