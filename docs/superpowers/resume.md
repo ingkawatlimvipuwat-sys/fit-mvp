@@ -57,7 +57,7 @@ This is a working prototype. It is used in production but has rough edges that n
 
 | Area | Item |
 |------|------|
-| Fit engine | Boundary tests at diff = ±1 and ±5 (suggested in code review, not blocking) |
+| ~~Fit engine~~ | ~~Boundary tests at diff = ±1 and ±5~~ — done, see `resolve.test.ts` |
 | Types | `lib/config/dimensions.ts`: make `ThresholdBand[]` `readonly` |
 | Types | `lib/i18n/strings.ts`: apply `as const` for narrower literal types |
 | Dashboard | `app/dashboard/layout.tsx`: add comment noting orphan-retailer-row is recoverable via Supabase Studio |
@@ -97,8 +97,14 @@ lib/
     dimensions.ts        — DimensionKey, DIMENSIONS[], dimensionsForCategory(), dimensionByKey()
     fit-profiles.ts      — named fit profiles (regular/slim/relaxed)
   fit/
-    engine.ts            — evaluateFit(garment, customer, profileKey) → FitResult
-    engine.test.ts       — 12 Vitest tests (all passing)
+    rules.ts             — EaseRule, FitRuleset, DEFAULT_RULE, easeRuleToBands() [pure]
+    rules.test.ts        — compiler + regression guard vs. the pre-change bands
+    rule-schema.ts       — zod schemas shared by API routes and the client editor
+    resolve.ts           — resolveRuleset(), builtinRuleset() [pure, no I/O]
+    resolve.test.ts      — schema validation + resolution precedence + boundaries
+    engine.ts            — evaluateFit(garment, customer, ruleset) → FitResult
+    engine.test.ts       — engine behaviour
+                           (47 Vitest tests across all three test files, all passing)
   hooks/
     useLanguage.tsx      — LanguageProvider + useLanguage() hook (Lang = 'th' | 'en')
   i18n/
@@ -138,7 +144,10 @@ app/
 - `app/api/garments/route.ts`: map raw dimension keys to Thai labels via `dimensionByKey()` in error messages.
 - `npm audit`: 5 vulnerabilities from Next.js 14.2 — unreachable; fix with Next.js 15 upgrade post-launch.
 - `FitChecker.tsx` `garmentMeasurements` prop removed (ESLint). Re-add in Phase 2 for client-side comparison display.
-- Fit engine boundary tests at diff = ±1 and ±5.
+- ~~Fit engine boundary tests at diff = ±1 and ±5.~~ Done in `lib/fit/resolve.test.ts`.
+- **Integration-test harness.** The suite is pure unit tests over `lib/fit` — no route or DB coverage anywhere. The one guarantee this leaves unverified by CI is that `/api/fit/evaluate` writes the correct `applied_rule` and that it stays put when a preset is edited. Verified manually for now.
+- **`tsc` clean does not mean `build` clean** on this project — `next lint` catches unused imports that the typechecker ignores. Run both before claiming green.
+- **Supabase clients are untyped** (no generated `Database` generic), so `.from('garments')` returns `any`. A wrong field shape compiles clean and fails at runtime. Do not treat a green typecheck as verification for anything touching a query result.
 
 ---
 
