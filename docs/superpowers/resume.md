@@ -145,6 +145,7 @@ app/
 - `npm audit`: 5 vulnerabilities from Next.js 14.2 — unreachable; fix with Next.js 15 upgrade post-launch.
 - `FitChecker.tsx` `garmentMeasurements` prop removed (ESLint). Re-add in Phase 2 for client-side comparison display.
 - ~~Fit engine boundary tests at diff = ±1 and ±5.~~ Done in `lib/fit/resolve.test.ts`.
+- **Fit rule summary reads wrong for negative ease.** `summarize()` in `app/dashboard/fit-rules/FitRulesManager.tsx` renders a rule as "พอดีเมื่อกว้างกว่าตัว {goodFrom}–{goodTo} ซม." That template assumes positive ease, so a stretchy rule shows "กว้างกว่าตัว -4–3 ซม." — "wider than the body by minus four cm". Verdicts are unaffected; only this one-line list summary. It misreads precisely for the stretchy case the feature exists for, so worth fixing before more retailers see the dashboard.
 - **Integration-test harness.** The suite is pure unit tests over `lib/fit` — no route or DB coverage anywhere. The one guarantee this leaves unverified by CI is that `/api/fit/evaluate` writes the correct `applied_rule` and that it stays put when a preset is edited. Verified manually for now.
 - **`tsc` clean does not mean `build` clean** on this project — `next lint` catches unused imports that the typechecker ignores. Run both before claiming green.
 - **Supabase clients are untyped** (no generated `Database` generic), so `.from('garments')` returns `any`. A wrong field shape compiles clean and fails at runtime. Do not treat a green typecheck as verification for anything touching a query result.
