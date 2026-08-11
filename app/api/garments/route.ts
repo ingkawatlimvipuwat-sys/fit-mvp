@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { dimensionsForCategory } from '@/lib/config/dimensions';
 import { FIT_PROFILES } from '@/lib/config/fit-profiles';
 import { t } from '@/lib/i18n/strings';
+import { FitRulesetSchema, firstIssueMessage } from '@/lib/fit/rule-schema';
 import type { Category, MeasurementBag } from '@/lib/supabase/types';
 
 const CATEGORY = z.enum(['top', 'bottom', 'dress']);
@@ -19,6 +20,8 @@ export async function POST(req: Request) {
   const name = String(form.get('name') ?? '').trim();
   const categoryRaw = String(form.get('category') ?? '');
   const fit_profile = String(form.get('fit_profile') ?? 'regular');
+  const fitRulesetIdRaw = String(form.get('fit_ruleset_id') ?? '').trim();
+  const overrideRaw = String(form.get('fit_rule_override') ?? '').trim();
   const photo = form.get('photo');
 
   if (!name) return NextResponse.json({ error: 'name required' }, { status: 400 });
@@ -30,6 +33,27 @@ export async function POST(req: Request) {
   }
   if (!z.enum(PROFILE_KEYS).safeParse(fit_profile).success) {
     return NextResponse.json({ error: 'invalid fit_profile' }, { status: 400 });
+  }
+
+  // These two are mutually exclusive by construction, not just by convention:
+  // an inline override always clears any preset reference.
+  let fit_rule_override: unknown = null;
+  let fit_ruleset_id: string | null = null;
+
+  if (overrideRaw) {
+    let overrideJson: unknown;
+    try { overrideJson = JSON.parse(overrideRaw); }
+    catch { return NextResponse.json({ error: 'ข้อมูลกฎไม่ถูกต้อง' }, { status: 400 }); }
+    const parsed = FitRulesetSchema.safeParse(overrideJson);
+    if (!parsed.success) {
+      return NextResponse.json({ error: firstIssueMessage(parsed.error) }, { status: 400 });
+    }
+    fit_rule_override = parsed.data;
+  } else if (fitRulesetIdRaw) {
+    if (!z.uuid().safeParse(fitRulesetIdRaw).success) {
+      return NextResponse.json({ error: 'invalid fit_ruleset_id' }, { status: 400 });
+    }
+    fit_ruleset_id = fitRulesetIdRaw;
   }
 
   // Collect measurements only for dimensions this category uses
@@ -62,7 +86,11 @@ export async function POST(req: Request) {
   // Insert row
   const { data: row, error: insErr } = await supabase
     .from('garments')
-    .insert({ retailer_id: user.id, name, category, fit_profile, photo_url: publicUrl, measurements })
+    .insert({
+      retailer_id: user.id, name, category, fit_profile,
+      photo_url: publicUrl, measurements,
+      fit_ruleset_id, fit_rule_override,
+    })
     .select('id')
     .single();
   if (insErr) {

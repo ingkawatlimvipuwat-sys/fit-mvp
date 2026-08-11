@@ -1,10 +1,13 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { dimensionsForCategory } from '@/lib/config/dimensions';
 import { FIT_PROFILES } from '@/lib/config/fit-profiles';
 import { t } from '@/lib/i18n/strings';
 import type { Category } from '@/lib/supabase/types';
+import FitRuleEditor, { isRulesetValid } from '@/app/dashboard/fit-rules/FitRuleEditor';
+import { DEFAULT_RULE } from '@/lib/fit/rules';
+import type { FitRuleset } from '@/lib/fit/rules';
 
 export default function NewGarmentPage() {
   const router = useRouter();
@@ -12,12 +15,36 @@ export default function NewGarmentPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const dims = useMemo(() => dimensionsForCategory(category), [category]);
+  const [presets, setPresets] = useState<{ id: string; name: string }[]>([]);
+  const [useOverride, setUseOverride] = useState(false);
+  const [override, setOverride] = useState<FitRuleset>({ base: DEFAULT_RULE, perDimension: {} });
+
+  useEffect(() => {
+    fetch('/api/fit-rulesets')
+      .then(r => r.ok ? r.json() : { rulesets: [] })
+      .then(d => setPresets(d.rulesets ?? []))
+      .catch(() => setPresets([]));  // a failed load just means no presets offered
+  }, []);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null); setLoading(true);
     try {
       const form = new FormData(e.currentTarget);
+      // The grouped select carries one value; split it back into the two
+      // mutually exclusive columns the API expects.
+      const choice = String(form.get('fit_profile_or_ruleset') ?? 'profile:regular');
+      form.delete('fit_profile_or_ruleset');
+      if (useOverride) {
+        if (!isRulesetValid(override)) { setError(t.authError.th); return; }
+        form.set('fit_profile', 'regular');       // required column; the override wins at resolve time
+        form.set('fit_rule_override', JSON.stringify(override));
+      } else if (choice.startsWith('preset:')) {
+        form.set('fit_profile', 'regular');       // fallback if the preset is later deleted
+        form.set('fit_ruleset_id', choice.slice('preset:'.length));
+      } else {
+        form.set('fit_profile', choice.slice('profile:'.length));
+      }
       const hasMeasurement = dims.some(d => {
         const v = form.get(d.key);
         return typeof v === 'string' && v.trim() !== '';
@@ -67,10 +94,31 @@ export default function NewGarmentPage() {
 
       <label className="block">
         <span className="text-sm text-gray-700">{t.fitProfile.th}</span>
-        <select name="fit_profile" defaultValue="regular" className="mt-1 block w-full rounded border border-gray-300 px-3 py-2">
-          {FIT_PROFILES.map(p => <option key={p.key} value={p.key}>{p.labelTh}</option>)}
+        <select
+          name="fit_profile_or_ruleset" defaultValue="profile:regular"
+          disabled={useOverride}
+          className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 disabled:opacity-60"
+        >
+          <optgroup label={t.fitRuleBuiltIn.th}>
+            {FIT_PROFILES.map(p => (
+              <option key={p.key} value={`profile:${p.key}`}>{p.labelTh}</option>
+            ))}
+          </optgroup>
+          {presets.length > 0 && (
+            <optgroup label={t.fitRuleShopRules.th}>
+              {presets.map(p => <option key={p.id} value={`preset:${p.id}`}>{p.name}</option>)}
+            </optgroup>
+          )}
         </select>
       </label>
+
+      <div className="space-y-3 rounded border p-4">
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={useOverride} onChange={e => setUseOverride(e.target.checked)} />
+          <span>{t.fitRuleOverride.th}</span>
+        </label>
+        {useOverride && <FitRuleEditor value={override} onChange={setOverride} />}
+      </div>
 
       <label className="block">
         <span className="text-sm text-gray-700">{t.photo.th}</span>
