@@ -26,18 +26,20 @@ export const EaseRuleSchema = z
     path: ['goodTo'],
   });
 
-export const FitRulesetSchema = z.object({
-  base: EaseRuleSchema.optional(),
-  perDimension: z
-    .object(
-      Object.fromEntries(DIMENSION_KEYS.map(k => [k, EaseRuleSchema.optional()])) as Record<
-        DimensionKey,
-        z.ZodOptional<typeof EaseRuleSchema>
-      >
-    )
-    .strict()
-    .default({}),
-});
+export const FitRulesetSchema = z
+  .object({
+    base: EaseRuleSchema.optional(),
+    perDimension: z
+      .object(
+        Object.fromEntries(DIMENSION_KEYS.map(k => [k, EaseRuleSchema.optional()])) as Record<
+          DimensionKey,
+          z.ZodOptional<typeof EaseRuleSchema>
+        >
+      )
+      .strict()
+      .default({}),
+  })
+  .strict();
 
 export const RulesetNameSchema = z.string().trim().min(1).max(60);
 
