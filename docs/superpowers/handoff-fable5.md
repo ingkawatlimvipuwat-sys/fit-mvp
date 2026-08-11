@@ -1,5 +1,18 @@
 # Handoff — Fit Recommendation MVP (for Fable 5)
 
+> ⚠️ **PARTIALLY SUPERSEDED (2026-08-11).** Read
+> `handoff-2026-08-11-custom-fit-rules.md` first — there is an open PR with a known
+> blocking gap.
+>
+> Still accurate and worth reading here: **§2 product intent**, **§3 who you're working
+> with**, **§4 process**, **§7 guardrails**, **§8 cost guidance**.
+>
+> **Now wrong:** §1 and §5 test counts (12 → **47**) and HEAD; **§6 environment** — the
+> `Desktop\Claude code` clone described as canonical was **deleted on 2026-08-11**, and the
+> only checkout is now
+> `C:\Users\Copter\Documents\Claude\Projects\Startup poor fools\fit-mvp`; §5's "architecture
+> in force" description of fit profiles predates the ease-rule model.
+
 > **You are picking up an in-flight prototype.** This document is the *intent* brief:
 > why this project exists, who you're working with, how work has been done, and what
 > decisions are already settled. For the mechanical current-state detail (file map,
