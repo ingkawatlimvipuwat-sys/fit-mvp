@@ -4,6 +4,8 @@ import { createSupabaseAdminClient } from '@/lib/supabase/server';
 import { evaluateFit } from '@/lib/fit/engine';
 import { DIMENSIONS, type DimensionKey } from '@/lib/config/dimensions';
 import type { MeasurementBag } from '@/lib/supabase/types';
+// TEMPORARY bridge until Task 8 wires up ruleset resolution.
+import { fitProfileByKey } from '@/lib/config/fit-profiles';
 
 const Body = z.object({
   garment_id: z.string().uuid(),
@@ -33,7 +35,7 @@ export async function POST(req: Request) {
     .single();
   if (gErr || !garment) return NextResponse.json({ error: 'garment not found' }, { status: 404 });
 
-  const result = evaluateFit(garment.measurements as MeasurementBag, cleanCustomer, garment.fit_profile);
+  const result = evaluateFit(garment.measurements as MeasurementBag, cleanCustomer, fitProfileByKey(garment.fit_profile).ruleset);
 
   const { error: insErr } = await supabase.from('fit_sessions').insert({
     garment_id,

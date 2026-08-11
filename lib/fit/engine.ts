@@ -1,5 +1,5 @@
 import { DIMENSIONS, type DimensionKey, type ThresholdBand } from '@/lib/config/dimensions';
-import { fitProfileByKey } from '@/lib/config/fit-profiles';
+import { easeRuleToBands, type FitRuleset } from '@/lib/fit/rules';
 import type { MeasurementBag } from '@/lib/supabase/types';
 
 export type Verdict = 'too_tight' | 'snug' | 'good_fit' | 'loose' | 'unknown';
@@ -31,9 +31,8 @@ function matchBand(diff: number, bands: readonly ThresholdBand[]): Verdict {
 export function evaluateFit(
   garment: MeasurementBag,
   customer: MeasurementBag,
-  fitProfileKey: string
+  ruleset: FitRuleset
 ): FitResult {
-  const profile = fitProfileByKey(fitProfileKey);
   const result: FitResult = { dimensions: {}, overall: 'unknown' };
   let worstScored: Verdict | null = null;
 
@@ -44,7 +43,9 @@ export function evaluateFit(
       result.dimensions[dim.key] = { verdict: 'unknown', customer: c ?? null, garment: g ?? null, diff: null };
       continue;
     }
-    const bands = profile.overrides[dim.key] ?? dim.defaultBands;
+    // perDimension beats base beats the dimension's own default (spec §4.4)
+    const rule = ruleset.perDimension[dim.key] ?? ruleset.base ?? dim.defaultRule;
+    const bands = easeRuleToBands(rule);
     const diff = c - g;
     const verdict = matchBand(diff, bands);
     result.dimensions[dim.key] = { verdict, customer: c, garment: g, diff };
