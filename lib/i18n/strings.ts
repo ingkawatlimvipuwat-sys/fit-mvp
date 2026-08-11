@@ -66,6 +66,28 @@ export const t = {
   verdictGood: { th: 'พอดี', en: 'Good fit' },
   verdictLoose: { th: 'หลวม', en: 'Loose' },
   verdictUnknown: { th: 'ไม่ได้ระบุ', en: 'Not specified' },
+
+  // Fit rules
+  fitRules: { th: 'กฎความพอดี', en: 'Fit rules' },
+  fitRulesNav: { th: 'กฎของร้าน', en: 'Shop rules' },
+  fitRuleNew: { th: 'สร้างกฎใหม่', en: 'New rule' },
+  fitRuleName: { th: 'ชื่อกฎ', en: 'Rule name' },
+  fitRuleNamePlaceholder: { th: 'เช่น ผ้ายืด', en: 'e.g. Stretchy jersey' },
+  fitRuleTightBelow: { th: 'แน่นเกินไป เมื่อแคบกว่าตัวมากกว่า…', en: 'Too tight when narrower than the body by more than…' },
+  fitRuleGoodFrom: { th: 'พอดี ตั้งแต่…', en: 'Good fit from…' },
+  fitRuleGoodTo: { th: '…ถึง…', en: '…to…' },
+  fitRulePreview: { th: 'ตัวอย่าง', en: 'Preview' },
+  fitRulePerDimension: { th: 'ปรับเฉพาะบางจุด', en: 'Per-measurement exceptions' },
+  fitRuleSameAsAbove: { th: 'เหมือนด้านบน', en: 'Same as above' },
+  fitRuleOverride: { th: 'ปรับเฉพาะสินค้านี้', en: 'Custom rule for this garment only' },
+  fitRuleGarmentCount: { th: 'สินค้าที่ใช้กฎนี้', en: 'Garments using this rule' },
+  fitRuleDeleteConfirm: { th: 'ลบกฎนี้? สินค้าที่ใช้อยู่จะกลับไปใช้ทรงมาตรฐาน', en: 'Delete this rule? Garments using it revert to their built-in profile.' },
+  fitRuleNone: { th: 'ยังไม่มีกฎของร้าน', en: 'No shop rules yet' },
+  fitRuleBuiltIn: { th: 'ทรงมาตรฐาน', en: 'Built-in profiles' },
+  fitRuleShopRules: { th: 'กฎของร้าน', en: 'Shop rules' },
+  cancel: { th: 'ยกเลิก', en: 'Cancel' },
+  delete: { th: 'ลบ', en: 'Delete' },
+  edit: { th: 'แก้ไข', en: 'Edit' },
 } as const;
 
 export type StringKey = keyof typeof t;
