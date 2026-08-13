@@ -22,6 +22,7 @@ export interface GarmentFormInitial {
   useOverride: boolean;
   override: FitRuleset;
   ruleChoice: string;
+  profileKey: string;
 }
 
 type GarmentFormProps =
@@ -118,6 +119,7 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
     const form = new FormData();
     for (const [k, v] of Object.entries(buildGarmentFields({
       name, category, ruleChoice, useOverride, override, measurements,
+      fallbackProfile: initial?.profileKey ?? 'regular',
     }))) form.set(k, v);
     if (photo) form.set('photo', photo);
 

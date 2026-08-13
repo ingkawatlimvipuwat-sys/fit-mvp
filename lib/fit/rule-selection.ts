@@ -12,6 +12,13 @@ export interface RuleSelection {
   useOverride: boolean;
   override: FitRuleset;
   ruleChoice: string;
+  /**
+   * The garment's stored built-in profile, normalised. Separate from
+   * ruleChoice because a garment sitting on a preset still HAS a profile: it
+   * is what the garment reverts to if that preset is ever deleted. Editing
+   * must carry it through rather than overwrite it.
+   */
+  profileKey: string;
 }
 
 /** Seed for the editor when the garment has no override of its own. */
@@ -31,19 +38,23 @@ const blankOverride = (): FitRuleset => ({ base: DEFAULT_RULE, perDimension: {} 
  * only its id.
  */
 export function ruleSelectionForGarment(g: GarmentRuleFields): RuleSelection {
-  const selectProfile = `profile:${fitProfileByKey(g.fit_profile).key}`;
+  const profileKey = fitProfileByKey(g.fit_profile).key;
+  const selectProfile = `profile:${profileKey}`;
 
   if (g.fit_rule_override != null) {
     const parsed = FitRulesetSchema.safeParse(g.fit_rule_override);
     if (parsed.success) {
-      return { useOverride: true, override: parsed.data, ruleChoice: selectProfile };
+      return { useOverride: true, override: parsed.data, ruleChoice: selectProfile, profileKey };
     }
     console.error('malformed fit_rule_override; showing fit_profile instead');
   }
 
   if (g.fit_ruleset_id) {
-    return { useOverride: false, override: blankOverride(), ruleChoice: `preset:${g.fit_ruleset_id}` };
+    return {
+      useOverride: false, override: blankOverride(),
+      ruleChoice: `preset:${g.fit_ruleset_id}`, profileKey,
+    };
   }
 
-  return { useOverride: false, override: blankOverride(), ruleChoice: selectProfile };
+  return { useOverride: false, override: blankOverride(), ruleChoice: selectProfile, profileKey };
 }

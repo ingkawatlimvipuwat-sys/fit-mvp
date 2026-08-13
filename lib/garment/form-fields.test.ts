@@ -15,6 +15,7 @@ function baseState(over: Partial<GarmentFormState> = {}): GarmentFormState {
     useOverride: false,
     override: { base: DEFAULT_RULE, perDimension: {} },
     measurements: { chest_cm: '97' },
+    fallbackProfile: 'regular',
     ...over,
   };
 }
@@ -74,6 +75,17 @@ describe('buildGarmentFields', () => {
     }));
     expect(fields.fit_profile).toBe('slim');
     expect(fields.fit_rule_override).toBe(JSON.stringify({ base: STRETCHY, perDimension: {} }));
+  });
+
+  it('keeps the garment\'s existing profile when a preset is attached', () => {
+    // The preset outranks fit_profile now, but fit_profile is what the garment
+    // reverts to if the preset is deleted. Overwriting it with 'regular' loses
+    // the retailer's choice invisibly.
+    const fields = buildGarmentFields(baseState({
+      ruleChoice: `preset:${UUID}`, useOverride: false, fallbackProfile: 'slim',
+    }));
+    expect(fields.fit_profile).toBe('slim');
+    expect(fields.fit_ruleset_id).toBe(UUID);
   });
 
   it('an override clears a preset — fit_ruleset_id is absent', () => {

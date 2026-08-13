@@ -14,6 +14,7 @@ describe('ruleSelectionForGarment', () => {
       useOverride: false,
       override: { base: DEFAULT_RULE, perDimension: {} },
       ruleChoice: 'profile:slim',
+      profileKey: 'slim',
     });
   });
 
@@ -23,6 +24,15 @@ describe('ruleSelectionForGarment', () => {
     });
     expect(sel.useOverride).toBe(false);
     expect(sel.ruleChoice).toBe(`preset:${UUID}`);
+    expect(sel.profileKey).toBe('regular');
+  });
+
+  it('a garment on a preset keeps its own profile as profileKey, not the preset', () => {
+    const sel = ruleSelectionForGarment({
+      fit_profile: 'slim', fit_ruleset_id: UUID, fit_rule_override: null,
+    });
+    expect(sel.ruleChoice).toBe(`preset:${UUID}`);
+    expect(sel.profileKey).toBe('slim');
   });
 
   it('an override wins over a preset, matching resolveRuleset precedence', () => {
@@ -49,6 +59,7 @@ describe('ruleSelectionForGarment', () => {
       fit_profile: 'nonsense', fit_ruleset_id: null, fit_rule_override: null,
     });
     expect(sel.ruleChoice).toBe('profile:regular');
+    expect(sel.profileKey).toBe('regular');
   });
 
   it('ignores a malformed override and falls through to the preset', () => {

@@ -12,6 +12,13 @@ export interface GarmentFormState {
   override: FitRuleset;
   /** Keyed across ALL dimensions, values as typed (strings). */
   measurements: Record<string, string>;
+  /**
+   * What to store in fit_profile when the retailer has chosen a preset
+   * instead. On create there is no prior choice, so 'regular'. On edit it is
+   * the garment's existing profile — a preset outranks it now, but it is the
+   * fallback if that preset is deleted, so overwriting it loses a real choice.
+   */
+  fallbackProfile: string;
 }
 
 /** Non-empty measurements belonging to `category`, as [key, value] pairs. */
@@ -51,10 +58,9 @@ export function buildGarmentFields(s: GarmentFormState): Record<string, string> 
   const out: Record<string, string> = {
     name: s.name.trim(),
     category: s.category,
-    // A preset is selected, so there is no profile choice to preserve.
     fit_profile: s.ruleChoice.startsWith('profile:')
       ? s.ruleChoice.slice('profile:'.length)
-      : 'regular',
+      : s.fallbackProfile,
   };
 
   for (const [k, v] of activeMeasurements(s.measurements, s.category)) out[k] = v;
