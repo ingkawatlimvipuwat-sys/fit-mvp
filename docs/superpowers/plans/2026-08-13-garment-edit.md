@@ -283,7 +283,12 @@ Create `lib/garment/parse-form.test.ts`:
 import { describe, it, expect } from 'vitest';
 import { parseGarmentFields } from './parse-form';
 
-const UUID = '11111111-2222-3333-4444-555555555555';
+// zod 4's z.uuid() enforces the RFC 4122 version and variant nibbles, so a
+// made-up 8-4-4-4-12 string is NOT necessarily accepted. This is the canonical
+// v4 shape: `4` opening the third group, `8` opening the fourth. A fixture with
+// `4` in the variant position fails z.uuid() and makes the preset-id tests look
+// like implementation bugs.
+const UUID = '11111111-2222-4333-8444-555555555555';
 const STRETCHY = { tightBelow: -6, goodFrom: -4, goodTo: 3 };
 
 /** Minimal valid top, with any field overridden or removed (value `null`). */
