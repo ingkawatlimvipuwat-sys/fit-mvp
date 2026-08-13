@@ -56,6 +56,16 @@ export const t = {
   photo: { th: 'รูปภาพ', en: 'Photo' },
   photoRequired: { th: 'จำเป็นต้องอัปโหลดรูป', en: 'Photo is required' },
   save: { th: 'บันทึก', en: 'Save' },
+  editGarment: { th: 'แก้ไขเสื้อผ้า', en: 'Edit garment' },
+  garmentMeasurements: { th: 'ขนาดเสื้อผ้า', en: 'Garment measurements' },
+  replacePhoto: { th: 'เปลี่ยนรูป', en: 'Replace photo' },
+  currentPhoto: { th: 'รูปปัจจุบัน', en: 'Current photo' },
+  photoKeepCurrent: { th: 'ไม่เลือกไฟล์ = ใช้รูปเดิม', en: 'Leave empty to keep the current photo' },
+  saving: { th: 'กำลังบันทึก…', en: 'Saving…' },
+  confirmDropMeasurements: {
+    th: 'เปลี่ยนประเภทแล้ว ขนาดต่อไปนี้จะถูกลบ: {dims} — บันทึกต่อไหม?',
+    en: 'Changing category will discard these measurements: {dims} — save anyway?',
+  },
 
   // Customer-facing
   yourMeasurements: { th: 'ขนาดของคุณ', en: 'Your measurements' },
