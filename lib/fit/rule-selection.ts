@@ -6,12 +6,12 @@ import type { GarmentRuleFields } from './resolve';
 
 /**
  * What the garment form's rule controls should show for an existing garment.
- * `select` is the grouped <select> value; `override` seeds FitRuleEditor.
+ * `ruleChoice` is the grouped <select> value; `override` seeds FitRuleEditor.
  */
 export interface RuleSelection {
   useOverride: boolean;
   override: FitRuleset;
-  select: string;
+  ruleChoice: string;
 }
 
 /** Seed for the editor when the garment has no override of its own. */
@@ -36,14 +36,14 @@ export function ruleSelectionForGarment(g: GarmentRuleFields): RuleSelection {
   if (g.fit_rule_override != null) {
     const parsed = FitRulesetSchema.safeParse(g.fit_rule_override);
     if (parsed.success) {
-      return { useOverride: true, override: parsed.data, select: selectProfile };
+      return { useOverride: true, override: parsed.data, ruleChoice: selectProfile };
     }
     console.error('malformed fit_rule_override; showing fit_profile instead');
   }
 
   if (g.fit_ruleset_id) {
-    return { useOverride: false, override: blankOverride(), select: `preset:${g.fit_ruleset_id}` };
+    return { useOverride: false, override: blankOverride(), ruleChoice: `preset:${g.fit_ruleset_id}` };
   }
 
-  return { useOverride: false, override: blankOverride(), select: selectProfile };
+  return { useOverride: false, override: blankOverride(), ruleChoice: selectProfile };
 }

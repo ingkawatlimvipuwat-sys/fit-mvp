@@ -55,6 +55,8 @@ export const t = {
   profileRelaxed: { th: 'ทรงหลวม', en: 'Relaxed' },
   photo: { th: 'รูปภาพ', en: 'Photo' },
   photoRequired: { th: 'จำเป็นต้องอัปโหลดรูป', en: 'Photo is required' },
+  garmentNameRequired: { th: 'กรุณากรอกชื่อเสื้อผ้า', en: 'Please enter a garment name' },
+  fitRuleInvalid: { th: 'กฎความพอดีไม่ถูกต้อง กรุณาตรวจสอบตัวเลข', en: 'The fit rule is not valid. Check the numbers.' },
   save: { th: 'บันทึก', en: 'Save' },
   editGarment: { th: 'แก้ไขเสื้อผ้า', en: 'Edit garment' },
   garmentMeasurements: { th: 'ขนาดเสื้อผ้า', en: 'Garment measurements' },

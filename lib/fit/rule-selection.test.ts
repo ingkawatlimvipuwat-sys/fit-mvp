@@ -13,7 +13,7 @@ describe('ruleSelectionForGarment', () => {
     expect(sel).toEqual({
       useOverride: false,
       override: { base: DEFAULT_RULE, perDimension: {} },
-      select: 'profile:slim',
+      ruleChoice: 'profile:slim',
     });
   });
 
@@ -22,7 +22,7 @@ describe('ruleSelectionForGarment', () => {
       fit_profile: 'regular', fit_ruleset_id: UUID, fit_rule_override: null,
     });
     expect(sel.useOverride).toBe(false);
-    expect(sel.select).toBe(`preset:${UUID}`);
+    expect(sel.ruleChoice).toBe(`preset:${UUID}`);
   });
 
   it('an override wins over a preset, matching resolveRuleset precedence', () => {
@@ -41,14 +41,14 @@ describe('ruleSelectionForGarment', () => {
       fit_ruleset_id: null,
       fit_rule_override: { base: STRETCHY, perDimension: {} },
     });
-    expect(sel.select).toBe('profile:relaxed');
+    expect(sel.ruleChoice).toBe('profile:relaxed');
   });
 
   it('falls back to regular for an unrecognised profile key', () => {
     const sel = ruleSelectionForGarment({
       fit_profile: 'nonsense', fit_ruleset_id: null, fit_rule_override: null,
     });
-    expect(sel.select).toBe('profile:regular');
+    expect(sel.ruleChoice).toBe('profile:regular');
   });
 
   it('ignores a malformed override and falls through to the preset', () => {
@@ -59,7 +59,7 @@ describe('ruleSelectionForGarment', () => {
       fit_rule_override: { nonsense: true },
     });
     expect(sel.useOverride).toBe(false);
-    expect(sel.select).toBe(`preset:${UUID}`);
+    expect(sel.ruleChoice).toBe(`preset:${UUID}`);
     spy.mockRestore();
   });
 
@@ -69,7 +69,7 @@ describe('ruleSelectionForGarment', () => {
       fit_profile: 'slim', fit_ruleset_id: null, fit_rule_override: { goodFrom: 'x' },
     });
     expect(sel.useOverride).toBe(false);
-    expect(sel.select).toBe('profile:slim');
+    expect(sel.ruleChoice).toBe('profile:slim');
     spy.mockRestore();
   });
 
@@ -79,6 +79,6 @@ describe('ruleSelectionForGarment', () => {
     const sel = ruleSelectionForGarment({
       fit_profile: 'regular', fit_ruleset_id: null, fit_rule_override: null,
     });
-    expect(sel.select).toBe('profile:regular');
+    expect(sel.ruleChoice).toBe('profile:regular');
   });
 });

@@ -9,6 +9,7 @@ import type { Category, MeasurementBag } from '@/lib/supabase/types';
 import FitRuleEditor, { isRulesetValid } from '@/app/dashboard/fit-rules/FitRuleEditor';
 import { DEFAULT_RULE } from '@/lib/fit/rules';
 import type { FitRuleset } from '@/lib/fit/rules';
+import { activeMeasurements, strandedDimensions, buildGarmentFields } from '@/lib/garment/form-fields';
 
 /** Everything edit mode needs to reproduce a garment's current state. */
 export interface GarmentFormInitial {
@@ -20,20 +21,21 @@ export interface GarmentFormInitial {
   /** From ruleSelectionForGarment() — see lib/fit/rule-selection.ts. */
   useOverride: boolean;
   override: FitRuleset;
-  select: string;
+  ruleChoice: string;
 }
 
-export default function GarmentForm({ mode, initial }: {
-  mode: 'create' | 'edit';
-  initial?: GarmentFormInitial;
-}) {
+type GarmentFormProps =
+  | { mode: 'create'; initial?: undefined }
+  | { mode: 'edit'; initial: GarmentFormInitial };
+
+export default function GarmentForm({ mode, initial }: GarmentFormProps) {
   const router = useRouter();
   const isEdit = mode === 'edit';
   const photoRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState(initial?.name ?? '');
   const [category, setCategory] = useState<Category>(initial?.category ?? 'top');
-  const [select, setSelect] = useState(initial?.select ?? 'profile:regular');
+  const [ruleChoice, setRuleChoice] = useState(initial?.ruleChoice ?? 'profile:regular');
   const [useOverride, setUseOverride] = useState(initial?.useOverride ?? false);
   const [override, setOverride] = useState<FitRuleset>(
     initial?.override ?? { base: DEFAULT_RULE, perDimension: {} }
@@ -65,38 +67,36 @@ export default function GarmentForm({ mode, initial }: {
 
   // Presets load after first paint. Without a stand-in option, a garment whose
   // rule IS a preset would render with the select showing something else until
-  // the fetch lands — and saving in that window would silently change its rule.
+  // the fetch lands — the retailer would be looking at a rule that is not
+  // their garment's. The saved value is unaffected — React state still holds
+  // the real id — but showing someone else's rule invites them to "correct" it.
   const presetOptions = useMemo(() => {
     const list = [...presets];
-    const initialId = initial?.select.startsWith('preset:')
-      ? initial.select.slice('preset:'.length)
+    const initialId = initial?.ruleChoice.startsWith('preset:')
+      ? initial.ruleChoice.slice('preset:'.length)
       : null;
     if (initialId && !list.some(p => p.id === initialId)) {
       list.unshift({ id: initialId, name: '…' });
     }
     return list;
-  }, [presets, initial]);
-
-  /** Dimensions holding a value that the current category has no input for. */
-  function strandedKeys(): string[] {
-    const active = new Set<string>(dims.map(d => d.key));
-    return Object.keys(measurements)
-      .filter(k => !active.has(k) && (measurements[k] ?? '').trim() !== '');
-  }
+  }, [presets, initial?.ruleChoice]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
 
-    if (useOverride && !isRulesetValid(override)) {
-      setError(t.authError.th);
+    if (!name.trim()) {
+      setError(t.garmentNameRequired.th);
       return;
     }
 
-    const entries = dims
-      .map(d => [d.key, (measurements[d.key] ?? '').trim()] as const)
-      .filter(([, v]) => v !== '');
-    if (entries.length === 0) {
+    if (useOverride && !isRulesetValid(override)) {
+      setError(t.fitRuleInvalid.th);
+      return;
+    }
+
+    const active = activeMeasurements(measurements, category);
+    if (active.length === 0) {
       setError(t.garmentNeedsMeasurement.th);
       return;
     }
@@ -109,34 +109,22 @@ export default function GarmentForm({ mode, initial }: {
 
     // Saving writes only the current category's dimensions, so warn before
     // a category change quietly discards numbers already entered.
-    const stranded = strandedKeys();
+    const stranded = strandedDimensions(measurements, category);
     if (stranded.length > 0) {
       const labels = stranded.map(k => dimensionByKey(k)?.labelTh ?? k).join(', ');
       if (!window.confirm(t.confirmDropMeasurements.th.replace('{dims}', labels))) return;
     }
 
     const form = new FormData();
-    form.set('name', name.trim());
-    form.set('category', category);
-    for (const [k, v] of entries) form.set(k, v);
+    for (const [k, v] of Object.entries(buildGarmentFields({
+      name, category, ruleChoice, useOverride, override, measurements,
+    }))) form.set(k, v);
     if (photo) form.set('photo', photo);
-
-    // The grouped select carries one value; split it back into the two
-    // mutually exclusive columns the API expects.
-    if (useOverride) {
-      form.set('fit_profile', 'regular');       // required column; the override wins at resolve time
-      form.set('fit_rule_override', JSON.stringify(override));
-    } else if (select.startsWith('preset:')) {
-      form.set('fit_profile', 'regular');       // fallback if the preset is later deleted
-      form.set('fit_ruleset_id', select.slice('preset:'.length));
-    } else {
-      form.set('fit_profile', select.slice('profile:'.length));
-    }
 
     setLoading(true);
     try {
       const res = await fetch(
-        isEdit ? `/api/garments/${initial!.id}` : '/api/garments',
+        mode === 'edit' ? `/api/garments/${initial.id}` : '/api/garments',
         { method: isEdit ? 'PATCH' : 'POST', body: form },
       );
       if (!res.ok) {
@@ -147,8 +135,8 @@ export default function GarmentForm({ mode, initial }: {
       router.push('/dashboard');
       router.refresh();
     } catch {
-      // Network failure (offline, timeout, DNS). Surface the generic error
-      // so the user knows the form is recoverable.
+      // Network failure (offline, timeout, DNS) — distinct from a rejection
+      // by the API, which is handled above.
       setError(t.networkError.th);
     } finally {
       setLoading(false);
@@ -183,7 +171,7 @@ export default function GarmentForm({ mode, initial }: {
       <label className="block">
         <span className="text-sm text-gray-700">{t.fitProfile.th}</span>
         <select
-          value={select} onChange={e => setSelect(e.target.value)}
+          value={ruleChoice} onChange={e => setRuleChoice(e.target.value)}
           disabled={useOverride}
           className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 disabled:opacity-60"
         >
