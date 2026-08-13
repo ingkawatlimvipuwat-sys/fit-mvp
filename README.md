@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Fit MVP
 
-## Getting Started
+A fit-checker web app for a Thai clothing retailer. Customers open a public shop link, enter
+their body measurements, and get a per-dimension fit verdict — instead of guessing at a size
+chart.
 
-First, run the development server:
+**Live:** https://fit-mvp-eight.vercel.app
+
+Next.js 14 (App Router) · TypeScript · Tailwind · Supabase (Auth + Postgres + Storage) · Vercel
+
+## Running locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Requires a `.env.local` with the three variables listed in `.env.example`. Get them from the
+Supabase dashboard under Settings → API.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+> **Note:** one Supabase project serves both local dev and production — there is no staging.
+> Data you change locally is live data.
 
-## Learn More
+## Checks
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm test && npm run build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Both must pass before merging. They catch different problems: `npm run build` runs `next lint`,
+which rejects unused imports that the typechecker ignores. A clean `tsc` is not enough.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploying
 
-## Deploy on Vercel
+**Vercel builds `main` and only `main`.** Pushing a `feature/*` branch puts your code on GitHub
+but changes nothing on the live site.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+git checkout main && git merge --ff-only feature/your-branch && git push origin main
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The deploy runs automatically and takes 1–2 minutes. Confirm it landed rather than assuming —
+open the Vercel dashboard's Deployments tab, or probe a route that exists only in the new code
+(a 404 means it hasn't deployed yet).
+
+Database migrations in `supabase/migrations/` are **applied by hand** through the Supabase SQL
+editor. They are not run by the deploy.
+
+## Documentation
+
+- `CLAUDE.md` — orientation for AI coding agents: shipping procedure, verification gates, known
+  landmines. Worth reading for humans too.
+- `docs/superpowers/resume.md` — state of record: current status, file map, open decisions.
+- `docs/superpowers/specs/` — design docs per feature.
+- `docs/superpowers/plans/` — task-by-task implementation plans.

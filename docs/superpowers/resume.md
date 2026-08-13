@@ -1,6 +1,10 @@
 # Resume — Fit Recommendation MVP
 
-> **For the agent starting a fresh session:** Read this first, then `docs/superpowers/plans/2026-05-25-fit-recommendation-mvp-phase1.md`. The plan is the canonical task list; this note is "where are we right now" and the handover brief.
+> **For the agent starting a fresh session:** Read `/CLAUDE.md` first (shipping procedure,
+> verification gates, landmines), then this file for current state and the file map.
+>
+> **This is the state doc of record.** Three handoff docs already exist because each session
+> wrote a new one, which is why the founder got lost. Update this file; do not add a fourth.
 
 ---
 
@@ -23,8 +27,20 @@ Single-tenant web app for one Thai clothing retailer. Customers visit a public s
 
 ## Current state
 
-**Branch:** `main`  
-**Status:** Phase 1 complete + language toggle shipped. Prototype.
+**Branch:** `main` — at `6819c97`, pushed, deployed.
+**Status as of 2026-08-11:** Phase 1 + language toggle + **custom fit rules** all live in
+production. Prototype.
+
+**Live:** https://fit-mvp-eight.vercel.app
+
+### How this gets to production
+
+Vercel builds **`main` only**. Pushing a `feature/*` branch puts code on GitHub but changes
+nothing on the live site. Merge to `main` and push, then verify the deploy landed by probing a
+route that only exists in the new code (404 = not deployed). Full procedure in `/CLAUDE.md`.
+
+This bit the project on 2026-08-11: `feature/custom-fit-rules` sat pushed-but-unmerged, 20
+commits ahead, while the live site showed none of it. Merged and deployed the same day.
 
 ### Done
 
@@ -34,6 +50,35 @@ Single-tenant web app for one Thai clothing retailer. Customers visit a public s
 - ✅ **Phase 1.4 Public shop + Hero fit checker** (Tasks 20–23): fit engine + TDD, `customer_token` localStorage helper, `/shop/[shop_slug]` browse, hero fit-checker + `/api/fit/evaluate` + `/api/fit/last`.
 - ✅ **Phase 1.5 Deploy** (Tasks 24–25): GitHub (`ingkawatlimvipuwat-sys/fit-mvp`), Vercel, live.
 - ✅ **Language toggle**: EN/TH toggle in shop header, persisted to `localStorage('fitmvp.lang')`, switches all UI labels. Shop name and garment names stay as retailer-entered text.
+- ✅ **Custom fit rules** (merged + deployed 2026-08-11): retailers define their own fit
+  thresholds in **ease** (`garment − customer` = "how many cm roomier than the body"). Preset
+  CRUD at `/dashboard/fit-rules`, per-garment override on the new-garment form, and an
+  `applied_rule` snapshot on every `fit_session` so historical verdicts stay interpretable
+  after a preset is edited. Negative ease expresses stretchy fabric, so no separate stretch
+  flag was needed. Design: `specs/2026-08-06-custom-fit-rules-design.md` §3 and §4.4.
+
+---
+
+## Open decision — blocks the fit-rules feature being fully usable
+
+**A retailer cannot apply a fit rule to a garment they already own.**
+
+A rule can only be attached at `/dashboard/garment/new`. There is no garment edit page — the
+dashboard lists and deletes, nothing more. So a shop with an existing catalogue would have to
+delete and re-create every item, re-uploading photos, to use the feature at all.
+
+This is not an implementation bug: the spec scoped it to the new-garment form and the plan
+built that faithfully. **The spec had a hole.** The feature is shipped and safe — existing
+garments keep their previous behaviour, guarded by a byte-for-byte regression test — it is
+simply unreachable for anything created before a rule existed.
+
+| Option | Cost | Notes |
+|---|---|---|
+| Rule selector on dashboard garment cards + `PATCH /api/garments/[id]` | ~1 hour | Smallest fix that makes the feature usable. Reuses `FitRuleEditor` unchanged. **Recommended.** |
+| Full `/dashboard/garment/[id]/edit` page | Own spec + plan | Wanted eventually; covers name, photo, measurements, rule. |
+| Leave as-is | 0 | Feature applies only to garments created from now on. |
+
+**Founder has not chosen yet. Confirm before building — do not assume.**
 
 ---
 
@@ -79,9 +124,17 @@ This is a working prototype. It is used in production but has rough edges that n
 
 ## Environment
 
-- **Supabase project:** `fit-mvp` (Singapore region, free tier).
+- **Live site:** https://fit-mvp-eight.vercel.app — Vercel, auto-deploys from **`main` only**.
+- **Supabase project:** `fit-mvp` (Singapore region, free tier). **One project serves both local
+  dev and production — there is no staging.** Local data changes are live changes, and a
+  migration applied from a dev session is applied to production.
+- **Migrations:** `supabase/migrations/` (`0001_initial.sql`, `0002_fit_rulesets.sql`). Applied
+  by hand through the Supabase SQL editor, not by tooling. Both are applied.
 - **GitHub repo:** `ingkawatlimvipuwat-sys/fit-mvp`
 - **Storage bucket:** `garment-photos` (public-read).
+- **Test data left live** (deliberately, 2026-08-11): a garment named `TEST เสื้อผ้ายืด (ลบได้)`
+  is on the public shop page, and the `ผ้ายืด` preset holds default values (`-1/1/5`) rather
+  than stretchy ones — it was overwritten to prove a counterfactual. Safe to delete.
 - **Env vars** (in `.env.local`, gitignored; also set in Vercel):
   - `NEXT_PUBLIC_SUPABASE_URL`
   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`

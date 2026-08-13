@@ -1,15 +1,29 @@
 # Handoff — Custom Fit Rules (2026-08-11)
 
-> **You are picking up work mid-flight, with an open PR and one known gap that blocks it
-> from being genuinely useful.** Read this first, then `resume.md` for the file map.
+> ## ⚠️ SUPERSEDED — this is a historical document
+>
+> **The work described here was merged and deployed to production on 2026-08-11.** Sections 1
+> and 2 below described a pre-merge state and are kept only as a record of what was decided.
+>
+> **For current state, read `/CLAUDE.md` then `docs/superpowers/resume.md`.**
+>
+> Still worth reading here: **§3** (design rationale — the ease model, why `applied_rule`
+> exists) and **§4** (traps that cost real time). Those remain accurate.
 >
 > The older `handoff-fable5.md` is still worth reading for **product intent** (§2) and
-> **how to work with the founder** (§3). Its §6 "Environment reality" is now **stale** —
-> see §6 below for what changed.
+> **how to work with the founder** (§3).
 
 ---
 
-## 1. Where things stand in one paragraph
+## 1. Where things stood at the time of writing — RESOLVED
+
+> **Resolution (2026-08-11):** merged to `main` as a clean fast-forward and pushed
+> (`7386d01 → 6819c97`, 20 commits). Verified live: `/api/fit-rulesets` returns **401** where
+> a nonexistent route returns 404, confirming the new routes are deployed and auth-guarded.
+>
+> **Root cause of the delay:** the branch was pushed to GitHub but never merged, and Vercel
+> builds `main` only — so "pushed" looked like "shipped" while production ran June's code.
+> The shipping procedure is now written down in `/CLAUDE.md`.
 
 Retailer-defined fit rules are **built, tested, and pushed — but not merged.** Branch
 `feature/custom-fit-rules` is 17 commits ahead of `main` at `7f44ced`, fully pushed, and a
@@ -21,7 +35,13 @@ test covers.
 
 ---
 
-## 2. STOP — read this before merging
+## 2. The product gap — STILL OPEN, but no longer blocks merging
+
+> **Status (2026-08-11):** merged anyway, deliberately. The gap does not make anything
+> unsafe — existing garments keep their prior behaviour, guarded by a byte-for-byte
+> regression test — the feature is just unreachable for garments created earlier. The
+> founder's choice between the three options below is **still pending**; it is tracked in
+> `resume.md` under "Open decision". Confirm before building.
 
 **A retailer cannot apply a fit rule to a garment they already own.**
 
@@ -201,12 +221,17 @@ counterfactual.
 
 ## 9. First moves
 
-1. `cd` to the Documents checkout. Confirm with `git branch --show-current` →
-   `feature/custom-fit-rules`, and `git log --oneline -1` → `7f44ced` or later.
+> **Superseded — step 1 is stale.** `feature/custom-fit-rules` is merged; work from `main`.
+> Current orientation lives in `/CLAUDE.md`. Steps 2 and 4–6 still apply as written.
+
+1. ~~`cd` to the Documents checkout. Confirm `git branch --show-current` →
+   `feature/custom-fit-rules`.~~ Work from `main` (at `6819c97` or later).
 2. `npm install` if fresh, then `npm test` (**expect 47 passing**) and `npm run build`
    (expect green). If either fails, stop and diagnose — do not build on a broken base.
-3. **Ask the founder which option from §2 they want.** That decision gates everything.
-4. Whatever you build, keep `main` deployable — it auto-deploys to Vercel.
+3. **Ask the founder which option from §2 they want** *if you are picking up the garment-edit
+   gap.* It no longer gates everything — the feature is shipped — but it is still unanswered.
+4. Whatever you build, keep `main` deployable — it auto-deploys to Vercel. Merging to `main`
+   **is** the deploy step; pushing a feature branch is not.
 5. The founder is non-technical: give click-by-click instructions for anything they must do
    themselves (SQL, Vercel, `gh auth login`), and never ask them to hand over credentials.
 6. Delegate mechanical work to Sonnet subagents — the founder is cost-conscious and asked
