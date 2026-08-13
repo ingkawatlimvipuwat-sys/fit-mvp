@@ -1246,6 +1246,42 @@ Expected: **401** — the handler is live and rejected an unauthenticated caller
 
 ---
 
+## Post-review amendments (applied during execution)
+
+Code review of Task 5 produced changes the plan did not anticipate. Later tasks must assume
+these, not the original Task 2 / Task 5 text above.
+
+1. **`RuleSelection.select` is now `RuleSelection.ruleChoice`.** Same tagged-string values
+   (`profile:<key>` / `preset:<uuid>`); `select` named the widget rather than the thing.
+   `GarmentFormInitial` carries `ruleChoice` too. Task 7 spreads `...selection`, so its code
+   above is unaffected.
+
+2. **New module `lib/garment/form-fields.ts`** with `activeMeasurements()`,
+   `strandedDimensions()` and `buildGarmentFields()`, plus 12 tests including two that
+   round-trip through `parseGarmentFields()`. The plan extracted the two *ends* of the
+   form-state → fields → columns chain into `lib/` and tested them, but left the middle hop
+   inside the component, untested — which is where a real bug was hiding.
+
+3. **Bug fixed: the chosen fit profile survives an override.** Ticking "custom rule for this
+   garment" hardcoded `fit_profile` to `'regular'`, discarding the profile the retailer had
+   picked and could still see in the disabled select. Verdicts were unaffected (an override
+   outranks the profile), but switching the override off later silently landed them on
+   `regular`. Pinned by a regression test.
+
+4. **Edit mode requires `initial` at the type level** — the props are a discriminated union,
+   so `<GarmentForm mode="edit" />` no longer compiles. The `initial!` assertion is gone.
+
+5. **Two new strings**, `garmentNameRequired` and `fitRuleInvalid`. An invalid ease rule used
+   to report itself as an authentication error, and a whitespace-only name reached the server
+   and returned raw English into a Thai-only UI.
+
+**Test count is now 84, not 72.** Later tasks should expect 84 passing, not 72.
+
+Deferred, recorded in `resume.md` rather than fixed here: the preset stand-in label `…`
+becomes permanent if `/api/fit-rulesets` fails, and `strandedDimensions` would blame the
+retailer for a category change if a dimension is ever moved between categories in
+`lib/config/dimensions.ts`.
+
 ## Out of scope — do not drift into these
 
 Both are recorded in `resume.md` as follow-ups. Raised during design on 2026-08-13 and deliberately excluded:
