@@ -1,6 +1,7 @@
 # Claude Code harness/session files
 .claude/
 .git.bak/
+.superpowers/
 
 # Node / Next.js (will start populating once we scaffold)
 node_modules/

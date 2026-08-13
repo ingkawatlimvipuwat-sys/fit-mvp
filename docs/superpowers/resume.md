@@ -59,7 +59,7 @@ commits ahead, while the live site showed none of it. Merged and deployed the sa
 
 ---
 
-## Open decision — blocks the fit-rules feature being fully usable
+## Decided 2026-08-13 — garment edit page (spec approved, not yet built)
 
 **A retailer cannot apply a fit rule to a garment they already own.**
 
@@ -72,13 +72,14 @@ built that faithfully. **The spec had a hole.** The feature is shipped and safe 
 garments keep their previous behaviour, guarded by a byte-for-byte regression test — it is
 simply unreachable for anything created before a rule existed.
 
-| Option | Cost | Notes |
-|---|---|---|
-| Rule selector on dashboard garment cards + `PATCH /api/garments/[id]` | ~1 hour | Smallest fix that makes the feature usable. Reuses `FitRuleEditor` unchanged. **Recommended.** |
-| Full `/dashboard/garment/[id]/edit` page | Own spec + plan | Wanted eventually; covers name, photo, measurements, rule. |
-| Leave as-is | 0 | Feature applies only to garments created from now on. |
+**Resolved 2026-08-13.** The founder chose the largest of the three options: a **full edit
+page** at `/dashboard/garment/[id]/edit` covering name, category, garment measurements, fit
+rule **and photo replacement**, built from a `GarmentForm` component shared with the
+add-garment page (create/edit modes) plus a new `PATCH /api/garments/[id]`.
 
-**Founder has not chosen yet. Confirm before building — do not assume.**
+No migration needed — `fit_ruleset_id` and `fit_rule_override` already exist.
+
+Design: **`specs/2026-08-13-garment-edit-design.md`**. Implementation plan still to be written.
 
 ---
 
@@ -202,6 +203,8 @@ app/
 - **Integration-test harness.** The suite is pure unit tests over `lib/fit` — no route or DB coverage anywhere. The one guarantee this leaves unverified by CI is that `/api/fit/evaluate` writes the correct `applied_rule` and that it stays put when a preset is edited. Verified manually for now.
 - **`tsc` clean does not mean `build` clean** on this project — `next lint` catches unused imports that the typechecker ignores. Run both before claiming green.
 - **Supabase clients are untyped** (no generated `Database` generic), so `.from('garments')` returns `any`. A wrong field shape compiles clean and fails at runtime. Do not treat a green typecheck as verification for anything touching a query result.
+- **Dashboard is Thai-only — no EN/TH toggle.** Every dashboard component hardcodes `t.x.th`; `LanguageProvider` wraps `app/shop/[shop_slug]/layout.tsx` only, so the toggle exists on customer-facing pages and nowhere else. `strings.ts` already carries `en` for everything, so the work is wiring the dashboard components to `useLanguage()` — plus a quality pass over the existing English, which was written as placeholder. Raised by the founder 2026-08-13; scoped out of the garment-edit work, which still writes correct `en` values for every new label so none of it needs redoing.
+- **Dashboard visual design is bare.** The founder saw the brainstorming mockups on 2026-08-13 and preferred them to the live dashboard's unstyled Tailwind. A look-and-feel pass across the dashboard is wanted, deliberately deferred so it does not ride along with a functional fix.
 
 ---
 
