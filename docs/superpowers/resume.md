@@ -59,7 +59,7 @@ commits ahead, while the live site showed none of it. Merged and deployed the sa
 
 ---
 
-## Decided 2026-08-13 — garment edit page (spec approved, not yet built)
+## Garment edit page — built 2026-08-15, NOT yet merged
 
 **A retailer cannot apply a fit rule to a garment they already own.**
 
@@ -79,7 +79,29 @@ add-garment page (create/edit modes) plus a new `PATCH /api/garments/[id]`.
 
 No migration needed — `fit_ruleset_id` and `fit_rule_override` already exist.
 
-Design: **`specs/2026-08-13-garment-edit-design.md`**. Implementation plan still to be written.
+**Status 2026-08-15: built and reviewed, NOT merged.** Branch `feature/garment-edit`.
+89 tests pass, `npm run build` clean. Reviewed per-commit plus a whole-branch pass; verdict was
+ship-after-manual-checks with no critical findings. **The design doc's §8 manual checklist has
+not been run** — it needs a signed-in browser against the live Supabase project, so it is the
+founder's to do. Merge only after it passes.
+
+Design: **`specs/2026-08-13-garment-edit-design.md`**.
+Plan: **`plans/2026-08-13-garment-edit.md`** — read its "Post-review amendments" section, which
+records what changed during execution and supersedes the earlier task text.
+
+**Three bugs were found by review, none by tests, and none detectable by the §8 checklist.**
+All three were silent-wrong-data that would surface long after the change:
+- Attaching a preset to an existing garment overwrote its stored `fit_profile` with `regular`.
+  Verdicts stayed correct (a preset outranks the profile), but deleting that preset later would
+  drop the garment to `regular` rather than its real profile — contradicting what
+  `t.fitRuleDeleteConfirm` promises the retailer. Now pinned by a regression test.
+- `PATCH` rewrote `photo_url` on every save using a value read earlier in the request, so a
+  concurrent save could leave a garment pointing at a just-deleted Storage object.
+- Ticking "custom rule for this garment" left the disabled select still displaying the shop
+  preset that the save was about to discard.
+
+The lesson for future specs here: a manual checklist that only inspects *current* behaviour
+cannot catch a wrong value that is currently outranked by something else.
 
 ---
 
@@ -158,7 +180,21 @@ lib/
     resolve.test.ts      — schema validation + resolution precedence + boundaries
     engine.ts            — evaluateFit(garment, customer, ruleset) → FitResult
     engine.test.ts       — engine behaviour
-                           (47 Vitest tests across all three test files, all passing)
+    rule-selection.ts    — ruleSelectionForGarment(): stored rule columns → edit-form state.
+                           Mirrors resolveRuleset() precedence so the form always displays the
+                           rule the engine actually applies. [pure]
+    rule-selection.test.ts
+  garment/
+    parse-form.ts        — parseGarmentFields(): the single definition of "a valid garment",
+                           shared by POST and PATCH so they cannot drift. No photo, no I/O. [pure]
+    parse-form.test.ts
+    form-fields.ts       — activeMeasurements(), strandedDimensions(), buildGarmentFields():
+                           form state → the flat field set the API parses. [pure]
+    form-fields.test.ts
+    round-trip.test.ts   — stored columns survive ruleSelectionForGarment → buildGarmentFields
+                           → parseGarmentFields unchanged, in all three rule states. The only
+                           automated defence against a column-name slip, given untyped clients.
+                           (89 Vitest tests across 7 files, all passing)
   hooks/
     useLanguage.tsx      — LanguageProvider + useLanguage() hook (Lang = 'th' | 'en')
   i18n/
@@ -185,7 +221,18 @@ app/
     page.tsx             — retailer garment list + copy-link
     layout.tsx           — auth guard (middleware-backed)
     CopyPublicLink.tsx   — client component (useEffect for window.origin, avoids hydration mismatch)
-    AddGarmentModal.tsx  — garment form with Supabase Storage photo upload
+    GarmentCard.tsx      — card with preview link, แก้ไข (edit) and ลบ (delete)
+    garment/
+      GarmentForm.tsx    — THE garment form, create + edit modes. Props are a discriminated
+                           union, so mode="edit" cannot compile without `initial`. Measurement
+                           inputs are controlled and keyed across all categories, so switching
+                           category hides values rather than losing them.
+      new/page.tsx       — wrapper: <GarmentForm mode="create" />
+      [id]/edit/page.tsx — owner-scoped fetch → notFound() → <GarmentForm mode="edit" />
+  api/garments/
+    route.ts             — POST (create)
+    [id]/route.ts        — PATCH (full replacement of editable columns; photo absent = keep)
+                           and DELETE, sharing removeStoredPhoto()/removeStoredObject()
 ```
 
 ---
@@ -193,7 +240,13 @@ app/
 ## Open follow-ups (non-blocking)
 
 - `lib/config/dimensions.ts`: make `ThresholdBand[]` `readonly`.
-- `lib/i18n/strings.ts`: apply `as const` for narrower literal types.
+- ~~`lib/i18n/strings.ts`: apply `as const`~~ — already done; the file has ended with `} as const;` for some time. Stale entry, removed 2026-08-15.
+- **`fit_ruleset_id` is validated as a uuid but never checked for ownership** (`lib/garment/parse-form.ts`). The foreign key proves the preset exists, not that it belongs to the caller, so a hand-crafted POST/PATCH could attach another shop's preset and `/api/fit/evaluate` would resolve it. Harmless while there is one retailer; fix before onboarding a second.
+- **The preset stand-in label `…` becomes permanent if `/api/fit-rulesets` fails to load.** `GarmentForm.tsx` conflates "not loaded yet" with "load failed", so in edit mode a network error leaves the retailer looking at an ellipsis where their garment's rule should be. Saving still preserves the correct id, so no data is harmed.
+- **`strandedDimensions()` would blame the retailer for a change they didn't make** if a dimension is ever moved between categories in `lib/config/dimensions.ts`. The confirmation says "you changed the category"; every existing garment would pop it on save. Compare against the garment's original category before warning.
+- **`parseGarmentFields()` returns English for four validation paths** (`name required`, `invalid category`, `invalid fit_profile`, `invalid fit_ruleset_id`) while its other messages are Thai. The client validates ahead of all four, so they are normally unreachable — a stale tab could surface them.
+- **The file-extension sanitisation is duplicated** verbatim between `app/api/garments/route.ts` and `app/api/garments/[id]/route.ts`. Both must produce the same Storage key shape; extract if either is touched again.
+- **`FitRuleEditor` always seeds a new override from `DEFAULT_RULE`**, never from the profile or preset currently in force, so ticking the override on a `slim` garment silently starts at regular's numbers.
 - `app/dashboard/layout.tsx`: add TODO noting orphan-retailer-row is recoverable via Supabase Studio.
 - `app/api/garments/route.ts`: map raw dimension keys to Thai labels via `dimensionByKey()` in error messages.
 - `npm audit`: 5 vulnerabilities from Next.js 14.2 — unreachable; fix with Next.js 15 upgrade post-launch.

@@ -43,7 +43,7 @@ edit page (duplication is the failure mode this work exists to fix).
 
 | File | Change |
 |---|---|
-| `app/dashboard/garment/GarmentForm.tsx` | **New.** The form, extracted from the add page. Props: `mode: 'create' \| 'edit'`, `garmentId?`, `initial?`. |
+| `app/dashboard/garment/GarmentForm.tsx` | **New.** The form, extracted from the add page. Props are a discriminated union — `{ mode: 'create'; initial?: undefined }` or `{ mode: 'edit'; initial: GarmentFormInitial }` — so edit mode cannot compile without its data, and the garment id rides on `initial.id` rather than a separate prop. |
 | `app/dashboard/garment/new/page.tsx` | **Shrinks** to a thin wrapper rendering `<GarmentForm mode="create" />`. |
 | `app/dashboard/garment/[id]/edit/page.tsx` | **New.** Server component: fetch garment scoped to the signed-in retailer, `notFound()` if absent, render `<GarmentForm mode="edit" …>`. |
 | `app/api/garments/[id]/route.ts` | **Gains `PATCH`**, alongside the existing `DELETE`. |
@@ -161,20 +161,28 @@ signed-in retailer's id before anything is removed.
   use the new values; recorded ones stay interpretable under the rule that produced them.
 - **Customer-facing pages.** No code change to shop browse or the fit checker. They read the
   data being edited.
-- **The fit engine.** `lib/fit/*` is untouched.
+- **The fit engine.** No existing file under `lib/fit/` is modified. (`rule-selection.ts` is
+  added there, beside the resolution logic whose precedence it mirrors.)
 - **The database.** No migration. `fit_ruleset_id` and `fit_rule_override` already exist from
   `0002_fit_rulesets.sql`. Nothing to run in Supabase.
 
 ## 8. Verification
 
-**Automated.** The suite is 47 pure unit tests over `lib/fit` — no route or DB coverage
-anywhere. Building an integration harness is larger than this feature and stays deferred
-(recorded in `resume.md`).
+**Automated.** The suite was 47 pure unit tests over `lib/fit` before this work and is **89
+across 7 files** after — still no route or DB coverage anywhere. Building an integration
+harness is larger than this feature and stays deferred (recorded in `resume.md`).
 
 - **New:** unit tests for the §5 stored-fields → form-state mapping. Override wins; preset
   next; profile last; null `fit_ruleset_id` falls back to profile.
-- **Unchanged:** all 47 existing tests must stay green. That is the evidence that extracting
-  `GarmentForm` did not disturb the create path or the engine.
+- **New (added during execution, not in the original plan):** `lib/garment/parse-form.test.ts`
+  for the shared validator, `lib/garment/form-fields.test.ts` for the form-state → fields hop,
+  and `lib/garment/round-trip.test.ts`, which feeds a garment's stored columns through
+  `ruleSelectionForGarment` → `buildGarmentFields` → `parseGarmentFields` and asserts they come
+  back unchanged in all three rule states. **That last one is the feature's core claim.** It
+  exists because review found a bug living in exactly the hop no test covered: the two ends of
+  the chain were tested and the middle was not.
+- **Unchanged:** all 47 pre-existing tests must stay green. That is the evidence that
+  extracting `GarmentForm` did not disturb the create path or the engine.
 - Both `npm test` **and** `npm run build` must pass. A clean `tsc` does not mean the build
   passes here — `next lint` rejects unused imports the typechecker ignores.
 
