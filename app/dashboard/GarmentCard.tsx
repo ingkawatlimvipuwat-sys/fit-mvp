@@ -76,7 +76,13 @@ export default function GarmentCard({
           </div>
         </>
       )}
-      <div className="border-t px-3 py-2">
+      <div className="flex items-center gap-4 border-t px-3 py-2">
+        <Link
+          href={`/dashboard/garment/${garment.id}/edit`}
+          className="text-xs text-blue-700 underline"
+        >
+          {t.edit.th}
+        </Link>
         <button
           type="button"
           disabled={deleting}
