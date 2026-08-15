@@ -192,7 +192,23 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
 
       <div className="space-y-3 rounded border p-4">
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={useOverride} onChange={e => setUseOverride(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={useOverride}
+            onChange={e => {
+              const on = e.target.checked;
+              setUseOverride(on);
+              // A garment cannot hold both an override and a preset (spec
+              // §6.1), so ticking this drops the preset link on save. Move the
+              // now-disabled select onto the profile the garment will actually
+              // fall back to, rather than leaving it displaying a preset that
+              // is about to be discarded. Mirrors what ruleSelectionForGarment
+              // does when reading a stored override back.
+              if (on && ruleChoice.startsWith('preset:')) {
+                setRuleChoice(`profile:${initial?.profileKey ?? 'regular'}`);
+              }
+            }}
+          />
           <span>{t.fitRuleOverride.th}</span>
         </label>
         {useOverride && <FitRuleEditor value={override} onChange={setOverride} />}

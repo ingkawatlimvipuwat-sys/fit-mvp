@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { parseGarmentFields } from '@/lib/garment/parse-form';
+import { t } from '@/lib/i18n/strings';
 
 export async function POST(req: Request) {
   const supabase = createSupabaseServerClient();
@@ -16,7 +17,7 @@ export async function POST(req: Request) {
   // shared validator, which edit also uses and where it is optional.
   const photo = form.get('photo');
   if (!(photo instanceof File) || photo.size === 0) {
-    return NextResponse.json({ error: 'photo required' }, { status: 400 });
+    return NextResponse.json({ error: t.photoRequired.th }, { status: 400 });
   }
 
   // Upload photo to Storage. Sanitize ext to a short alphanumeric token so
@@ -28,7 +29,10 @@ export async function POST(req: Request) {
   const { error: upErr } = await supabase.storage.from('garment-photos').upload(path, photo, {
     cacheControl: '3600', upsert: false, contentType: photo.type || 'image/jpeg',
   });
-  if (upErr) return NextResponse.json({ error: upErr.message }, { status: 500 });
+  if (upErr) {
+    console.error('garment photo upload failed:', upErr);
+    return NextResponse.json({ error: t.photoUploadFailed.th }, { status: 500 });
+  }
   const { data: { publicUrl } } = supabase.storage.from('garment-photos').getPublicUrl(path);
 
   const { data: row, error: insErr } = await supabase
@@ -37,12 +41,13 @@ export async function POST(req: Request) {
     .select('id')
     .single();
   if (insErr) {
+    console.error('garment insert failed:', insErr);
     // Best-effort cleanup: remove the orphaned Storage file so the bucket
     // doesn't accumulate dead photos. Mirrors the signup route's orphan
     // cleanup at commit 13230c7. Failure of this cleanup is swallowed —
     // the user-facing error is what we return regardless.
     await supabase.storage.from('garment-photos').remove([path]).catch(() => {});
-    return NextResponse.json({ error: insErr.message }, { status: 500 });
+    return NextResponse.json({ error: t.saveFailed.th }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true, id: row.id });
