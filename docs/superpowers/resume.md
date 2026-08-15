@@ -27,9 +27,9 @@ Single-tenant web app for one Thai clothing retailer. Customers visit a public s
 
 ## Current state
 
-**Branch:** `main` — at `6819c97`, pushed, deployed.
-**Status as of 2026-08-11:** Phase 1 + language toggle + **custom fit rules** all live in
-production. Prototype.
+**Branch:** `main` — at `d56230a`, pushed, deployed (verified by route probe, not assumed).
+**Status as of 2026-08-15:** Phase 1 + language toggle + **custom fit rules** + **garment
+edit page** all live in production. Prototype. 89 tests.
 
 **Live:** https://fit-mvp-eight.vercel.app
 
@@ -59,7 +59,7 @@ commits ahead, while the live site showed none of it. Merged and deployed the sa
 
 ---
 
-## Garment edit page — built 2026-08-15, NOT yet merged
+## Garment edit page — SHIPPED 2026-08-15
 
 **A retailer cannot apply a fit rule to a garment they already own.**
 
@@ -79,11 +79,14 @@ add-garment page (create/edit modes) plus a new `PATCH /api/garments/[id]`.
 
 No migration needed — `fit_ruleset_id` and `fit_rule_override` already exist.
 
-**Status 2026-08-15: built and reviewed, NOT merged.** Branch `feature/garment-edit`.
-89 tests pass, `npm run build` clean. Reviewed per-commit plus a whole-branch pass; verdict was
-ship-after-manual-checks with no critical findings. **The design doc's §8 manual checklist has
-not been run** — it needs a signed-in browser against the live Supabase project, so it is the
-founder's to do. Merge only after it passes.
+**Shipped 2026-08-15.** Merged `feature/garment-edit` → `main` as a clean fast-forward
+(`2f91831..d56230a`, 16 commits, 18 files) and pushed. 89 tests, clean build. Founder ran the
+manual checks locally first.
+
+**Deploy verified by probe, not assumed** — and verified against three controls, because a
+blanket 401 would otherwise look like success: `PATCH /api/garments/<uuid>` → **401** (handler
+live), `PATCH /api/garments` → **405** (route exists, no PATCH export, so the 401 is not
+blanket), nonexistent route → **404** (no Vercel deployment protection faking it).
 
 Design: **`specs/2026-08-13-garment-edit-design.md`**.
 Plan: **`plans/2026-08-13-garment-edit.md`** — read its "Post-review amendments" section, which
@@ -104,6 +107,32 @@ The lesson for future specs here: a manual checklist that only inspects *current
 cannot catch a wrong value that is currently outranked by something else.
 
 ---
+
+## Open — the fit-rules page is effectively unreachable (found 2026-08-15)
+
+**The only route to `/dashboard/fit-rules` is the words `กฎของร้าน` as small grey text in the
+dashboard header, beside Logout** (`app/dashboard/layout.tsx:30`). Nothing on the dashboard
+page itself points to it.
+
+The founder — who commissioned the feature and whose account owns a preset — concluded it had
+never been built, and believed an entire session's work had been lost. Diagnosis needed a
+direct query against the live database to prove otherwise. A retailer being onboarded would
+simply never find it.
+
+**Nothing is wrong with the feature.** Verified 2026-08-15: `fit_rulesets` exists and holds the
+`ผ้ายืด` preset; a garment references it; another carries a `fit_rule_override`; migration 0002
+is fully applied; exactly one auth account exists and it owns that preset; anon is correctly
+blocked. This is a discoverability defect, not a code defect.
+
+**A second, compounding problem:** `app/dashboard/fit-rules/page.tsx:13` destructures only
+`data` and discards the query error, so a genuine database failure renders as
+`ยังไม่มีกฎของร้าน` — "no shop rules yet" — indistinguishable from a healthy empty account.
+That ambiguity is why a database probe was needed rather than a glance at the screen. Fix
+regardless of what happens to navigation.
+
+Options mocked up for the founder (tabs under the header / a button beside `เพิ่มเสื้อผ้า` /
+tabs plus a link at the point of use in the garment form). **Not yet chosen** — the founder
+deferred it to ship the garment edit page first. Confirm before building.
 
 ## Architecture decisions in force
 
