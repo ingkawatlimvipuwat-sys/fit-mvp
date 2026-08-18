@@ -9,20 +9,57 @@ import type { FitRulesetRow } from '@/lib/supabase/types';
 
 const EMPTY: FitRuleset = { base: DEFAULT_RULE, perDimension: {} };
 
-/** One-line plain-language summary, e.g. "พอดีเมื่อกว้างกว่าตัว 1–5 ซม." */
+/**
+ * One-line plain-language summary, e.g. "พอดีเมื่อกว้างกว่าตัว 1–5 ซม."
+ *
+ * goodFrom/goodTo are ease values (garment minus body): positive means the
+ * garment is roomier than the body, negative means narrower (a legitimate
+ * setting for stretchy fabric). A plain numeric range reads wrong once
+ * either bound goes negative — "-4–3" is unreadable (the range dash and
+ * the minus sign look identical) and a literal reading of "roomier than
+ * the body by minus four" is nonsense. So we branch on sign and phrase
+ * negative bounds as "narrower than the body" instead of carrying the
+ * minus sign into the range.
+ */
 function summarize(rs: FitRuleset): string {
   const b = rs.base ?? DEFAULT_RULE;
-  return `พอดีเมื่อกว้างกว่าตัว ${b.goodFrom}–${b.goodTo} ซม.`;
+  const { goodFrom, goodTo } = b;
+  if (goodFrom >= 0 && goodTo >= 0) {
+    return `พอดีเมื่อกว้างกว่าตัว ${goodFrom}–${goodTo} ซม.`;
+  }
+  if (goodFrom < 0 && goodTo >= 0) {
+    return `พอดีตั้งแต่แคบกว่าตัว ${Math.abs(goodFrom)} ซม. ถึงกว้างกว่าตัว ${goodTo} ซม.`;
+  }
+  return `พอดีเมื่อแคบกว่าตัว ${Math.abs(goodTo)}–${Math.abs(goodFrom)} ซม.`;
 }
 
-export default function FitRulesManager({ initial, counts }: {
+export default function FitRulesManager({ initial, counts, loadFailed = false }: {
   initial: FitRulesetRow[];
   counts: Record<string, number>;
+  loadFailed?: boolean;
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState<{ id: string | null; name: string; rule: FitRuleset } | null>(null);
+  // Snapshot of {name, rule} taken when editing opened, so cancel can tell
+  // whether anything actually changed before warning about losing it.
+  const [openedSnapshot, setOpenedSnapshot] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  function startEditing(next: { id: string | null; name: string; rule: FitRuleset }) {
+    setEditing(next);
+    setOpenedSnapshot(JSON.stringify({ name: next.name, rule: next.rule }));
+    setError(null);
+  }
+
+  function cancelEditing() {
+    if (!editing) return;
+    const current = JSON.stringify({ name: editing.name, rule: editing.rule });
+    if (current !== openedSnapshot && !window.confirm(t.confirmDiscard.th)) return;
+    setEditing(null);
+    setOpenedSnapshot(null);
+    setError(null);
+  }
 
   async function save() {
     if (!editing) return;
@@ -84,7 +121,7 @@ export default function FitRulesManager({ initial, counts }: {
           >
             {busy ? '…' : t.save.th}
           </button>
-          <button onClick={() => { setEditing(null); setError(null); }} className="rounded border px-4 py-2">
+          <button onClick={cancelEditing} className="rounded border px-4 py-2">
             {t.cancel.th}
           </button>
         </div>
@@ -95,13 +132,13 @@ export default function FitRulesManager({ initial, counts }: {
   return (
     <div className="space-y-4">
       <button
-        onClick={() => setEditing({ id: null, name: '', rule: EMPTY })}
+        onClick={() => startEditing({ id: null, name: '', rule: EMPTY })}
         className="rounded bg-gray-900 px-4 py-2 text-white"
       >
         {t.fitRuleNew.th}
       </button>
 
-      {initial.length === 0 && <p className="text-sm text-gray-600">{t.fitRuleNone.th}</p>}
+      {!loadFailed && initial.length === 0 && <p className="text-sm text-gray-600">{t.fitRuleNone.th}</p>}
 
       <ul className="space-y-2">
         {initial.map(r => (
@@ -113,7 +150,7 @@ export default function FitRulesManager({ initial, counts }: {
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => setEditing({ id: r.id, name: r.name, rule: r.rule })}
+                onClick={() => startEditing({ id: r.id, name: r.name, rule: r.rule })}
                 className="rounded border px-3 py-1 text-sm"
               >
                 {t.edit.th}
