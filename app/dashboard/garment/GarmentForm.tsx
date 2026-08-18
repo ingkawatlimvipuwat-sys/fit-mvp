@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { dimensionsForCategory, dimensionByKey } from '@/lib/config/dimensions';
 import { FIT_PROFILES, fitProfileByKey } from '@/lib/config/fit-profiles';
 import { t } from '@/lib/i18n/strings';
+import { useLanguage } from '@/lib/hooks/useLanguage';
 import type { Category, MeasurementBag } from '@/lib/supabase/types';
 import FitRuleEditor, { isRulesetValid } from '@/app/dashboard/fit-rules/FitRuleEditor';
 import { DEFAULT_RULE } from '@/lib/fit/rules';
@@ -73,6 +74,7 @@ type GarmentFormProps =
 
 export default function GarmentForm({ mode, initial }: GarmentFormProps) {
   const router = useRouter();
+  const [lang] = useLanguage();
   const isEdit = mode === 'edit';
   const photoRef = useRef<HTMLInputElement>(null);
 
@@ -149,24 +151,24 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
     setError(null);
 
     if (!name.trim()) {
-      setError(t.garmentNameRequired.th);
+      setError(t.garmentNameRequired[lang]);
       return;
     }
 
     if (useOverride && !isRulesetValid(override)) {
-      setError(t.fitRuleInvalid.th);
+      setError(t.fitRuleInvalid[lang]);
       return;
     }
 
     const active = activeMeasurements(measurements, category);
     if (active.length === 0) {
-      setError(t.garmentNeedsMeasurement.th);
+      setError(t.garmentNeedsMeasurement[lang]);
       return;
     }
 
     const photo = photoRef.current?.files?.[0] ?? null;
     if (!photo && !isEdit) {
-      setError(t.photoRequired.th);
+      setError(t.photoRequired[lang]);
       return;
     }
 
@@ -174,8 +176,13 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
     // a category change quietly discards numbers already entered.
     const stranded = strandedDimensions(measurements, category);
     if (stranded.length > 0) {
-      const labels = stranded.map(k => dimensionByKey(k)?.labelTh ?? k).join(', ');
-      if (!window.confirm(t.confirmDropMeasurements.th.replace('{dims}', labels))) return;
+      const labels = stranded
+        .map(k => {
+          const d = dimensionByKey(k);
+          return (lang === 'th' ? d?.labelTh : d?.labelEn) ?? k;
+        })
+        .join(', ');
+      if (!window.confirm(t.confirmDropMeasurements[lang].replace('{dims}', labels))) return;
     }
 
     const form = new FormData();
@@ -193,7 +200,7 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
       );
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(typeof data.error === 'string' ? data.error : t.authError.th);
+        setError(typeof data.error === 'string' ? data.error : t.authError[lang]);
         return;
       }
       router.push('/dashboard');
@@ -201,7 +208,7 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
     } catch {
       // Network failure (offline, timeout, DNS) — distinct from a rejection
       // by the API, which is handled above.
-      setError(t.networkError.th);
+      setError(t.networkError[lang]);
     } finally {
       setLoading(false);
     }
@@ -209,10 +216,10 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
 
   return (
     <form className="space-y-5" onSubmit={onSubmit}>
-      <h1 className="text-xl font-semibold">{isEdit ? t.editGarment.th : t.addGarment.th}</h1>
+      <h1 className="text-xl font-semibold">{isEdit ? t.editGarment[lang] : t.addGarment[lang]}</h1>
 
       <label className="block">
-        <span className="text-sm text-gray-700">{t.garmentName.th}</span>
+        <span className="text-sm text-gray-700">{t.garmentName[lang]}</span>
         <input
           required value={name} onChange={e => setName(e.target.value)}
           className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
@@ -220,32 +227,32 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
       </label>
 
       <label className="block">
-        <span className="text-sm text-gray-700">{t.category.th}</span>
+        <span className="text-sm text-gray-700">{t.category[lang]}</span>
         <select
           required value={category}
           onChange={e => setCategory(e.target.value as Category)}
           className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
         >
-          <option value="top">{t.catTop.th}</option>
-          <option value="bottom">{t.catBottom.th}</option>
-          <option value="dress">{t.catDress.th}</option>
+          <option value="top">{t.catTop[lang]}</option>
+          <option value="bottom">{t.catBottom[lang]}</option>
+          <option value="dress">{t.catDress[lang]}</option>
         </select>
       </label>
 
       <label className="block">
-        <span className="text-sm text-gray-700">{t.fitProfile.th}</span>
+        <span className="text-sm text-gray-700">{t.fitProfile[lang]}</span>
         <select
           value={ruleChoice} onChange={e => setRuleChoice(e.target.value)}
           disabled={useOverride}
           className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 disabled:opacity-60"
         >
-          <optgroup label={t.fitRuleBuiltIn.th}>
+          <optgroup label={t.fitRuleBuiltIn[lang]}>
             {FIT_PROFILES.map(p => (
-              <option key={p.key} value={`profile:${p.key}`}>{p.labelTh}</option>
+              <option key={p.key} value={`profile:${p.key}`}>{lang === 'th' ? p.labelTh : p.labelEn}</option>
             ))}
           </optgroup>
           {presetOptions.length > 0 && (
-            <optgroup label={t.fitRuleShopRules.th}>
+            <optgroup label={t.fitRuleShopRules[lang]}>
               {presetOptions.map(p => <option key={p.id} value={`preset:${p.id}`}>{p.name}</option>)}
             </optgroup>
           )}
@@ -285,7 +292,7 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
               }
             }}
           />
-          <span>{t.fitRuleOverride.th}</span>
+          <span>{t.fitRuleOverride[lang]}</span>
         </label>
         {useOverride && (
           <FitRuleEditor
@@ -299,15 +306,15 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
       </div>
 
       <label className="block">
-        <span className="text-sm text-gray-700">{isEdit ? t.replacePhoto.th : t.photo.th}</span>
+        <span className="text-sm text-gray-700">{isEdit ? t.replacePhoto[lang] : t.photo[lang]}</span>
         {isEdit && initial?.photo_url && (
           <span className="mt-2 flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={initial.photo_url} alt={t.currentPhoto.th}
+              src={initial.photo_url} alt={t.currentPhoto[lang]}
               className="h-16 w-16 rounded object-cover"
             />
-            <span className="text-xs text-gray-500">{t.photoKeepCurrent.th}</span>
+            <span className="text-xs text-gray-500">{t.photoKeepCurrent[lang]}</span>
           </span>
         )}
         <input
@@ -317,10 +324,10 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
       </label>
 
       <fieldset className="space-y-3 rounded border p-4">
-        <legend className="px-2 text-sm font-medium">{t.garmentMeasurements.th}</legend>
+        <legend className="px-2 text-sm font-medium">{t.garmentMeasurements[lang]}</legend>
         {dims.map(d => (
           <label key={d.key} className="block">
-            <span className="text-sm text-gray-700">{d.labelTh} (cm)</span>
+            <span className="text-sm text-gray-700">{lang === 'th' ? d.labelTh : d.labelEn} (cm)</span>
             <input
               type="number" step="0.1" min="1" max="300" inputMode="decimal"
               value={measurements[d.key] ?? ''}
@@ -338,7 +345,7 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
           type="submit" disabled={loading}
           className="rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-60"
         >
-          {loading ? t.saving.th : t.save.th}
+          {loading ? t.saving[lang] : t.save[lang]}
         </button>
         <Link
           href="/dashboard"
@@ -346,12 +353,12 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
           onClick={e => {
             // Only prompt when there's actually something to lose — a confirm
             // on an untouched form is worse than none.
-            if (isDirty() && !window.confirm(t.confirmDiscard.th)) {
+            if (isDirty() && !window.confirm(t.confirmDiscard[lang])) {
               e.preventDefault();
             }
           }}
         >
-          {t.cancel.th}
+          {t.cancel[lang]}
         </Link>
       </div>
     </form>
