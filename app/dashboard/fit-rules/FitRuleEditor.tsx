@@ -5,6 +5,7 @@ import { EaseRuleSchema } from '@/lib/fit/rule-schema';
 import { DEFAULT_RULE } from '@/lib/fit/rules';
 import type { EaseRule, FitRuleset } from '@/lib/fit/rules';
 import { t } from '@/lib/i18n/strings';
+import { useLanguage, type Lang } from '@/lib/hooks/useLanguage';
 
 // Matches VERDICT_COLOR in app/shop/[shop_slug]/[garment_id]/FitChecker.tsx
 const ZONE_COLOR = {
@@ -32,7 +33,7 @@ function NumberField({ label, value, onChange }: {
 }
 
 /** Horizontal ease scale, coloured into the four verdict zones. */
-function Preview({ rule }: { rule: EaseRule }) {
+function Preview({ rule, lang }: { rule: EaseRule; lang: Lang }) {
   const zones = [
     { verdict: 'too_tight' as const, from: SCALE_MIN,        to: rule.tightBelow },
     { verdict: 'snug' as const,      from: rule.tightBelow,  to: rule.goodFrom },
@@ -55,10 +56,10 @@ function Preview({ rule }: { rule: EaseRule }) {
         ))}
       </div>
       <div className="flex justify-between text-xs text-gray-500">
-        <span>{SCALE_MIN} ซม.</span><span>0</span><span>+{SCALE_MAX} ซม.</span>
+        <span>{SCALE_MIN} {t.unitCm[lang]}</span><span>0</span><span>+{SCALE_MAX} {t.unitCm[lang]}</span>
       </div>
       <p className="text-sm text-gray-700">
-        ลูกค้ารอบอก {body} ซม. + เสื้อ {garmentAtGoodFit.toFixed(1)} ซม. → {t.verdictGood.th}
+        ลูกค้ารอบอก {body} ซม. + เสื้อ {garmentAtGoodFit.toFixed(1)} ซม. → {t.verdictGood[lang]}
       </p>
     </div>
   );
@@ -68,6 +69,7 @@ export default function FitRuleEditor({ value, onChange }: {
   value: FitRuleset;
   onChange: (next: FitRuleset) => void;
 }) {
+  const [lang] = useLanguage();
   const base = value.base ?? DEFAULT_RULE;
   const parsed = useMemo(() => EaseRuleSchema.safeParse(base), [base]);
   const error = parsed.success ? null : parsed.error.issues[0]?.message ?? null;
@@ -83,17 +85,17 @@ export default function FitRuleEditor({ value, onChange }: {
 
   return (
     <div className="space-y-4">
-      <NumberField label={t.fitRuleTightBelow.th} value={base.tightBelow} onChange={n => setBase({ tightBelow: n })} />
-      <NumberField label={t.fitRuleGoodFrom.th}   value={base.goodFrom}   onChange={n => setBase({ goodFrom: n })} />
-      <NumberField label={t.fitRuleGoodTo.th}     value={base.goodTo}     onChange={n => setBase({ goodTo: n })} />
+      <NumberField label={t.fitRuleTightBelow[lang]} value={base.tightBelow} onChange={n => setBase({ tightBelow: n })} />
+      <NumberField label={t.fitRuleGoodFrom[lang]}   value={base.goodFrom}   onChange={n => setBase({ goodFrom: n })} />
+      <NumberField label={t.fitRuleGoodTo[lang]}     value={base.goodTo}     onChange={n => setBase({ goodTo: n })} />
 
       <div>
-        <p className="mb-1 text-sm font-medium">{t.fitRulePreview.th}</p>
-        {parsed.success ? <Preview rule={base} /> : <p className="text-sm text-red-600">{error}</p>}
+        <p className="mb-1 text-sm font-medium">{t.fitRulePreview[lang]}</p>
+        {parsed.success ? <Preview rule={base} lang={lang} /> : <p className="text-sm text-red-600">{error}</p>}
       </div>
 
       <details className="rounded border p-3">
-        <summary className="cursor-pointer text-sm font-medium">{t.fitRulePerDimension.th}</summary>
+        <summary className="cursor-pointer text-sm font-medium">{t.fitRulePerDimension[lang]}</summary>
         <div className="mt-3 space-y-4">
           {DIMENSIONS.map(d => {
             const dimRule = value.perDimension[d.key];
@@ -104,13 +106,13 @@ export default function FitRuleEditor({ value, onChange }: {
                     type="checkbox" checked={dimRule === undefined}
                     onChange={e => setDim(d.key, e.target.checked ? null : { ...base })}
                   />
-                  <span>{d.labelTh} — {t.fitRuleSameAsAbove.th}</span>
+                  <span>{d.labelTh} — {t.fitRuleSameAsAbove[lang]}</span>
                 </label>
                 {dimRule && (
                   <div className="mt-3 space-y-3">
-                    <NumberField label={t.fitRuleTightBelow.th} value={dimRule.tightBelow} onChange={n => setDim(d.key, { ...dimRule, tightBelow: n })} />
-                    <NumberField label={t.fitRuleGoodFrom.th}   value={dimRule.goodFrom}   onChange={n => setDim(d.key, { ...dimRule, goodFrom: n })} />
-                    <NumberField label={t.fitRuleGoodTo.th}     value={dimRule.goodTo}     onChange={n => setDim(d.key, { ...dimRule, goodTo: n })} />
+                    <NumberField label={t.fitRuleTightBelow[lang]} value={dimRule.tightBelow} onChange={n => setDim(d.key, { ...dimRule, tightBelow: n })} />
+                    <NumberField label={t.fitRuleGoodFrom[lang]}   value={dimRule.goodFrom}   onChange={n => setDim(d.key, { ...dimRule, goodFrom: n })} />
+                    <NumberField label={t.fitRuleGoodTo[lang]}     value={dimRule.goodTo}     onChange={n => setDim(d.key, { ...dimRule, goodTo: n })} />
                   </div>
                 )}
               </div>

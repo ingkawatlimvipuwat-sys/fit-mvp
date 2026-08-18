@@ -1,5 +1,4 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { t } from '@/lib/i18n/strings';
 import FitRulesManager from './FitRulesManager';
 import type { FitRulesetRow } from '@/lib/supabase/types';
 
@@ -31,14 +30,10 @@ export default async function FitRulesPage() {
   const loadFailed = rulesetsError != null;
 
   return (
-    <div className="space-y-5">
-      <h1 className="text-xl font-semibold">{t.fitRules.th}</h1>
-      {loadFailed && <p className="text-sm text-red-600">{t.fitRulesLoadFailed.th}</p>}
-      <FitRulesManager
-        initial={(rulesets ?? []) as FitRulesetRow[]}
-        counts={counts}
-        loadFailed={loadFailed}
-      />
-    </div>
+    <FitRulesManager
+      initial={(rulesets ?? []) as FitRulesetRow[]}
+      counts={counts}
+      loadFailed={loadFailed}
+    />
   );
 }
