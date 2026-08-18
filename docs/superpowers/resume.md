@@ -161,8 +161,9 @@ This is a working prototype. It is used in production but has rough edges that n
 | API | `app/api/garments/route.ts`: map raw dimension keys to Thai labels in error messages |
 | Security | `npm audit`: 5 vulnerabilities from Next.js 14.2 — unreachable in this app; fix with Next.js 15 upgrade post-launch |
 | FitChecker | `garmentMeasurements` prop removed to fix ESLint build failure. Re-add in Phase 2 for client-side comparison display |
-| UX | No loading skeleton on shop browse page |
-| UX | No back-navigation from hero page to shop browse page |
+| ~~UX~~ | ~~No loading skeleton on shop browse page~~ — done, `loading.tsx` exists for browse and garment pages. Stale entry, verified live 2026-08-18. |
+| ~~UX~~ | ~~No back-navigation from hero page to shop browse page~~ — done, `BackLink.tsx` ships `← กลับไปหน้าร้าน`. Stale entry, verified live 2026-08-18. |
+| UX | **Full UX audit 2026-08-18: `docs/superpowers/ux-audit-2026-08-18.md`** — customer/shop sides visually indistinguishable, dead-end 404s, isolated login/signup, fit-result sign display confusing. Read it before any navigation/header work. |
 | UX | Language preference tied to browser localStorage, not to a customer account — if the customer switches device or browser, preference resets |
 | Storage | Typo bucket `garmet-photos` exists in Supabase Storage alongside the correct `garment-photos` — unused, harmless, but delete it eventually |
 
