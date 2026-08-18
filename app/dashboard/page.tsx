@@ -4,6 +4,8 @@ import { t } from '@/lib/i18n/strings';
 import CopyPublicLink from './CopyPublicLink';
 import GarmentCard from './GarmentCard';
 
+export const metadata = { title: 'แดชบอร์ด — Fit MVP' };
+
 export default async function DashboardPage() {
   const supabase = createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
