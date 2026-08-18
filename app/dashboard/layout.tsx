@@ -1,8 +1,7 @@
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { t } from '@/lib/i18n/strings';
-import LogoutButton from './LogoutButton';
+import { LanguageProvider } from '@/lib/hooks/useLanguage';
+import DashboardHeader from './DashboardHeader';
 import DashboardNav from './DashboardNav';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -22,20 +21,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .single();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="flex items-center justify-between border-b border-gray-800 bg-gray-900 px-6 py-3 text-white">
-        <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-          {retailer?.shop_name ?? t.dashboardTitle.th}
-          <span className="rounded bg-white/15 px-2 py-0.5 text-xs font-normal">
-            {t.dashboardBadge.th}
-          </span>
-        </Link>
-        <nav className="flex items-center gap-4">
-          <LogoutButton />
-        </nav>
-      </header>
-      <DashboardNav />
-      <main className="mx-auto max-w-4xl p-6">{children}</main>
-    </div>
+    <LanguageProvider>
+      <div className="min-h-screen bg-gray-50">
+        <DashboardHeader shopName={retailer?.shop_name ?? null} />
+        <DashboardNav />
+        <main className="mx-auto max-w-4xl p-6">{children}</main>
+      </div>
+    </LanguageProvider>
   );
 }

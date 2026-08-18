@@ -2,9 +2,11 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { t } from '@/lib/i18n/strings';
+import { useLanguage } from '@/lib/hooks/useLanguage';
 
 export default function DashboardNav() {
   const pathname = usePathname();
+  const [lang] = useLanguage();
 
   const isGarmentsActive = pathname === '/dashboard' || pathname.startsWith('/dashboard/garment');
   const isFitRulesActive = pathname.startsWith('/dashboard/fit-rules');
@@ -18,10 +20,10 @@ export default function DashboardNav() {
     <nav className="border-b bg-gray-50 px-6">
       <div className="flex items-center gap-6">
         <Link href="/dashboard" className={tabClass(isGarmentsActive)}>
-          {t.navGarments.th}
+          {t.navGarments[lang]}
         </Link>
         <Link href="/dashboard/fit-rules" className={tabClass(isFitRulesActive)}>
-          {t.fitRulesNav.th}
+          {t.fitRulesNav[lang]}
         </Link>
       </div>
     </nav>
