@@ -17,7 +17,7 @@ export default function DashboardHeader({ shopName }: { shopName: string | null 
         </span>
       </Link>
       <nav className="flex items-center gap-4">
-        <LanguageToggle />
+        <LanguageToggle tone="dark" />
         <LogoutButton />
       </nav>
     </header>
