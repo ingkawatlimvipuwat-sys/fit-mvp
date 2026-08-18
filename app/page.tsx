@@ -19,6 +19,12 @@ export default function HomePage() {
         <Link href="/signup" className="rounded border border-gray-300 px-4 py-2 text-gray-900">{t.signup.th}</Link>
       </div>
 
+      {/* A customer who trims the shop URL down to the domain root lands here.
+          The landing page speaks only to retailers, so point them back at the
+          link their shop sent them rather than leaving them with nothing. */}
+      <p className="mt-6 text-sm text-gray-500">{t.customerHint.th}</p>
+      <p className="mt-0.5 text-xs text-gray-400">{t.customerHint.en}</p>
+
       <div className="mt-16">
         <h2 className="text-sm font-medium text-gray-500">{t.howItWorks.th}</h2>
         <ol className="mt-4 space-y-4">
