@@ -102,6 +102,59 @@ export const t = {
   cancel: { th: 'ยกเลิก', en: 'Cancel' },
   delete: { th: 'ลบ', en: 'Delete' },
   edit: { th: 'แก้ไข', en: 'Edit' },
+// Orientation / navigation (UX audit 2026-08-18)
+  dashboardBadge: { th: 'แดชบอร์ดร้านค้า', en: 'Shop dashboard' },
+  navGarments: { th: 'เสื้อผ้า', en: 'Garments' },
+  backToDashboard: { th: 'กลับไปแดชบอร์ด', en: 'Back to dashboard' },
+  backToHome: { th: 'กลับหน้าแรก', en: 'Back to home' },
+
+  // Auth cross-links and errors (UX audit 2026-08-18)
+  noAccountYet: { th: 'ยังไม่มีบัญชี?', en: 'Don’t have an account?' },
+  haveAccount: { th: 'มีบัญชีแล้ว?', en: 'Already have an account?' },
+  authInvalidCredentials: { th: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง', en: 'Wrong email or password.' },
+  loginRequired: { th: 'กรุณาเข้าสู่ระบบก่อน', en: 'Please log in to continue.' },
+
+  // Not-found pages (UX audit 2026-08-18)
+  notFoundTitle: { th: 'ไม่พบหน้านี้', en: 'Page not found' },
+  notFoundBody: {
+    th: 'ลิงก์อาจไม่ถูกต้องหรือถูกลบไปแล้ว กรุณาตรวจสอบลิงก์อีกครั้ง',
+    en: 'The link may be wrong, or the page may have been removed. Please check the link.',
+  },
+  notFoundGarmentTitle: { th: 'ไม่พบสินค้านี้', en: 'Item not found' },
+  notFoundGarmentBody: {
+    th: 'สินค้านี้อาจถูกลบไปแล้ว ดูสินค้าอื่นได้ที่หน้าร้าน',
+    en: 'This item may have been removed. Browse the shop to see what else is available.',
+  },
+
+  // Landing (UX audit 2026-08-18)
+  customerHint: {
+    th: 'เป็นลูกค้า? เปิดลิงก์ร้านที่ได้รับจากร้านค้าเพื่อเริ่มใช้งาน',
+    en: 'A customer? Open the shop link your retailer sent you.',
+  },
+
+  // Fit result wording (UX audit 2026-08-18, C1)
+  // diff is customer minus garment: positive means the garment is the smaller
+  // of the two. Never show the raw signed number — it reads backwards against
+  // the ease convention used everywhere else.
+  diffSmaller: { th: 'เล็กกว่าตัว {n} ซม.', en: '{n} cm smaller than you' },
+  diffRoomier: { th: 'ใหญ่กว่าตัว {n} ซม.', en: '{n} cm roomier than you' },
+  diffExact: { th: 'เท่าตัวพอดี', en: 'same as your measurement' },
+
+  // Prefilled measurements (UX audit 2026-08-18, C5)
+  prefilledNotice: { th: 'กรอกไว้ให้จากขนาดล่าสุดของคุณ', en: 'Filled in from your most recent measurements' },
+  clearMeasurements: { th: 'ล้างค่า', en: 'Clear' },
+
+  // Fit-rules load failure (UX audit 2026-08-18, C3)
+  fitRulesLoadFailed: {
+    th: 'โหลดกฎของร้านไม่สำเร็จ กรุณารีเฟรชหน้านี้',
+    en: 'Could not load your shop rules. Please refresh the page.',
+  },
+
+  // Unsaved-work guard (UX audit 2026-08-18, D2)
+  confirmDiscard: {
+    th: 'ออกจากหน้านี้? ข้อมูลที่กรอกไว้จะหายไป',
+    en: 'Leave this page? Anything you typed will be lost.',
+  },
 } as const;
 
 export type StringKey = keyof typeof t;
