@@ -108,7 +108,7 @@ cannot catch a wrong value that is currently outranked by something else.
 
 ---
 
-## Open — the fit-rules page is effectively unreachable (found 2026-08-15)
+## RESOLVED — the fit-rules page was effectively unreachable (found 2026-08-15, fixed 2026-08-18)
 
 **The only route to `/dashboard/fit-rules` is the words `กฎของร้าน` as small grey text in the
 dashboard header, beside Logout** (`app/dashboard/layout.tsx:30`). Nothing on the dashboard
@@ -130,9 +130,63 @@ blocked. This is a discoverability defect, not a code defect.
 That ambiguity is why a database probe was needed rather than a glance at the screen. Fix
 regardless of what happens to navigation.
 
-Options mocked up for the founder (tabs under the header / a button beside `เพิ่มเสื้อผ้า` /
-tabs plus a link at the point of use in the garment form). **Not yet chosen** — the founder
-deferred it to ship the garment edit page first. Confirm before building.
+**Resolved 2026-08-18.** The founder chose tabs under the header. `app/dashboard/DashboardNav.tsx`
+renders a Garments / กฎของร้าน tab row on every dashboard route, so the rules page has a
+permanent visible entry point and dashboard subpages have a way back. The swallowed query
+error is fixed too: `app/dashboard/fit-rules/page.tsx` now surfaces `t.fitRulesLoadFailed`
+and suppresses the "no rules yet" empty state when the load actually failed.
+
+## UX audit executed — 2026-08-18
+
+Branch `feature/ux-audit-2026-08-18`, 12 commits. Source: `docs/superpowers/ux-audit-2026-08-18.md`.
+Run as six parallel Sonnet subagents on disjoint file sets, with all shared Thai copy written
+into `lib/i18n/strings.ts` up front as a single commit so the agents could not collide on it.
+
+**Shipped:**
+
+| Item | What changed |
+|---|---|
+| A1 | Dashboard header is now dark (`bg-gray-900`) with a `แดชบอร์ดร้านค้า` badge — it can no longer be mistaken for the white customer header. This was the root cause of the founder's "which side am I on" complaint. |
+| A2 | Per-page titles on dashboard, login, signup, both garment form routes, shop, and garment. The garment and edit routes name the item, so two tabs are tellable apart. |
+| B1 | Login ⇄ signup cross-links, plus a "back to home" link on both. |
+| B2 | `app/not-found.tsx` and `app/shop/[shop_slug]/not-found.tsx`, Thai-first with a route home. |
+| B3 + C2 | `DashboardNav.tsx` tab row — see the resolved section above. |
+| B4 | Customer header shop name is a link to the shop. |
+| B5 | Logged-out redirect carries `?reason=auth`; login shows a notice instead of appearing to jump at random. |
+| B6 | Landing page tells customers to open the link their shop sent them. |
+| C1 | Fit results no longer print the raw signed diff. See the commit — the sign convention is the important part. |
+| C3 | fit-rules load failure is surfaced instead of reading as "no rules yet". |
+| C4 | Wrong email/password gets its own Thai message; everything else still falls back to the generic one, and raw Supabase English still never reaches the UI. |
+| C5 | Pre-filled measurements are explained, with a clear button. |
+| D2 | Cancel confirms before discarding typed work, on both the garment form and the fit-rules editor. |
+| D3 | Ticking "ปรับเฉพาะสินค้านี้" seeds the editor from the rule actually in force, not the global default. |
+| D4 | Rule summary phrases negative ease as "แคบกว่าตัว" instead of rendering an unreadable `-4–3`. |
+
+**Not done, deliberately:**
+
+- **C6 — dashboard EN/TH toggle.** Out of scope for this run by the founder's choice; it is a
+  much larger job touching every dashboard file. The wiring plan is still in this document.
+- **D1** (native `confirm`/`alert` on garment delete), **D5** (one validation error at a time),
+  **D6** (hardcoded `(cm)` — the audit explicitly says do not "fix" this), **D7** (`ไม่ได้ระบุ`
+  rows for unfilled dimensions). All judged acceptable for an MVP.
+
+**Verification:** `npm test` 89 passing, `npm run build` clean, 16 routes. The suite still
+covers `lib/fit` only — every change above is UI and none of it is under test. It has NOT been
+exercised in a browser, logged-in or logged-out.
+
+**Process note for the next agent.** Six agents sharing one working directory produced two real
+hazards, both worth avoiding rather than rediscovering:
+1. **Concurrent `next build` corrupts a shared `.next/`.** Three agents hit phantom failures in
+   each other's files before builds were centralised. Have subagents run
+   `npm test` + `npx tsc --noEmit` + `npx next lint`, and run the one authoritative
+   `npm run build` yourself after they land.
+2. **`git commit` commits the whole index, not just what you staged.** A `git add <path>`
+   followed by `git commit` swept three agents' staged files into one unrelated commit. Use
+   `git commit -- <paths>`, which commits the named paths regardless of index state. The
+   history was split back apart afterwards and the resulting tree verified identical, but it
+   is far cheaper not to do it in the first place.
+
+---
 
 ## Architecture decisions in force
 
@@ -163,7 +217,7 @@ This is a working prototype. It is used in production but has rough edges that n
 | FitChecker | `garmentMeasurements` prop removed to fix ESLint build failure. Re-add in Phase 2 for client-side comparison display |
 | ~~UX~~ | ~~No loading skeleton on shop browse page~~ — done, `loading.tsx` exists for browse and garment pages. Stale entry, verified live 2026-08-18. |
 | ~~UX~~ | ~~No back-navigation from hero page to shop browse page~~ — done, `BackLink.tsx` ships `← กลับไปหน้าร้าน`. Stale entry, verified live 2026-08-18. |
-| UX | **Full UX audit 2026-08-18: `docs/superpowers/ux-audit-2026-08-18.md`** — customer/shop sides visually indistinguishable, dead-end 404s, isolated login/signup, fit-result sign display confusing. Read it before any navigation/header work. |
+| ~~UX~~ | ~~**Full UX audit 2026-08-18**~~ — executed 2026-08-18 on `feature/ux-audit-2026-08-18`. Sections A, B, C1/C3/C4/C5 and D2/D3/D4 are done. See "UX audit executed" below for what remains. The audit doc itself stays as the record of what was found. |
 | UX | Language preference tied to browser localStorage, not to a customer account — if the customer switches device or browser, preference resets |
 | Storage | Typo bucket `garmet-photos` exists in Supabase Storage alongside the correct `garment-photos` — unused, harmless, but delete it eventually |
 
