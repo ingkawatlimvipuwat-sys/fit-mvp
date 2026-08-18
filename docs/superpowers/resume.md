@@ -138,7 +138,7 @@ and suppresses the "no rules yet" empty state when the load actually failed.
 
 ## UX audit executed — 2026-08-18
 
-Branch `feature/ux-audit-2026-08-18`, 12 commits. Source: `docs/superpowers/ux-audit-2026-08-18.md`.
+Branch `feature/ux-audit-2026-08-18`, 14 commits. Source: `docs/superpowers/ux-audit-2026-08-18.md`.
 Run as six parallel Sonnet subagents on disjoint file sets, with all shared Thai copy written
 into `lib/i18n/strings.ts` up front as a single commit so the agents could not collide on it.
 
@@ -149,7 +149,7 @@ into `lib/i18n/strings.ts` up front as a single commit so the agents could not c
 | A1 | Dashboard header is now dark (`bg-gray-900`) with a `แดชบอร์ดร้านค้า` badge — it can no longer be mistaken for the white customer header. This was the root cause of the founder's "which side am I on" complaint. |
 | A2 | Per-page titles on dashboard, login, signup, both garment form routes, shop, and garment. The garment and edit routes name the item, so two tabs are tellable apart. |
 | B1 | Login ⇄ signup cross-links, plus a "back to home" link on both. |
-| B2 | `app/not-found.tsx` and `app/shop/[shop_slug]/not-found.tsx`, Thai-first with a route home. |
+| B2 | Three Thai-first not-found boundaries, each with a route home: root (`ไม่พบหน้านี้`), shop-level for a bad slug (`ไม่พบร้านค้านี้`), and garment-level for a dead item link (`ไม่พบสินค้านี้`). The shop/garment split came out of the live walkthrough — one boundary served both, so a truncated shop link wrongly answered "item not found". |
 | B3 + C2 | `DashboardNav.tsx` tab row — see the resolved section above. |
 | B4 | Customer header shop name is a link to the shop. |
 | B5 | Logged-out redirect carries `?reason=auth`; login shows a notice instead of appearing to jump at random. |
@@ -171,8 +171,20 @@ into `lib/i18n/strings.ts` up front as a single commit so the agents could not c
   rows for unfilled dimensions). All judged acceptable for an MVP.
 
 **Verification:** `npm test` 89 passing, `npm run build` clean, 16 routes. The suite still
-covers `lib/fit` only — every change above is UI and none of it is under test. It has NOT been
-exercised in a browser, logged-in or logged-out.
+covers `lib/fit` only — every change above is UI and none of it is under test.
+
+The **customer side was walked in a browser** against a local dev server on 2026-08-18 and
+confirmed live: per-page titles (`test — Fit MVP`, `test shirt — test`), the shop name as a
+working link, all three not-found boundaries, the prefill notice with a `type="button"` clear
+control, and the C1 result wording — garment chest 66 vs customer 70 renders
+`คับเกินไป` + `เล็กกว่าตัว 4.0 ซม.`, shoulder 69 vs 65 renders `พอดี` + `ใหญ่กว่าตัว 4.0 ซม.`,
+and unfilled dimensions show no number at all. That walkthrough wrote one `fit_sessions` row
+to the live database, since there is no staging.
+
+The **dashboard side has still NOT been seen in a browser** — it needs a logged-in session.
+The dark header, the badge, the nav tabs, the logout contrast fix, the fit-rules load-failure
+notice, and both discard guards are backed only by a clean build. Worth ten minutes with a
+real login before trusting them.
 
 **Process note for the next agent.** Six agents sharing one working directory produced two real
 hazards, both worth avoiding rather than rediscovering:
