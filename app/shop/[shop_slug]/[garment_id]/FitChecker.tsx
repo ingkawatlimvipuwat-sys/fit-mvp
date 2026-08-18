@@ -24,6 +24,16 @@ const VERDICT_COLOR: Record<Verdict, string> = {
   unknown: 'bg-gray-100 text-gray-600',
 };
 
+// `diff` is customer minus garment (see lib/fit/engine.ts). A positive diff means the
+// garment is smaller than the customer; a negative diff means the garment is roomier.
+// This phrase is always a positive quantity so it reads the same direction as the
+// ease convention used elsewhere in this product (garment minus customer, positive = roomy).
+function diffPhrase(diff: number, lang: 'th' | 'en'): string {
+  if (Math.abs(diff) < 0.05) return t.diffExact[lang];
+  if (diff > 0) return t.diffSmaller[lang].replace('{n}', Math.abs(diff).toFixed(1));
+  return t.diffRoomier[lang].replace('{n}', Math.abs(diff).toFixed(1));
+}
+
 export default function FitChecker({
   garmentId, dimensions,
 }: {
@@ -34,6 +44,7 @@ export default function FitChecker({
   const [result, setResult] = useState<FitResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [prefilled, setPrefilled] = useState(false);
   const resultRef = useRef<HTMLDivElement>(null);
 
   const verdictLabel: Record<Verdict, string> = {
@@ -52,7 +63,10 @@ export default function FitChecker({
           for (const [k, v] of Object.entries(j.measurements)) {
             if (typeof v === 'number') pre[k] = String(v);
           }
-          setValues(pre);
+          if (Object.keys(pre).length > 0) {
+            setValues(pre);
+            setPrefilled(true);
+          }
         }
       })
       .catch(() => {});
@@ -101,6 +115,18 @@ export default function FitChecker({
     <section className="mt-8 space-y-6">
       <form className="space-y-4 rounded border bg-white p-4" onSubmit={onSubmit}>
         <h2 className="text-lg font-medium">{t.yourMeasurements[lang]}</h2>
+        {prefilled && (
+          <div className="flex items-center justify-between gap-3 rounded bg-gray-50 px-3 py-2">
+            <span className="text-sm text-gray-500">{t.prefilledNotice[lang]}</span>
+            <button
+              type="button"
+              onClick={() => { setValues({}); setPrefilled(false); }}
+              className="shrink-0 text-sm font-medium text-gray-700 underline"
+            >
+              {t.clearMeasurements[lang]}
+            </button>
+          </div>
+        )}
         {dimensions.map(d => (
           <label key={d.key} className="block">
             <span className="text-sm text-gray-700">
@@ -112,7 +138,11 @@ export default function FitChecker({
             <input
               type="number" step="0.1" min="1" max="300" inputMode="decimal"
               value={values[d.key] ?? ''}
-              onChange={e => setValues(v => ({ ...v, [d.key]: e.target.value }))}
+              onChange={e => {
+                const val = e.target.value;
+                setValues(v => ({ ...v, [d.key]: val }));
+                setPrefilled(false);
+              }}
               className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
             />
           </label>
@@ -136,11 +166,15 @@ export default function FitChecker({
               const r = result.dimensions[d.key];
               const v = r?.verdict ?? 'unknown';
               return (
-                <li key={d.key} className="flex items-center justify-between py-2 text-sm">
+                <li key={d.key} className="flex items-start justify-between gap-3 py-2 text-sm">
                   <span>{lang === 'th' ? d.labelTh : d.labelEn}</span>
-                  <span className={`rounded px-2 py-0.5 text-xs ${VERDICT_COLOR[v]}`}>
-                    {verdictLabel[v]}
-                    {r?.diff !== null && r?.diff !== undefined ? ` (${r.diff > 0 ? '+' : ''}${r.diff.toFixed(1)}cm)` : ''}
+                  <span className="flex flex-col items-end gap-0.5 text-right">
+                    <span className={`rounded px-2 py-0.5 text-xs ${VERDICT_COLOR[v]}`}>
+                      {verdictLabel[v]}
+                    </span>
+                    {r?.diff !== null && r?.diff !== undefined && (
+                      <span className="text-xs text-gray-500">{diffPhrase(r.diff, lang)}</span>
+                    )}
                   </span>
                 </li>
               );
