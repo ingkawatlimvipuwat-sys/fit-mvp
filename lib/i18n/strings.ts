@@ -121,6 +121,11 @@ export const t = {
     th: 'ลิงก์อาจไม่ถูกต้องหรือถูกลบไปแล้ว กรุณาตรวจสอบลิงก์อีกครั้ง',
     en: 'The link may be wrong, or the page may have been removed. Please check the link.',
   },
+  notFoundShopTitle: { th: 'ไม่พบร้านค้านี้', en: 'Shop not found' },
+  notFoundShopBody: {
+    th: 'ลิงก์ร้านอาจไม่ครบหรือไม่ถูกต้อง กรุณาตรวจสอบลิงก์ที่ได้รับจากร้านค้าอีกครั้ง',
+    en: 'The shop link may be incomplete or incorrect. Please check the link your retailer sent you.',
+  },
   notFoundGarmentTitle: { th: 'ไม่พบสินค้านี้', en: 'Item not found' },
   notFoundGarmentBody: {
     th: 'สินค้านี้อาจถูกลบไปแล้ว ดูสินค้าอื่นได้ที่หน้าร้าน',
