@@ -102,7 +102,8 @@ export const t = {
   cancel: { th: 'ยกเลิก', en: 'Cancel' },
   delete: { th: 'ลบ', en: 'Delete' },
   edit: { th: 'แก้ไข', en: 'Edit' },
-// Orientation / navigation (UX audit 2026-08-18)
+
+  // Orientation / navigation (UX audit 2026-08-18)
   dashboardBadge: { th: 'แดชบอร์ดร้านค้า', en: 'Shop dashboard' },
   navGarments: { th: 'เสื้อผ้า', en: 'Garments' },
   backToDashboard: { th: 'กลับไปแดชบอร์ด', en: 'Back to dashboard' },
