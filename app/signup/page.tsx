@@ -3,9 +3,12 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { t } from '@/lib/i18n/strings';
+import { useLanguage } from '@/lib/hooks/useLanguage';
+import LanguageToggle from '@/app/LanguageToggle';
 
 export default function SignupPage() {
   const router = useRouter();
+  const [lang] = useLanguage();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -23,12 +26,12 @@ export default function SignupPage() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(typeof data.error === 'string' ? data.error : t.authError.th);
+        setError(typeof data.error === 'string' ? data.error : t.authError[lang]);
         return;
       }
       router.push('/dashboard');
     } catch {
-      setError(t.networkError.th);
+      setError(t.networkError[lang]);
     } finally {
       setLoading(false);
     }
@@ -36,28 +39,31 @@ export default function SignupPage() {
 
   return (
     <main className="mx-auto max-w-md px-6 py-16">
-      <Link href="/" className="text-sm text-gray-500 hover:text-gray-900">
-        ← {t.backToHome.th}
-      </Link>
-      <h1 className="mt-4 text-2xl font-semibold">{t.signup.th}</h1>
+      <div className="flex items-center justify-between">
+        <Link href="/" className="text-sm text-gray-500 hover:text-gray-900">
+          ← {t.backToHome[lang]}
+        </Link>
+        <LanguageToggle />
+      </div>
+      <h1 className="mt-4 text-2xl font-semibold">{t.signup[lang]}</h1>
       <form className="mt-8 space-y-4" onSubmit={onSubmit}>
-        <Field name="shop_name" label={t.shopName.th} />
-        <Field name="shop_slug" label={t.shopSlug.th} pattern="[a-z0-9-]{3,40}" />
-        <Field name="email" label={t.email.th} type="email" />
-        <Field name="password" label={t.password.th} type="password" minLength={8} />
+        <Field name="shop_name" label={t.shopName[lang]} />
+        <Field name="shop_slug" label={t.shopSlug[lang]} pattern="[a-z0-9-]{3,40}" />
+        <Field name="email" label={t.email[lang]} type="email" />
+        <Field name="password" label={t.password[lang]} type="password" minLength={8} />
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button
           type="submit"
           disabled={loading}
           className="w-full rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-60"
         >
-          {loading ? '…' : t.signupSubmit.th}
+          {loading ? '…' : t.signupSubmit[lang]}
         </button>
       </form>
       <p className="mt-4 text-sm text-gray-600">
-        {t.haveAccount.th}{' '}
+        {t.haveAccount[lang]}{' '}
         <Link href="/login" className="underline text-gray-900">
-          {t.login.th}
+          {t.login[lang]}
         </Link>
       </p>
     </main>

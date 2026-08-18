@@ -1,26 +1,14 @@
 'use client';
 import Link from 'next/link';
-import { useLanguage } from '@/lib/hooks/useLanguage';
+import LanguageToggle from '@/app/LanguageToggle';
 
 export default function ShopHeader({ shopName, shopSlug }: { shopName: string; shopSlug: string }) {
-  const [lang, setLang] = useLanguage();
-
   return (
     <header className="flex items-center justify-between border-b px-6 py-3">
       <Link href={`/shop/${shopSlug}`} className="font-semibold hover:text-gray-600">
         {shopName}
       </Link>
-      <div className="flex overflow-hidden rounded border border-gray-300 text-xs">
-        {(['th', 'en'] as const).map(l => (
-          <button
-            key={l}
-            onClick={() => setLang(l)}
-            className={`px-3 py-1.5 ${lang === l ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-50'}`}
-          >
-            {l.toUpperCase()}
-          </button>
-        ))}
-      </div>
+      <LanguageToggle />
     </header>
   );
 }
