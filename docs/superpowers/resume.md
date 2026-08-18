@@ -164,8 +164,8 @@ into `lib/i18n/strings.ts` up front as a single commit so the agents could not c
 
 **Not done, deliberately:**
 
-- **C6 — dashboard EN/TH toggle.** Out of scope for this run by the founder's choice; it is a
-  much larger job touching every dashboard file. The wiring plan is still in this document.
+- ~~**C6 — dashboard EN/TH toggle.**~~ Done 2026-08-18 after the founder asked for it — see
+  "Language coverage" below.
 - **D1** (native `confirm`/`alert` on garment delete), **D5** (one validation error at a time),
   **D6** (hardcoded `(cm)` — the audit explicitly says do not "fix" this), **D7** (`ไม่ได้ระบุ`
   rows for unfilled dimensions). All judged acceptable for an MVP.
@@ -197,6 +197,51 @@ hazards, both worth avoiding rather than rediscovering:
    `git commit -- <paths>`, which commits the named paths regardless of index state. The
    history was split back apart afterwards and the resulting tree verified identical, but it
    is far cheaper not to do it in the first place.
+
+---
+
+## Language coverage — where TH/EN works, and where it cannot
+
+Added 2026-08-18 (audit item C6 plus follow-ups the founder asked for).
+
+**The toggle now covers:** the customer shop pages (as before), login, signup, and the whole
+retailer dashboard — header, nav tabs, garment list and cards, the garment form, and the
+fit-rules pages including the rule editor.
+
+**The landing page is bilingual without a toggle.** It shows Thai with muted English beneath,
+including on the login and signup buttons. It is a server component and the founder liked the
+side-by-side reading, so it was deliberately left that way.
+
+**How it is wired.** `LanguageProvider` (`lib/hooks/useLanguage.tsx`) now wraps three subtrees:
+`app/shop/[shop_slug]/layout.tsx`, `app/login/layout.tsx` + `app/signup/layout.tsx`, and
+`app/dashboard/layout.tsx`. One `localStorage` key (`fitmvp.lang`) backs all of them, so the
+preference is per-browser and shared across the retailer and customer sides. `app/LanguageToggle.tsx`
+is the single shared control; it takes `tone="dark"` on the dashboard header because its active
+state is a dark pill that would be invisible on `bg-gray-900`.
+
+**The constraint that shaped the work:** `LanguageProvider` is React context, so ONLY client
+components can call `useLanguage()`. Several dashboard routes are async server components that
+query Supabase and cannot. Rather than converting them (which would have moved database work to
+the client), their text-bearing markup was extracted into small client components:
+`DashboardHeader.tsx`, `AddGarmentLink.tsx` and `GarmentGrid.tsx` came out of
+`layout.tsx`/`page.tsx`, and the fit-rules heading and load-failure line moved into
+`FitRulesManager`. **If you add a user-visible string to a server component, this is the pattern
+to follow.**
+
+**What is still Thai-only, and why:**
+
+- **Browser tab titles.** `metadata` and `generateMetadata` run on the server before any client
+  code, so they cannot see `localStorage`. Every title is Thai. Fixing this properly needs the
+  language in the URL or a cookie — a routing change, not a string change.
+- **Server-side API error messages** (e.g. `app/api/garments/route.ts`, `app/api/signup/route.ts`)
+  are Thai strings chosen on the server. The signup page deliberately passes `data.error`
+  through untranslated because the API owns that copy.
+- **`(cm)` in measurement labels** — Latin in both languages. Audit item D6 says explicitly not
+  to "fix" this.
+
+**The English is not proofread.** `strings.ts` carried `en` values for every key from early on,
+but they were written as a fallback nobody expected to see. They are now visible on every screen.
+A copy pass is worth doing before showing this to an English-speaking retailer.
 
 ---
 
