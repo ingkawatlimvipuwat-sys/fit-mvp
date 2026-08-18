@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { t } from '@/lib/i18n/strings';
 
 export default function SignupPage() {
@@ -35,7 +36,10 @@ export default function SignupPage() {
 
   return (
     <main className="mx-auto max-w-md px-6 py-16">
-      <h1 className="text-2xl font-semibold">{t.signup.th}</h1>
+      <Link href="/" className="text-sm text-gray-500 hover:text-gray-900">
+        ← {t.backToHome.th}
+      </Link>
+      <h1 className="mt-4 text-2xl font-semibold">{t.signup.th}</h1>
       <form className="mt-8 space-y-4" onSubmit={onSubmit}>
         <Field name="shop_name" label={t.shopName.th} />
         <Field name="shop_slug" label={t.shopSlug.th} pattern="[a-z0-9-]{3,40}" />
@@ -50,6 +54,12 @@ export default function SignupPage() {
           {loading ? '…' : t.signupSubmit.th}
         </button>
       </form>
+      <p className="mt-4 text-sm text-gray-600">
+        {t.haveAccount.th}{' '}
+        <Link href="/login" className="underline text-gray-900">
+          {t.login.th}
+        </Link>
+      </p>
     </main>
   );
 }
