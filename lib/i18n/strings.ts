@@ -177,6 +177,10 @@ export const t = {
     th: 'พอดีเมื่อแคบกว่าตัว {from}–{to} ซม.',
     en: 'Fits when {from}–{to} cm narrower than the body',
   },
+  fitRuleExample: {
+    th: 'ลูกค้ารอบอก {body} ซม. + เสื้อ {garment} ซม. →',
+    en: 'Customer chest {body} cm + garment {garment} cm →',
+  },
   unitCm: { th: 'ซม.', en: 'cm' },
 } as const;
 

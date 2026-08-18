@@ -59,7 +59,10 @@ function Preview({ rule, lang }: { rule: EaseRule; lang: Lang }) {
         <span>{SCALE_MIN} {t.unitCm[lang]}</span><span>0</span><span>+{SCALE_MAX} {t.unitCm[lang]}</span>
       </div>
       <p className="text-sm text-gray-700">
-        ลูกค้ารอบอก {body} ซม. + เสื้อ {garmentAtGoodFit.toFixed(1)} ซม. → {t.verdictGood[lang]}
+        {t.fitRuleExample[lang]
+          .replace('{body}', String(body))
+          .replace('{garment}', garmentAtGoodFit.toFixed(1))}{' '}
+        {t.verdictGood[lang]}
       </p>
     </div>
   );
@@ -106,7 +109,7 @@ export default function FitRuleEditor({ value, onChange }: {
                     type="checkbox" checked={dimRule === undefined}
                     onChange={e => setDim(d.key, e.target.checked ? null : { ...base })}
                   />
-                  <span>{d.labelTh} — {t.fitRuleSameAsAbove[lang]}</span>
+                  <span>{lang === 'th' ? d.labelTh : d.labelEn} — {t.fitRuleSameAsAbove[lang]}</span>
                 </label>
                 {dimRule && (
                   <div className="mt-3 space-y-3">
