@@ -13,7 +13,7 @@ export default function LogoutButton() {
         router.push('/login');
         router.refresh();
       }}
-      className="text-sm text-gray-600 hover:text-gray-900"
+      className="text-sm text-gray-300 hover:text-white"
     >
       {t.logout.th}
     </button>
