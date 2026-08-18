@@ -6,6 +6,22 @@ import NoGarments from './NoGarments';
 
 export const dynamic = 'force-dynamic';
 
+export async function generateMetadata({ params }: { params: { shop_slug: string } }) {
+  const fallback = { title: 'Fit MVP — หาขนาดที่ใช่' };
+  try {
+    const supabase = createSupabaseAdminClient();
+    const { data: shop } = await supabase
+      .from('shops')
+      .select('shop_name')
+      .eq('shop_slug', params.shop_slug)
+      .single();
+    if (!shop) return fallback;
+    return { title: `${shop.shop_name} — Fit MVP` };
+  } catch {
+    return fallback;
+  }
+}
+
 export default async function ShopPage({ params }: { params: { shop_slug: string } }) {
   const supabase = createSupabaseAdminClient();
   const { data: shop, error } = await supabase
@@ -26,7 +42,7 @@ export default async function ShopPage({ params }: { params: { shop_slug: string
 
   return (
     <>
-      <ShopHeader shopName={shop.shop_name} />
+      <ShopHeader shopName={shop.shop_name} shopSlug={params.shop_slug} />
       <main className="mx-auto max-w-4xl px-6 py-8">
       {!garments || garments.length === 0 ? (
         <NoGarments />

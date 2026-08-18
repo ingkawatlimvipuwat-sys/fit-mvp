@@ -9,6 +9,33 @@ import type { Category } from '@/lib/supabase/types';
 
 export const dynamic = 'force-dynamic';
 
+export async function generateMetadata({
+  params,
+}: { params: { shop_slug: string; garment_id: string } }) {
+  const fallback = { title: 'Fit MVP — หาขนาดที่ใช่' };
+  try {
+    const supabase = createSupabaseAdminClient();
+    const { data: shop } = await supabase
+      .from('shops')
+      .select('id, shop_name')
+      .eq('shop_slug', params.shop_slug)
+      .single();
+    if (!shop) return fallback;
+
+    const { data: garment } = await supabase
+      .from('garments')
+      .select('name')
+      .eq('id', params.garment_id)
+      .eq('retailer_id', shop.id)
+      .single();
+    if (!garment) return fallback;
+
+    return { title: `${garment.name} — ${shop.shop_name}` };
+  } catch {
+    return fallback;
+  }
+}
+
 export default async function HeroPage({
   params,
 }: { params: { shop_slug: string; garment_id: string } }) {
@@ -51,7 +78,7 @@ export default async function HeroPage({
 
   return (
     <>
-      <ShopHeader shopName={shop.shop_name} />
+      <ShopHeader shopName={shop.shop_name} shopSlug={params.shop_slug} />
       <main className="mx-auto max-w-2xl px-6 py-8">
         <BackLink shopSlug={params.shop_slug} />
         <div className="mt-3 aspect-square overflow-hidden rounded bg-gray-100">
