@@ -15,8 +15,14 @@ export default function HomePage() {
       <p className="mt-1 text-sm text-gray-400">{t.tagline.en}</p>
 
       <div className="mt-8 flex gap-4">
-        <Link href="/login" className="rounded bg-gray-900 px-4 py-2 text-white">{t.login.th}</Link>
-        <Link href="/signup" className="rounded border border-gray-300 px-4 py-2 text-gray-900">{t.signup.th}</Link>
+        <Link href="/login" className="rounded bg-gray-900 px-4 py-2 text-center text-white">
+          {t.login.th}
+          <span className="block text-xs font-normal text-gray-300">{t.login.en}</span>
+        </Link>
+        <Link href="/signup" className="rounded border border-gray-300 px-4 py-2 text-center text-gray-900">
+          {t.signup.th}
+          <span className="block text-xs font-normal text-gray-400">{t.signup.en}</span>
+        </Link>
       </div>
 
       {/* A customer who trims the shop URL down to the domain root lands here.

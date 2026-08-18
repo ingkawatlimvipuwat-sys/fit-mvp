@@ -161,6 +161,23 @@ export const t = {
     th: 'ออกจากหน้านี้? ข้อมูลที่กรอกไว้จะหายไป',
     en: 'Leave this page? Anything you typed will be lost.',
   },
+// Dashboard translation (C6, 2026-08-18).
+  // summarize() in FitRulesManager had these as inline Thai template literals;
+  // they need both languages now. {from}/{to} are always positive magnitudes —
+  // the sign is carried by which key is chosen, not by the number.
+  ruleSummaryRoomy: {
+    th: 'พอดีเมื่อกว้างกว่าตัว {from}–{to} ซม.',
+    en: 'Fits when {from}–{to} cm roomier than the body',
+  },
+  ruleSummaryStraddle: {
+    th: 'พอดีตั้งแต่แคบกว่าตัว {from} ซม. ถึงกว้างกว่าตัว {to} ซม.',
+    en: 'Fits from {from} cm narrower to {to} cm roomier than the body',
+  },
+  ruleSummaryNarrow: {
+    th: 'พอดีเมื่อแคบกว่าตัว {from}–{to} ซม.',
+    en: 'Fits when {from}–{to} cm narrower than the body',
+  },
+  unitCm: { th: 'ซม.', en: 'cm' },
 } as const;
 
 export type StringKey = keyof typeof t;
