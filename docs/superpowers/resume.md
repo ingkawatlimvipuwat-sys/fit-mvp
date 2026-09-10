@@ -136,6 +136,20 @@ permanent visible entry point and dashboard subpages have a way back. The swallo
 error is fixed too: `app/dashboard/fit-rules/page.tsx` now surfaces `t.fitRulesLoadFailed`
 and suppresses the "no rules yet" empty state when the load actually failed.
 
+## NEXT — Colour & fabric reference (spec approved 2026-09-10, not built)
+
+Early user feedback: buyers get garments whose colour or fabric finish does not match the
+photo. Founder brainstormed and approved a design: colour swatches (hex + name, unlimited
+list) and fabric chips (finish / thickness / stretch / feel) plus a collapsed technical tier,
+shown as **Fit / Colour / Fabric** tabs on the shopper garment page and colour dots on the
+shop grid. Separate tables `garment_colours`, `garment_fabric`; one new column on `garments`.
+
+Spec: **`specs/2026-09-10-colour-fabric-design.md`** — its section 10 says how to execute
+(Opus directs, Sonnet implements, writing-plans first). No plan written yet. No code touched.
+
+Second feedback item — **catalogue organisation** (categories, variants, sorting for shops
+with hundreds of items) — is deliberately deferred to its own future spec.
+
 ## UX audit executed — 2026-08-18
 
 Branch `feature/ux-audit-2026-08-18`, 14 commits. Source: `docs/superpowers/ux-audit-2026-08-18.md`.
