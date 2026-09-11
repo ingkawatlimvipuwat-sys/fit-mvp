@@ -27,13 +27,12 @@ Single-tenant web app for one Thai clothing retailer. Customers visit a public s
 
 ## Current state
 
-**Branch:** `main` — at `d56230a`, pushed, deployed (verified by route probe, not assumed).
+**Branch:** `main` — at `5b076b6`, pushed, deployed (verified by content probe on the live
+site, not assumed).
 **Status as of 2026-09-11:** Phase 1 + language toggle + **custom fit rules** + **garment
-edit page** all live in production. Prototype. 155 tests (89 pure + 66 added by the colour &
-fabric branch, which includes this project's first component tests).
-
-**Colour & fabric is BUILT but NOT SHIPPED** — see its section below. The migration must be
-applied before that branch is merged, or every shopper garment page 500s.
+edit page** + **colour & fabric reference** all live in production. Prototype. 155 tests
+(89 pure + 66 added by the colour & fabric branch, which includes this project's first
+component tests).
 
 **Live:** https://fit-mvp-eight.vercel.app
 
@@ -140,7 +139,56 @@ permanent visible entry point and dashboard subpages have a way back. The swallo
 error is fixed too: `app/dashboard/fit-rules/page.tsx` now surfaces `t.fitRulesLoadFailed`
 and suppresses the "no rules yet" empty state when the load actually failed.
 
-## Colour & fabric reference — BUILT on `feature/colour-fabric`, NOT SHIPPED (2026-09-11)
+## Colour & fabric reference — SHIPPED 2026-09-11
+
+Merged `feature/colour-fabric` → `main` as a fast-forward (`09e7d9f..5b076b6`, 21 commits) and
+pushed. Deploy verified against live content, not assumed: the garment carrying the founder's
+check data serves `role="tablist"`, both hex codes and all three chips; a garment with no
+colour/fabric data serves the pre-feature page with no tab bar (the control).
+
+**Order was followed:** migration 0003 applied by the founder and verified against the live DB
+(schema, anon read, anon write blocked, all 8 CHECK constraints) BEFORE the merge. Founder ran
+the full manual check on localhost — including the crashed-then-fixed edit page and the
+change-only-the-name invariant — before the merge was made.
+
+### Shipped after the branch was first written up (same day, founder feedback)
+
+- **Edit page crashed at render** with `emptyFabricForm is not a function`: the server-component
+  edit page imported the function from `FabricSection.tsx`, a `'use client'` file. Functions do
+  not survive that boundary — they arrive as opaque client references; only components cross.
+  Compiles clean, both gates blind. Now lives in `lib/garment/colour-fabric.ts` (comment at the
+  definition records the trap). **Landmine for future work:** a server component may import
+  ONLY components from a `'use client'` file; every shared value or function belongs in `lib/`.
+- **Founder rejected the first-draft wording as vague** ("how thin is your thin?"). Now:
+  thickness and stretch chips carry numeric anchors (บาง <150 g/m² · ปานกลาง 150–300 · หนา >300;
+  stretch by pull %, <5 / 5–15 / >15) shown under the form radios and as plain text under the
+  shopper chips (phones have no hover); thread count label says per square inch; construction
+  label says weave/knit with examples as the input placeholder; the hex code is visible next to
+  the form's colour picker and under every shopper swatch.
+- **Pre-existing staleness bug found and fixed while verifying** (`8168b30`): Next's patched
+  fetch cached the admin client's reads, so public shop pages served whatever the DB said at the
+  first request of the server's life — a retailer's edits never appeared until a redeploy.
+  Reproduced on the old `garments` read too, so it predates this feature. The admin client now
+  passes `cache: 'no-store'`.
+
+### Considered and rejected (2026-09-11, do not re-litigate without new evidence)
+
+- **Sliders + changing example model for fabric input.** Founder proposed, then dropped it in
+  brainstorm once the cost was clear: a smooth slider needs numeric columns, a migration and a
+  shopper redesign, and a 3-stop slider is only a skin over the same three words. Chips stay.
+- **Auto-picking the thickness chip from a typed g/m² value.** Offered, never approved, dropped
+  in the same decision. The known gap remains: a retailer can type 350 g/m² and tick บาง and
+  nothing stops them.
+
+### Environment landmine (cost a session's worth of debugging on 2026-09-11)
+
+**Never run `npm run build` while the dev server is running.** Both write `.next/`; the build
+overwrites the dev server's chunks out from under it. Symptoms escalate: first the stylesheet
+404s (page renders unstyled), then `Cannot find module './NNN.js'` server errors. Recovery:
+kill node, delete `.next`, start ONE dev server. Verification order that is safe:
+`npm test` (never touches `.next`) → stop dev server → `npm run build` → restart dev server.
+
+## Colour & fabric — how it was built (branch history, 2026-09-11)
 
 Early user feedback: buyers get garments whose colour or fabric finish does not match the
 photo. Founder brainstormed and approved a design: colour swatches (hex + name, unlimited
@@ -152,25 +200,15 @@ Spec: **`specs/2026-09-10-colour-fabric-design.md`**
 Plan: **`plans/2026-09-11-colour-fabric.md`** — read its two sections at the end,
 "Post-review amendments" and "ORDERING IS NOT OPTIONAL", before doing anything with this branch.
 
-**State:** 14 commits on `feature/colour-fabric`, 155 tests passing, clean build. Nothing merged,
-nothing pushed, migration NOT applied. The live site is untouched.
+**Ordering lesson worth keeping:** the migration had to land BEFORE the merge, because the new
+shopper-page query selects `true_colour_photo_url` and the page's guard rethrows anything that
+is not `PGRST116` — merging first would have 500'd every shopper garment page. The general rule:
+additive migrations are safe to apply under old code, so schema first, code second, and probe the
+schema against the live DB before merging. That is what was done.
 
-### Two things must happen before this ships, in this order
-
-**1. Apply the migration FIRST, before merging.** Verified against the live database on
-2026-09-11: `garments?select=true_colour_photo_url` returns `400 / 42703 column does not exist`.
-The shopper garment page's existing guard rethrows anything that is not `PGRST116`, so merging
-before the SQL runs **500s every shopper garment page** — the one page customers actually use.
-The migration is purely additive (one nullable column, two new tables, their policies) and the
-deployed code references none of it, so applying it while `main` is still the old code is safe and
-is the correct order. Re-probe and confirm 200 before merging.
-
-**2. Founder manual check (~10 min), and proofread the Thai.** On a phone: add a garment with 3
-colours and fabric set, open the shop link, confirm the swatches look like the real garment under
-daylight. Then edit, remove one colour, save, confirm the other two survived. Then edit again
-changing *only the name* and confirm the colours and both photos are still there — that last step
-is the "absent means keep" invariant seen from outside. Thai copy in `strings.ts` is a first draft;
-`feelCrisp` (`แข็งอยู่ทรง`, for "crisp") is the one most worth a second opinion.
+Thai copy note: `feelCrisp` (`แข็งอยู่ทรง`, for "crisp") is a best-guess translation the founder
+has seen but not explicitly blessed; revisit if a native speaker winces. The phone-with-real-
+garment-under-daylight colour-fidelity check happens on the live site post-deploy.
 
 ### What the tests do and do not cover
 
