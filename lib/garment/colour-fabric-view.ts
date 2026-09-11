@@ -13,9 +13,7 @@ export function showColourTab(colours: unknown[], trueColourPhotoUrl: string | n
  */
 export function showFabricTab(fabric: GarmentFabric | null): boolean {
   if (!fabric) return false;
-  // isFabricEmpty takes Record<string, unknown>; GarmentFabric has no index
-  // signature, so the shapes need this bridge even though every field lines up.
-  return !isFabricEmpty(fabric as unknown as Record<string, unknown>) || !!fabric.fabric_photo_url;
+  return !isFabricEmpty(fabric) || !!fabric.fabric_photo_url;
 }
 
 export interface Chip { group: FabricChipKey; value: string }

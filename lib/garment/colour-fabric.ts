@@ -106,10 +106,15 @@ export const FABRIC_FIELDS = [
  * back from the database also carries garment_id, updated_at and
  * fabric_photo_url, which are always set and would make this permanently false.
  */
-export function isFabricEmpty(f: Record<string, unknown> | null | undefined): boolean {
+export function isFabricEmpty(f: object | null | undefined): boolean {
   if (!f) return true;
+  // `object`, not Record<string, unknown>: an interface without an index
+  // signature (GarmentFabric) is not assignable to Record, so every caller
+  // holding a real database row would otherwise need its own cast. One cast
+  // here beats one at each call site.
+  const row = f as Record<string, unknown>;
   return FABRIC_FIELDS.every(k => {
-    const v = f[k];
+    const v = row[k];
     return v === null || v === undefined || (typeof v === 'string' && v.trim() === '');
   });
 }
