@@ -164,6 +164,11 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
     e.preventDefault();
     setError(null);
 
+    // Captured first thing: React nulls `currentTarget` once the handler stops
+    // running synchronously, so reading it after any future `await` added above
+    // would silently yield no photo files and no error. Hold the node instead.
+    const formEl = e.currentTarget;
+
     if (!name.trim()) {
       setError(t.garmentNameRequired[lang]);
       return;
@@ -207,7 +212,6 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
       if (!window.confirm(t.confirmDropMeasurements[lang].replace('{dims}', labels))) return;
     }
 
-    const formEl = e.currentTarget;
     const trueColourFile =
       (formEl.elements.namedItem('true_colour_photo') as HTMLInputElement | null)?.files?.[0] ?? null;
     const fabricPhotoFile =
