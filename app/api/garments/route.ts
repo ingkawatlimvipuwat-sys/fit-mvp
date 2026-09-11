@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { parseGarmentFields } from '@/lib/garment/parse-form';
 import { t } from '@/lib/i18n/strings';
+import { PHOTO_BUCKET, uploadPhotoField } from '@/lib/garment/photo-upload';
 
 export async function POST(req: Request) {
   const supabase = createSupabaseServerClient();
@@ -15,25 +16,15 @@ export async function POST(req: Request) {
 
   // Photo is required on create, so it is checked here rather than in the
   // shared validator, which edit also uses and where it is optional.
-  const photo = form.get('photo');
-  if (!(photo instanceof File) || photo.size === 0) {
+  // uploadPhotoField() returns null for exactly the "absent or empty" case.
+  const uploaded = await uploadPhotoField(supabase, user.id, form, 'photo');
+  if (uploaded === null) {
     return NextResponse.json({ error: t.photoRequired.th }, { status: 400 });
   }
-
-  // Upload photo to Storage. Sanitize ext to a short alphanumeric token so
-  // a hand-crafted filename can't introduce slashes or query strings into
-  // the Storage object key.
-  const rawExt = photo.name.split('.').pop()?.toLowerCase() ?? 'jpg';
-  const ext = rawExt.replace(/[^a-z0-9]/g, '').slice(0, 10) || 'jpg';
-  const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
-  const { error: upErr } = await supabase.storage.from('garment-photos').upload(path, photo, {
-    cacheControl: '3600', upsert: false, contentType: photo.type || 'image/jpeg',
-  });
-  if (upErr) {
-    console.error('garment photo upload failed:', upErr);
+  if (uploaded === 'failed') {
     return NextResponse.json({ error: t.photoUploadFailed.th }, { status: 500 });
   }
-  const { data: { publicUrl } } = supabase.storage.from('garment-photos').getPublicUrl(path);
+  const { url: publicUrl, path } = uploaded;
 
   const { data: row, error: insErr } = await supabase
     .from('garments')
@@ -46,7 +37,7 @@ export async function POST(req: Request) {
     // doesn't accumulate dead photos. Mirrors the signup route's orphan
     // cleanup at commit 13230c7. Failure of this cleanup is swallowed —
     // the user-facing error is what we return regardless.
-    await supabase.storage.from('garment-photos').remove([path]).catch(() => {});
+    await supabase.storage.from(PHOTO_BUCKET).remove([path]).catch(() => {});
     return NextResponse.json({ error: t.saveFailed.th }, { status: 500 });
   }
 

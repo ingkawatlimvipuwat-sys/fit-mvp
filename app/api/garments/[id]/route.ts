@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server';
 import { createSupabaseServerClient, createSupabaseAdminClient } from '@/lib/supabase/server';
 import { parseGarmentFields } from '@/lib/garment/parse-form';
 import { t } from '@/lib/i18n/strings';
-
-const STORAGE_PREFIX = '/object/public/garment-photos/';
+import { PHOTO_BUCKET, pathFromPublicUrl, uploadPhotoField } from '@/lib/garment/photo-upload';
 
 /**
  * Delete one object from the garment-photos bucket. Never throws: by the time
@@ -15,27 +14,17 @@ async function removeStoredObject(path: string, userId: string): Promise<void> {
   if (!path.startsWith(`${userId}/`)) return;
   const admin = createSupabaseAdminClient();
   try {
-    const { error } = await admin.storage.from('garment-photos').remove([path]);
+    const { error } = await admin.storage.from(PHOTO_BUCKET).remove([path]);
     if (error) console.error('storage cleanup failed (non-fatal):', error);
   } catch (e) {
     console.error('storage cleanup failed (non-fatal):', e);
   }
 }
 
-/** As above, but locating the object from a stored public URL. */
+/** As removeStoredObject, but locating the object from a stored public URL. */
 async function removeStoredPhoto(photoUrl: string | null, userId: string): Promise<void> {
-  if (!photoUrl) return;
-  const idx = photoUrl.indexOf(STORAGE_PREFIX);
-  if (idx === -1) return;
-  let path: string;
-  try {
-    // A malformed %-escape must not escape this function.
-    path = decodeURIComponent(photoUrl.slice(idx + STORAGE_PREFIX.length));
-  } catch {
-    console.error('unreadable photo_url; skipping cleanup');
-    return;
-  }
-  await removeStoredObject(path, userId);
+  const path = pathFromPublicUrl(photoUrl);
+  if (path) await removeStoredObject(path, userId);
 }
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
@@ -67,27 +56,15 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   let newPhotoUrl: string | null = null;
   let uploadedPath: string | null = null;
 
-  const photo = form.get('photo');
-  if (photo instanceof File && photo.size > 0) {
-    // Same ext sanitisation as POST: a hand-crafted filename must not be able
-    // to introduce slashes or query strings into the Storage object key.
-    const rawExt = photo.name.split('.').pop()?.toLowerCase() ?? 'jpg';
-    const ext = rawExt.replace(/[^a-z0-9]/g, '').slice(0, 10) || 'jpg';
-    uploadedPath = `${user.id}/${crypto.randomUUID()}.${ext}`;
-
-    const { error: upErr } = await supabase.storage
-      .from('garment-photos')
-      .upload(uploadedPath, photo, {
-        cacheControl: '3600', upsert: false, contentType: photo.type || 'image/jpeg',
-      });
-    // Upload first, point the row at it second, delete the old one last. If
-    // this fails nothing has changed and the original photo is intact.
-    if (upErr) {
-      console.error('garment photo upload failed:', upErr);
-      return NextResponse.json({ error: t.photoUploadFailed.th }, { status: 500 });
-    }
-
-    newPhotoUrl = supabase.storage.from('garment-photos').getPublicUrl(uploadedPath).data.publicUrl;
+  // Upload first, point the row at it second, delete the old one last. If
+  // this fails nothing has changed and the original photo is intact.
+  const uploaded = await uploadPhotoField(supabase, user.id, form, 'photo');
+  if (uploaded === 'failed') {
+    return NextResponse.json({ error: t.photoUploadFailed.th }, { status: 500 });
+  }
+  if (uploaded) {
+    newPhotoUrl = uploaded.url;
+    uploadedPath = uploaded.path;
   }
 
   const { error: updErr } = await supabase
