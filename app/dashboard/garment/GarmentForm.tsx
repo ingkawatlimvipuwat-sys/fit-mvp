@@ -11,6 +11,9 @@ import FitRuleEditor, { isRulesetValid } from '@/app/dashboard/fit-rules/FitRule
 import { DEFAULT_RULE } from '@/lib/fit/rules';
 import type { FitRuleset } from '@/lib/fit/rules';
 import { activeMeasurements, strandedDimensions, buildGarmentFields } from '@/lib/garment/form-fields';
+import ColoursSection from '@/app/dashboard/garment/ColoursSection';
+import FabricSection, { emptyFabricForm, type FabricFormState } from '@/app/dashboard/garment/FabricSection';
+import type { Colour } from '@/lib/garment/colour-fabric';
 
 type PresetOption = { id: string; name: string; rule: FitRuleset };
 
@@ -66,6 +69,10 @@ export interface GarmentFormInitial {
   override: FitRuleset;
   ruleChoice: string;
   profileKey: string;
+  colours: Colour[];
+  true_colour_photo_url: string | null;
+  fabric: FabricFormState;
+  fabric_photo_url: string | null;
 }
 
 type GarmentFormProps =
@@ -97,6 +104,9 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
     () => seedMeasurements(initial?.measurements)
   );
 
+  const [colours, setColours] = useState<Colour[]>(initial?.colours ?? []);
+  const [fabric, setFabric] = useState<FabricFormState>(initial?.fabric ?? emptyFabricForm());
+
   // Unsaved-work guard baseline (UX audit 2026-08-18, D2): the form's state on
   // first render, in create mode the empty defaults, in edit mode `initial`.
   // Captured once via lazy useState init so later edits never move the goalposts.
@@ -107,6 +117,8 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
     useOverride: initial?.useOverride ?? false,
     override: initial?.override ?? { base: DEFAULT_RULE, perDimension: {} },
     measurements: seedMeasurements(initial?.measurements),
+    colours: initial?.colours ?? [],
+    fabric: initial?.fabric ?? emptyFabricForm(),
   }));
 
   const [presets, setPresets] = useState<PresetOption[]>([]);
@@ -118,7 +130,9 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
   // Same shape as initialSnapshot above — a plain JSON.stringify comparison is
   // enough for this MVP-sized, plain-object state.
   function isDirty(): boolean {
-    const current = JSON.stringify({ name, category, ruleChoice, useOverride, override, measurements });
+    const current = JSON.stringify({
+      name, category, ruleChoice, useOverride, override, measurements, colours, fabric,
+    });
     return current !== initialSnapshot || (photoRef.current?.files?.length ?? 0) > 0;
   }
 
@@ -172,6 +186,14 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
       return;
     }
 
+    // A row the retailer added and never filled in is dropped as a kindness.
+    // A row with a chosen colour but no name is an error they must resolve.
+    const cleanColours = colours.filter(c => c.name.trim() !== '' || c.hex !== '#000000');
+    if (cleanColours.some(c => c.name.trim() === '')) {
+      setError(t.colourNameRequired[lang]);
+      return;
+    }
+
     // Saving writes only the current category's dimensions, so warn before
     // a category change quietly discards numbers already entered.
     const stranded = strandedDimensions(measurements, category);
@@ -185,12 +207,26 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
       if (!window.confirm(t.confirmDropMeasurements[lang].replace('{dims}', labels))) return;
     }
 
+    const formEl = e.currentTarget;
+    const trueColourFile =
+      (formEl.elements.namedItem('true_colour_photo') as HTMLInputElement | null)?.files?.[0] ?? null;
+    const fabricPhotoFile =
+      (formEl.elements.namedItem('fabric_photo') as HTMLInputElement | null)?.files?.[0] ?? null;
+
     const form = new FormData();
     for (const [k, v] of Object.entries(buildGarmentFields({
       name, category, ruleChoice, useOverride, override, measurements,
       fallbackProfile: initial?.profileKey ?? 'regular',
     }))) form.set(k, v);
     if (photo) form.set('photo', photo);
+
+    // colours/fabric must ALWAYS be set, even when empty: presence tells the
+    // API "this is the truth, replace it" — omitting them when empty would
+    // make it impossible to delete a retailer's last colour or fabric detail.
+    form.set('colours', JSON.stringify(cleanColours.map(c => ({ hex: c.hex, name: c.name.trim() }))));
+    form.set('fabric', JSON.stringify(fabric));
+    if (trueColourFile) form.set('true_colour_photo', trueColourFile);
+    if (fabricPhotoFile) form.set('fabric_photo', fabricPhotoFile);
 
     setLoading(true);
     try {
@@ -337,6 +373,17 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
           </label>
         ))}
       </fieldset>
+
+      <ColoursSection
+        colours={colours}
+        onChange={setColours}
+        currentPhotoUrl={initial?.true_colour_photo_url ?? null}
+      />
+      <FabricSection
+        fabric={fabric}
+        onChange={setFabric}
+        currentPhotoUrl={initial?.fabric_photo_url ?? null}
+      />
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
