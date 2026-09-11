@@ -119,6 +119,21 @@ export function isFabricEmpty(f: object | null | undefined): boolean {
   });
 }
 
+/** Every fabric field as the retailer form holds it: strings, '' meaning "not set". */
+export type FabricFormState = Record<string, string>;
+
+/**
+ * Lives HERE, not in FabricSection.tsx, on purpose. The garment edit page is a
+ * server component and needs this to pre-fill the form. A function exported
+ * from a 'use client' file arrives in a server component as an opaque client
+ * reference — it compiles, then throws "is not a function" at render time.
+ * Only components survive that boundary; plain values and functions must come
+ * from a module like this one with no 'use client' directive.
+ */
+export function emptyFabricForm(): FabricFormState {
+  return Object.fromEntries(FABRIC_FIELDS.map(k => [k, '']));
+}
+
 /**
  * Absent field and empty value mean different things, so the result says which.
  * Colours are replace-all; reading an absent field as [] would let any caller

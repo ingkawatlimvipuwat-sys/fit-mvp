@@ -1,15 +1,8 @@
 'use client';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { t, type StringKey } from '@/lib/i18n/strings';
-import { FABRIC_CHIPS, FABRIC_FIELDS, chipStringKey, type FabricChipKey } from '@/lib/garment/colour-fabric';
+import { FABRIC_CHIPS, chipStringKey, type FabricChipKey, type FabricFormState } from '@/lib/garment/colour-fabric';
 import { TECHNICAL_FIELDS } from '@/lib/garment/colour-fabric-view';
-
-/** Every fabric field as the form holds it: strings, '' meaning "not set". */
-export type FabricFormState = Record<string, string>;
-
-export function emptyFabricForm(): FabricFormState {
-  return Object.fromEntries(FABRIC_FIELDS.map(k => [k, '']));
-}
 
 /** 'weight_gsm' -> 'weightGsm', matching the i18n key names. */
 function labelKey(field: string): StringKey {
@@ -17,6 +10,12 @@ function labelKey(field: string): StringKey {
     .map((p, i) => (i === 0 ? p : p.charAt(0).toUpperCase() + p.slice(1)))
     .join('') as StringKey;
 }
+
+/** Chip groups whose words need a numeric anchor to mean anything. */
+const GROUP_HINTS: Partial<Record<FabricChipKey, StringKey>> = {
+  thickness: 'thicknessHint',
+  stretch: 'stretchHint',
+};
 
 const NUMERIC: Record<string, { step: string; max: number }> = {
   weight_gsm:   { step: '1', max: 2000 },
@@ -41,6 +40,11 @@ export default function FabricSection({
       {(Object.keys(FABRIC_CHIPS) as FabricChipKey[]).map(group => (
         <fieldset key={group} className="mt-3">
           <legend className="text-sm font-medium">{t[group][lang]}</legend>
+          {GROUP_HINTS[group] && (
+            // The anchor that makes "thin" mean the same thing to every
+            // retailer. Without it each shop guesses its own scale.
+            <p className="mt-0.5 text-xs text-gray-500">{t[GROUP_HINTS[group]][lang]}</p>
+          )}
           <div className="mt-1 flex flex-wrap gap-3 text-sm">
             {/* "Not set" is a real option, not the absence of one: the retailer
                 must be able to take a claim back off the garment. */}
@@ -86,6 +90,7 @@ export default function FabricSection({
                     step={num?.step} min={num ? 0 : undefined} max={num?.max}
                     maxLength={num ? undefined : 200}
                     value={fabric[field] ?? ''}
+                    placeholder={field === 'construction' ? t.constructionHint[lang] : undefined}
                     onChange={e => set(field, e.target.value)}
                     className="mt-1 w-full rounded border px-2 py-1.5"
                   />

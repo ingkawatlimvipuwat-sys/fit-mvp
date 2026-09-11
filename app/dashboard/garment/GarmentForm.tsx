@@ -12,8 +12,8 @@ import { DEFAULT_RULE } from '@/lib/fit/rules';
 import type { FitRuleset } from '@/lib/fit/rules';
 import { activeMeasurements, strandedDimensions, buildGarmentFields } from '@/lib/garment/form-fields';
 import ColoursSection from '@/app/dashboard/garment/ColoursSection';
-import FabricSection, { emptyFabricForm, type FabricFormState } from '@/app/dashboard/garment/FabricSection';
-import type { Colour } from '@/lib/garment/colour-fabric';
+import FabricSection from '@/app/dashboard/garment/FabricSection';
+import { emptyFabricForm, type FabricFormState, type Colour } from '@/lib/garment/colour-fabric';
 
 type PresetOption = { id: string; name: string; rule: FitRuleset };
 

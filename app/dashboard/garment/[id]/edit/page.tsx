@@ -2,8 +2,7 @@ import { notFound } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { ruleSelectionForGarment } from '@/lib/fit/rule-selection';
 import GarmentForm from '@/app/dashboard/garment/GarmentForm';
-import { emptyFabricForm } from '@/app/dashboard/garment/FabricSection';
-import { FABRIC_FIELDS, type Colour } from '@/lib/garment/colour-fabric';
+import { emptyFabricForm, FABRIC_FIELDS, type Colour } from '@/lib/garment/colour-fabric';
 import type { Category, MeasurementBag } from '@/lib/supabase/types';
 
 /**
