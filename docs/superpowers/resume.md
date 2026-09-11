@@ -28,8 +28,12 @@ Single-tenant web app for one Thai clothing retailer. Customers visit a public s
 ## Current state
 
 **Branch:** `main` — at `d56230a`, pushed, deployed (verified by route probe, not assumed).
-**Status as of 2026-08-15:** Phase 1 + language toggle + **custom fit rules** + **garment
-edit page** all live in production. Prototype. 89 tests.
+**Status as of 2026-09-11:** Phase 1 + language toggle + **custom fit rules** + **garment
+edit page** all live in production. Prototype. 155 tests (89 pure + 66 added by the colour &
+fabric branch, which includes this project's first component tests).
+
+**Colour & fabric is BUILT but NOT SHIPPED** — see its section below. The migration must be
+applied before that branch is merged, or every shopper garment page 500s.
 
 **Live:** https://fit-mvp-eight.vercel.app
 
@@ -136,7 +140,7 @@ permanent visible entry point and dashboard subpages have a way back. The swallo
 error is fixed too: `app/dashboard/fit-rules/page.tsx` now surfaces `t.fitRulesLoadFailed`
 and suppresses the "no rules yet" empty state when the load actually failed.
 
-## NEXT — Colour & fabric reference (spec approved 2026-09-10, not built)
+## Colour & fabric reference — BUILT on `feature/colour-fabric`, NOT SHIPPED (2026-09-11)
 
 Early user feedback: buyers get garments whose colour or fabric finish does not match the
 photo. Founder brainstormed and approved a design: colour swatches (hex + name, unlimited
@@ -144,8 +148,90 @@ list) and fabric chips (finish / thickness / stretch / feel) plus a collapsed te
 shown as **Fit / Colour / Fabric** tabs on the shopper garment page and colour dots on the
 shop grid. Separate tables `garment_colours`, `garment_fabric`; one new column on `garments`.
 
-Spec: **`specs/2026-09-10-colour-fabric-design.md`** — its section 10 says how to execute
-(Opus directs, Sonnet implements, writing-plans first). No plan written yet. No code touched.
+Spec: **`specs/2026-09-10-colour-fabric-design.md`**
+Plan: **`plans/2026-09-11-colour-fabric.md`** — read its two sections at the end,
+"Post-review amendments" and "ORDERING IS NOT OPTIONAL", before doing anything with this branch.
+
+**State:** 14 commits on `feature/colour-fabric`, 155 tests passing, clean build. Nothing merged,
+nothing pushed, migration NOT applied. The live site is untouched.
+
+### Two things must happen before this ships, in this order
+
+**1. Apply the migration FIRST, before merging.** Verified against the live database on
+2026-09-11: `garments?select=true_colour_photo_url` returns `400 / 42703 column does not exist`.
+The shopper garment page's existing guard rethrows anything that is not `PGRST116`, so merging
+before the SQL runs **500s every shopper garment page** — the one page customers actually use.
+The migration is purely additive (one nullable column, two new tables, their policies) and the
+deployed code references none of it, so applying it while `main` is still the old code is safe and
+is the correct order. Re-probe and confirm 200 before merging.
+
+**2. Founder manual check (~10 min), and proofread the Thai.** On a phone: add a garment with 3
+colours and fabric set, open the shop link, confirm the swatches look like the real garment under
+daylight. Then edit, remove one colour, save, confirm the other two survived. Then edit again
+changing *only the name* and confirm the colours and both photos are still there — that last step
+is the "absent means keep" invariant seen from outside. Thai copy in `strings.ts` is a first draft;
+`feelCrisp` (`แข็งอยู่ทรง`, for "crisp") is the one most worth a second opinion.
+
+### What the tests do and do not cover
+
+This branch added the project's **first component tests** — `jsdom` + `@testing-library/react`,
+with `oxc: { jsx: { runtime: 'automatic' } }` in `vitest.config.ts`. Component test files opt into
+jsdom per file with a `// @vitest-environment jsdom` docblock, so the pure tests still run in node.
+
+Two harness traps, both already paid for:
+- `tsconfig.json` sets `"jsx": "preserve"` for Next, and **vite 8 transforms with oxc, not
+  esbuild** — an `esbuild: { jsx: 'automatic' }` block is silently ignored with only a warning.
+- **`@testing-library/react`'s auto-cleanup does not arm on this project** because vitest runs
+  without `globals: true`. Every component test file needs an explicit `afterEach(cleanup)` or
+  renders leak between tests and you get "multiple elements found".
+
+Still **no route or database coverage**. The API behaviour in `app/api/garments/*` is pinned only
+at the pure-parser layer (`colour-fabric-regression.test.ts`), the same way `round-trip.test.ts`
+pins the edit page. There is no staging Supabase — one project serves dev and production — so
+route tests would write to live data.
+
+### Three bugs found by review, none by tests
+
+- **PATCH deleted the old fabric photo when nothing pointed at the new one.** The write that would
+  have referenced the upload sits behind `if (fabricParse.present)`, so a request carrying a fabric
+  photo and no `fabric` field destroyed the stored object while the surviving row still referenced
+  it — a permanently broken image. Same shape as the `photo_url` concurrency bug from the edit page.
+  Fixed in `59814f2`.
+- **`GarmentForm` read `e.currentTarget` about twenty lines into `onSubmit`.** Correct today, but
+  React nulls it once the handler stops running synchronously, so any future `await` added above
+  that line would have made both new photo uploads silently stop working. Hoisted in `975a4b9`.
+- **`isFabricEmpty` was typed `Record<string, unknown>`**, which an interface without an index
+  signature is not assignable to, so every caller holding a real database row needed its own double
+  cast. Widened to `object` with one internal cast in `148944d`.
+
+### Decisions worth knowing
+
+- **Absent vs empty is load-bearing and the spec never stated it.** An absent `colours` field means
+  "leave the data alone"; a present `[]` means "replace it with nothing". Colours are replace-all,
+  so collapsing the two would let any client that predates this feature silently wipe a retailer's
+  colour list. `parseColoursField` returns a `present` flag for exactly this, and the regression
+  test pins it.
+- **The fabric row is written with an explicit insert-or-update, not `.upsert()`.** The spec said
+  upsert; PostgREST's `ON CONFLICT` column set is not obvious and guessing it wrong would silently
+  drop an existing `fabric_photo_url` on any save without a new file.
+- **`DELETE` now cleans up all three photos.** The cascade removes the child rows; Storage objects
+  are not in the database and would have been orphaned forever.
+- **The two new shopper queries joined the existing `Promise.all`**, and the grid does one grouped
+  colour query for the whole page — no N+1.
+- **The Fit panel stays mounted when another tab is active**, hidden by the `hidden` attribute.
+  `FitChecker` holds the shopper's typed measurements in local state, so unmounting it would clear
+  a half-filled form. Pinned by a test; do not "tidy" it into a conditional render, and do not put
+  a `flex`/`grid` class on those wrappers (a display utility beats `[hidden] { display: none }`).
+
+### Known gaps, deliberately left
+
+- **There is no way to remove a fabric photo**, only to replace it. So once a fabric row has a
+  photo it can never become empty enough to be deleted. Harmless, but it means a retailer cannot
+  fully retract fabric information.
+- **Child-row writes log and continue rather than failing the request.** A retailer whose colours
+  silently failed to save sees a successful save. Acceptable for a one-retailer prototype.
+- AI colour extraction, catalogue organisation, and colour search/filter are all deferred by the
+  spec's section 9.
 
 Second feedback item — **catalogue organisation** (categories, variants, sorting for shops
 with hundreds of items) — is deliberately deferred to its own future spec.
