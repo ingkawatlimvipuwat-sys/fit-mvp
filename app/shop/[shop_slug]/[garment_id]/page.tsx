@@ -4,8 +4,9 @@ import { dimensionsForCategory } from '@/lib/config/dimensions';
 import FitChecker from './FitChecker';
 import BackLink from './BackLink';
 import OtherGarments from './OtherGarments';
+import GarmentTabs from './GarmentTabs';
 import ShopHeader from '../ShopHeader';
-import type { Category } from '@/lib/supabase/types';
+import type { Category, GarmentFabric } from '@/lib/supabase/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,10 +54,15 @@ export default async function HeroPage({
   }
   if (!shop) notFound();
 
-  const [{ data: garment, error: garmentError }, { data: others }] = await Promise.all([
+  const [
+    { data: garment, error: garmentError },
+    { data: others },
+    { data: colourRows },
+    { data: fabricRow },
+  ] = await Promise.all([
     supabase
       .from('garments')
-      .select('id, name, category, photo_url, fit_profile, measurements')
+      .select('id, name, category, photo_url, true_colour_photo_url, fit_profile, measurements')
       .eq('id', params.garment_id)
       .eq('retailer_id', shop.id)
       .single(),
@@ -67,6 +73,16 @@ export default async function HeroPage({
       .neq('id', params.garment_id)
       .order('created_at', { ascending: false })
       .limit(8),
+    supabase
+      .from('garment_colours')
+      .select('hex, name')
+      .eq('garment_id', params.garment_id)
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('garment_fabric')
+      .select('*')
+      .eq('garment_id', params.garment_id)
+      .maybeSingle(),
   ]);
 
   if (garmentError && garmentError.code !== 'PGRST116') {
@@ -87,16 +103,22 @@ export default async function HeroPage({
         </div>
         <h1 className="mt-4 text-2xl font-semibold">{garment.name}</h1>
 
-        <FitChecker
-          garmentId={garment.id}
-          dimensions={dims.map(d => ({
-            key: d.key,
-            labelTh: d.labelTh,
-            hintTh: d.measureHintTh,
-            labelEn: d.labelEn,
-            hintEn: d.measureHintEn,
-          }))}
-        />
+        <GarmentTabs
+          colours={colourRows ?? []}
+          trueColourPhotoUrl={garment.true_colour_photo_url ?? null}
+          fabric={(fabricRow as GarmentFabric) ?? null}
+        >
+          <FitChecker
+            garmentId={garment.id}
+            dimensions={dims.map(d => ({
+              key: d.key,
+              labelTh: d.labelTh,
+              hintTh: d.measureHintTh,
+              labelEn: d.labelEn,
+              hintEn: d.measureHintEn,
+            }))}
+          />
+        </GarmentTabs>
 
         <OtherGarments shopSlug={params.shop_slug} others={others ?? []} />
       </main>
