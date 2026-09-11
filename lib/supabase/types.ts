@@ -19,6 +19,8 @@ export interface Garment {
   name: string;
   category: Category;
   photo_url: string;
+  /** Garment laid flat under daylight. Nullable: a colour reference, not a hero shot. */
+  true_colour_photo_url: string | null;
   fit_profile: string;
   /** Preset reference. Mutually exclusive with fit_rule_override. */
   fit_ruleset_id: string | null;
@@ -50,4 +52,40 @@ export interface FitRulesetRow {
   name: string;
   rule: FitRuleset;
   created_at: string;
+}
+
+export type Finish = 'matte' | 'slight_sheen' | 'glossy';
+export type Thickness = 'thin' | 'medium' | 'thick';
+export type Stretch = 'none' | 'some' | 'high';
+export type Feel = 'soft' | 'crisp' | 'rough';
+
+export interface GarmentColour {
+  id: string;
+  garment_id: string;
+  /** Always '#rrggbb'. Enforced by a CHECK constraint and by zod. */
+  hex: string;
+  name: string;
+  created_at: string;
+}
+
+/**
+ * Zero or one per garment. Every content field is nullable, and null means
+ * "the retailer did not say" — never "no". isFabricEmpty() in
+ * lib/garment/colour-fabric.ts is the only correct way to ask whether this row
+ * carries any information, because it ignores garment_id/updated_at.
+ */
+export interface GarmentFabric {
+  garment_id: string;
+  finish: Finish | null;
+  thickness: Thickness | null;
+  stretch: Stretch | null;
+  feel: Feel | null;
+  composition: string | null;
+  weight_gsm: number | null;
+  construction: string | null;
+  thread_count: number | null;
+  pore_size_mm: number | null;
+  notes: string | null;
+  fabric_photo_url: string | null;
+  updated_at: string;
 }
