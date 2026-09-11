@@ -2536,3 +2536,40 @@ in case a zod upgrade changes this.
 controller, not just run: removing `.strict()` fails 2 tests, making `isFabricEmpty` count
 non-content columns fails 1, and treating an absent `colours` field as an empty list fails 1. The
 tests are not vacuous.
+
+---
+
+## ORDERING IS NOT OPTIONAL: migration BEFORE merge
+
+Verified against the live database on 2026-09-11, not reasoned about:
+
+```
+garments?select=id,true_colour_photo_url  -> 400 {"code":"42703",
+                                              "message":"column garments.true_colour_photo_url does not exist"}
+garment_colours?select=hex                -> 404 {"code":"PGRST205"}
+```
+
+`app/shop/[shop_slug]/[garment_id]/page.tsx` now selects `true_colour_photo_url`, and its existing
+guard is:
+
+```ts
+if (garmentError && garmentError.code !== 'PGRST116') {
+  throw new Error('shop data unavailable: ' + garmentError.message);
+}
+```
+
+`42703` is not `PGRST116`, so **merging this branch before the migration is applied throws on every
+shopper garment page** — a 500 on the one page customers actually use. The colour and fabric queries
+themselves degrade silently (their errors are destructured without `error` and `?? []` covers the
+null), so they are not the hazard. The single added column is.
+
+**The migration is purely additive** — one nullable column, two new tables, their policies. Nothing
+in the currently-deployed code references any of it. So it is safe to apply to production *first*,
+while `main` is still the old code, and that is the correct order:
+
+1. Confirm the Supabase project is not auto-paused.
+2. Apply `supabase/migrations/0003_colour_fabric.sql` in the SQL editor. Live site unaffected.
+3. Re-run the probe above and confirm the column and tables now answer 200.
+4. Only then merge to `main` and push.
+
+Doing it the other way round gives a broken live site for however long the migration takes.
