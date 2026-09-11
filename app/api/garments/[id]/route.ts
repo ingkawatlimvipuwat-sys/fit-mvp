@@ -154,7 +154,14 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   // Only now are the replaced objects unreferenced.
   if (hero) await removeStoredPhoto(existing.photo_url, user.id);
   if (trueColour) await removeStoredPhoto(existing.true_colour_photo_url, user.id);
-  if (fabricPic && existingFabric?.fabric_photo_url) {
+  // A fabric photo can only be cleaned up if something was actually written to
+  // point at the new one. When `fabric` was absent, Rule 2 skipped the whole
+  // fabric block, so nothing references the upload: delete the orphan and leave
+  // the old photo alone. Deleting the old one here would leave the surviving row
+  // pointing at a destroyed object — a permanently broken image.
+  if (fabricPic && !fabricParse.present) {
+    await removeStoredObject(fabricPic.path, user.id);
+  } else if (fabricPic && existingFabric?.fabric_photo_url) {
     await removeStoredPhoto(existingFabric.fabric_photo_url, user.id);
   }
 
