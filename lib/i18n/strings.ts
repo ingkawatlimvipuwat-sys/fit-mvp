@@ -182,6 +182,62 @@ export const t = {
     en: 'Customer chest {body} cm + garment {garment} cm →',
   },
   unitCm: { th: 'ซม.', en: 'cm' },
+
+  // --- Colour & fabric: shopper tabs ---
+  tabFit:    { th: 'ความพอดี', en: 'Fit' },
+  tabColour: { th: 'สี', en: 'Colour' },
+  tabFabric: { th: 'เนื้อผ้า', en: 'Fabric' },
+
+  // --- Colour & fabric: retailer form ---
+  coloursSection:         { th: 'สีของสินค้า', en: 'Colours' },
+  addColour:              { th: 'เพิ่มสี', en: 'Add colour' },
+  colourName:             { th: 'ชื่อสี', en: 'Colour name' },
+  removeColour:           { th: 'ลบสี', en: 'Remove colour' },
+  colourNameRequired:     { th: 'กรุณาใส่ชื่อสีทุกสี', en: 'Every colour needs a name' },
+  trueColourPhoto:        { th: 'รูปสีจริง (วางราบ แสงธรรมชาติ)', en: 'True colour photo (laid flat, daylight)' },
+  fabricSection:          { th: 'เนื้อผ้า', en: 'Fabric' },
+  fabricTechnicalDetails: { th: 'รายละเอียดทางเทคนิค', en: 'Technical details' },
+  fabricPhoto:            { th: 'รูปใกล้เนื้อผ้า', en: 'Fabric close-up photo' },
+  notSet:                 { th: 'ไม่ระบุ', en: 'Not set' },
+
+  // --- Fabric chips: group labels and values ---
+  // The VALUE keys are derived at runtime by chipStringKey() in
+  // lib/garment/colour-fabric.ts, which builds e.g. 'finishSlightSheen' from
+  // the group 'finish' and the enum value 'slight_sheen'. Renaming a key here
+  // without renaming the enum value there renders a blank label, with no error.
+  finish:            { th: 'ความเงา', en: 'Finish' },
+  finishMatte:       { th: 'ด้าน', en: 'Matte' },
+  finishSlightSheen: { th: 'เงาเล็กน้อย', en: 'Slight sheen' },
+  finishGlossy:      { th: 'เงา', en: 'Glossy' },
+  thickness:         { th: 'ความหนา', en: 'Thickness' },
+  thicknessThin:     { th: 'บาง', en: 'Thin' },
+  thicknessMedium:   { th: 'ปานกลาง', en: 'Medium' },
+  thicknessThick:    { th: 'หนา', en: 'Thick' },
+  stretch:           { th: 'ความยืด', en: 'Stretch' },
+  stretchNone:       { th: 'ไม่ยืด', en: 'None' },
+  stretchSome:       { th: 'ยืดเล็กน้อย', en: 'Some' },
+  stretchHigh:       { th: 'ยืดมาก', en: 'High' },
+  feel:              { th: 'สัมผัส', en: 'Feel' },
+  feelSoft:          { th: 'นุ่ม', en: 'Soft' },
+  feelCrisp:         { th: 'แข็งอยู่ทรง', en: 'Crisp' },
+  feelRough:         { th: 'หยาบ', en: 'Rough' },
+
+  // --- Fabric technical labels ---
+  composition:  { th: 'ส่วนประกอบ', en: 'Composition' },
+  weightGsm:    { th: 'น้ำหนัก (g/m²)', en: 'Weight (g/m²)' },
+  construction: { th: 'โครงสร้างผ้า', en: 'Construction' },
+  threadCount:  { th: 'จำนวนเส้นด้าย', en: 'Thread count' },
+  poreSizeMm:   { th: 'ขนาดรูผ้า (มม.)', en: 'Pore size (mm)' },
+  notes:        { th: 'หมายเหตุ', en: 'Notes' },
+
+  // --- Colour & fabric: shopper copy ---
+  trueColourCaption:      { th: 'ถ่ายวางราบใต้แสงธรรมชาติ', en: 'Photographed flat under daylight' },
+  screenColourDisclaimer: { th: 'สีจริงอาจต่างจากหน้าจอเล็กน้อย', en: 'Real colour may differ slightly from your screen' },
+  moreColours:            { th: '+{n}', en: '+{n}' },
+
+  // --- Colour & fabric: errors ---
+  colourInvalid: { th: 'ข้อมูลสีไม่ถูกต้อง', en: 'Invalid colour data' },
+  fabricInvalid: { th: 'ข้อมูลเนื้อผ้าไม่ถูกต้อง', en: 'Invalid fabric data' },
 } as const;
 
 export type StringKey = keyof typeof t;
