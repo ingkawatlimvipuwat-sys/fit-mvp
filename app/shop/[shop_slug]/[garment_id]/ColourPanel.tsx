@@ -24,6 +24,9 @@ export default function ColourPanel({
                 aria-hidden="true"
               />
               <span className="mt-1 block break-words text-xs text-gray-700">{c.name}</span>
+              {/* The code itself, so a shopper can check or match the exact
+                  colour rather than trusting their screen's rendering of it. */}
+              <span className="block font-mono text-[10px] uppercase text-gray-400">{c.hex}</span>
             </li>
           ))}
         </ul>

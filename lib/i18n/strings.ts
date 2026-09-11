@@ -222,11 +222,24 @@ export const t = {
   feelCrisp:         { th: 'แข็งอยู่ทรง', en: 'Crisp' },
   feelRough:         { th: 'หยาบ', en: 'Rough' },
 
+  // --- Fabric chip definitions ---
+  // Anchors so "thin" and "stretchy" mean the same thing to every retailer and
+  // shopper. Shown under the form's radio groups and under the shopper's chips.
+  thicknessHint: {
+    th: 'บาง < 150 g/m² · ปานกลาง 150–300 · หนา > 300',
+    en: 'Thin < 150 g/m² · Medium 150–300 · Thick > 300',
+  },
+  stretchHint: {
+    th: 'เมื่อดึงผ้า: ไม่ยืด < 5% · ยืดเล็กน้อย 5–15% · ยืดมาก > 15%',
+    en: 'When pulled: none < 5% · some 5–15% · high > 15%',
+  },
+
   // --- Fabric technical labels ---
   composition:  { th: 'ส่วนประกอบ', en: 'Composition' },
   weightGsm:    { th: 'น้ำหนัก (g/m²)', en: 'Weight (g/m²)' },
-  construction: { th: 'โครงสร้างผ้า', en: 'Construction' },
-  threadCount:  { th: 'จำนวนเส้นด้าย', en: 'Thread count' },
+  construction: { th: 'โครงสร้างผ้า (วิธีทอ/ถัก)', en: 'Construction (weave/knit)' },
+  constructionHint: { th: 'เช่น ทอลายขัด, เจอร์ซีย์, ลายสอง', en: 'e.g. plain weave, single jersey, twill' },
+  threadCount:  { th: 'จำนวนเส้นด้ายต่อตารางนิ้ว', en: 'Thread count (per square inch)' },
   poreSizeMm:   { th: 'ขนาดรูผ้า (มม.)', en: 'Pore size (mm)' },
   notes:        { th: 'หมายเหตุ', en: 'Notes' },
 

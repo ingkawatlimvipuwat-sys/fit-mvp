@@ -31,6 +31,9 @@ export default function ColoursSection({
               className="h-9 w-12 rounded border"
               aria-label={`${t.coloursSection[lang]} ${i + 1}`}
             />
+            {/* The native picker swatch hides the value; the shopper page shows
+                this code, so the retailer should see the same thing here. */}
+            <span className="w-16 font-mono text-xs uppercase text-gray-500">{c.hex}</span>
             <input
               type="text"
               value={c.name}

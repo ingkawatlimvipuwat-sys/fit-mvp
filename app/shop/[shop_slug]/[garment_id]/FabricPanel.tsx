@@ -13,6 +13,12 @@ const ICONS: Record<string, React.ReactNode> = {
   feel:      <path d="M2 10c2-4 4 4 6 0s4-4 6 0" />,
 };
 
+/** Chip groups whose words need the numeric anchor spelled out. */
+const CHIP_HINTS: Partial<Record<string, StringKey>> = {
+  thickness: 'thicknessHint',
+  stretch: 'stretchHint',
+};
+
 /** 'weight_gsm' -> 'weightGsm', matching the i18n key names. */
 function labelKey(field: string): StringKey {
   return field.split('_')
@@ -44,6 +50,19 @@ export default function FabricPanel({ fabric }: { fabric: GarmentFabric }) {
             </li>
           ))}
         </ul>
+      )}
+
+      {/* "Thick" means nothing without a scale, and phones have no hover for a
+          tooltip, so the anchor for each shown chip is spelled out in plain
+          sight. Only for the groups that have one, only when that chip shows. */}
+      {chips.some(c => CHIP_HINTS[c.group]) && (
+        <div className="mt-2 space-y-0.5">
+          {chips.filter(c => CHIP_HINTS[c.group]).map(c => (
+            <p key={c.group} className="text-xs text-gray-400">
+              {t[c.group][lang]}: {t[CHIP_HINTS[c.group]!][lang]}
+            </p>
+          ))}
+        </div>
       )}
 
       {fabric.fabric_photo_url && (
