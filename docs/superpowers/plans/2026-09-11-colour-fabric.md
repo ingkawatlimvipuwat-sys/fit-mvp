@@ -2503,3 +2503,36 @@ test count, what the manual check covered. Add to "Open follow-ups" anything del
 5. **Absent-vs-empty for `colours`/`fabric` is not specified.** Chosen: absent = keep, present-empty
    = replace. The alternative silently deletes a retailer's colour list on any save from a client
    that does not know about colours.
+
+---
+
+## Post-review amendments — recorded during execution
+
+This section supersedes the task text above where they disagree. Same convention as
+`plans/2026-08-13-garment-edit.md`.
+
+**Task 4 — `storageKeyFor` fell back to `jpg` only for a filename with a dot.**
+The plan's test asserted `storageKeyFor(user, 'noextension')` ends in `.jpg`, describing the
+*documented* intent. The original route code did not do that: `'noextension'.split('.').pop()`
+returns the whole filename, so it produced `…/uuid.noextensio` — a ten-character pseudo-extension.
+The test encoded intent, not behaviour, and the implementer surfaced the conflict instead of
+quietly editing the test.
+
+Accepted the fix: `storageKeyFor` now uses `lastIndexOf('.')`, so a name with no dot at all gets
+`jpg`. Every filename containing a dot is byte-identical to before, and the security property that
+actually matters is untouched — `a.jp/g` still sanitises to `jpg`, so no slash or query string can
+reach the Storage key. The delta affects only dotless filenames, which a browser file input does
+not produce.
+
+**Task 4 — test count is 8, not the 9 the plan estimated**, so the suite total after Task 4 is 123,
+not 124. The plan's per-task estimates are approximate; the literal test code is authoritative.
+
+**Task 2 — no zod fallback was needed.** zod 4.4.3 does feed `undefined` through `z.preprocess`
+for an absent object key, so `FabricSchema.safeParse({})` yields all-null with the original
+`.nullable()` helpers. The `.nullish()` contingency in Task 2 Step 4 is unused; leave it documented
+in case a zod upgrade changes this.
+
+**Verification note.** Task 2's three load-bearing invariants were mutation-tested by the
+controller, not just run: removing `.strict()` fails 2 tests, making `isFabricEmpty` count
+non-content columns fails 1, and treating an absent `colours` field as an empty list fails 1. The
+tests are not vacuous.
