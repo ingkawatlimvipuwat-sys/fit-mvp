@@ -36,6 +36,18 @@ export function createSupabaseAdminClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
+    {
+      auth: { autoRefreshToken: false, persistSession: false },
+      // Next patches global fetch and caches GET responses in its Data Cache.
+      // `export const dynamic = 'force-dynamic'` makes the ROUTE dynamic but
+      // does not reliably opt these reads out, so the public shop pages served
+      // a snapshot taken at the first request of the server's life: a retailer
+      // could add a garment or a colour and never see it appear. Opting out
+      // here covers every caller, which is the point — a per-query opt-out
+      // would be one more thing to remember at each new call site.
+      global: {
+        fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }),
+      },
+    }
   );
 }
