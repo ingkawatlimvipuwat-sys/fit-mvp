@@ -38,15 +38,18 @@ lookup table and a nearest-row match over four sizes.
 | Decision | Choice | Rationale |
 |---|---|---|
 | Chart source | Built-in Thai default **now**, per-shop override **later** | Ship customer value first; leave a clean seam for overrides. |
-| Gender | **Women's + Men's**, customer picks | A Thai women's M ≠ men's M. Customer taps gender first. |
+| Body profile | **Adult Women's + Men's** now; axis generalized so Teen/Kids drop in later | A Thai women's M ≠ men's M. The chart is keyed by a `BodyProfile`, not a raw gender, so non-adult profiles are additive — no restructuring. |
+| Non-adults (teens, children) | **Not in the helper now.** They use the always-available manual entry. | Children's clothing is sized by age/height, not S/M/L/XL — a genuinely different structure. Deferred to a future profile (see §10), tied to the age-data module. |
 | Interaction | **One helper panel, both jobs** | Avoids mode-toggle screen states; partial-estimate stays natural. |
 | Which dims the chart carries | **shoulder, chest, waist, hip only** | These scale with body size. `length_cm` and `sleeve_cm` are garment-cut / length-preference numbers, not fixed body attributes — we do not invent them. |
 | Garment applicability | Helper only fills dims **this garment actually has** | Sleeveless garment → sleeve never touched. Falls out of the existing per-garment dimension list. |
 | Transparency | Every filled/estimated value lands in the **normal, editable inputs** | No hidden guessing; customer can correct any value before checking fit. |
 
 **Out of scope for this build:** the dashboard editor for per-shop overrides
-(phase 2), and additional sizes beyond S/M/L/XL (the data shape allows them, we
-just don't ship them yet).
+(phase 2); additional sizes beyond S/M/L/XL (the data shape allows them, we just
+don't ship them yet); Teen/Kids body profiles (§10); and the age-data collection
+module (§10). The helper is an **adult convenience** — everyone, including
+non-adults, keeps the manual-entry path that already produces a full fit verdict.
 
 ## 4. Architecture
 
@@ -71,17 +74,22 @@ only populates the same inputs that already POST to `/api/fit/evaluate`.
 ### Data shape
 
 ```ts
-export type Gender = 'women' | 'men';
-export type SizeCode = 'S' | 'M' | 'L' | 'XL';
+// Keyed by body profile, NOT raw gender, so non-adult profiles (e.g.
+// 'teen_women' / 'kids') are additive later without restructuring. Phase 1
+// ships only the two adult profiles.
+export type BodyProfile = 'women' | 'men'; // future: 'teen_women' | 'teen_men' | 'kids' | ...
+export type SizeCode = 'S' | 'M' | 'L' | 'XL'; // adult codes; a future kids profile may use age bands
 
 // Only body dimensions that scale with size. Never length_cm / sleeve_cm.
 export type SizeChartDim = 'shoulder_cm' | 'chest_cm' | 'waist_cm' | 'hip_cm';
 
 export type SizeRow = Record<SizeChartDim, number>;
-export type SizeChart = Record<Gender, Record<SizeCode, SizeRow>>;
+// Per-profile map is size-code → row. A future kids profile could key by age
+// band instead; keep the inner map's key type open enough to allow that.
+export type SizeChart = Record<BodyProfile, Record<SizeCode, SizeRow>>;
 ```
 
-### Default numbers (cm) — starting values, editable in one place
+### Default numbers (cm) — adult, starting values, editable in one place
 
 | | Shoulder | Chest/Bust | Waist | Hip |
 |---|---|---|---|---|
@@ -101,7 +109,7 @@ edit + deploy.
 
 ```ts
 fillFromSize(
-  gender: Gender,
+  profile: BodyProfile,
   size: SizeCode,
   garmentDims: DimensionKey[],
 ): Partial<Record<DimensionKey, number>>
@@ -112,7 +120,7 @@ never present in the chart so are never returned.
 
 ```ts
 estimateFromPartial(
-  gender: Gender,
+  profile: BodyProfile,
   known: Partial<Record<DimensionKey, number>>,
   garmentDims: DimensionKey[],
 ): { values: Partial<Record<DimensionKey, number>>; inferredSize: SizeCode } | null
@@ -134,8 +142,9 @@ honest and explainable.
 
 ## 6. Customer flow
 
-1. Panel shows **Women's / Men's** toggle, **S M L XL** buttons, and an
-   **"Estimate the rest"** button.
+1. Panel shows an adult **Women's / Men's** toggle, **S M L XL** buttons, and an
+   **"Estimate the rest"** button. Framing makes clear it's an adult shortcut;
+   anyone can ignore it and type real numbers (the manual path is unchanged).
 2. Tap a size → all applicable body fields fill (editable), marked subtly as
    auto-filled.
 3. Or type what you know → tap "Estimate the rest" → blank body fields fill; a
@@ -143,8 +152,9 @@ honest and explainable.
 4. `length_cm` / `sleeve_cm` stay blank for the customer to measure or skip.
 5. All values remain editable; **Check fit** proceeds exactly as today.
 
-Gender is used only to select the chart on the client. It is **not** sent to the
-API and **not** stored — `/api/fit/evaluate` still receives plain cm numbers.
+Body profile is used only to select the chart on the client. It is **not** sent
+to the API and **not** stored — `/api/fit/evaluate` still receives plain cm
+numbers.
 
 ## 7. Error / edge handling
 
@@ -169,8 +179,8 @@ Pure functions in `lib/fit/sizeEstimate.ts` get unit tests alongside the current
 - **Boundary trap (CLAUDE.md):** verify any fixture that feeds into a fit verdict
   uses 97/100 not 96/100 where `good_fit` is intended.
 
-FitChecker gets a manual browser check (both genders, a size fill, a partial
-estimate, a sleeveless garment, editing an auto-filled value).
+FitChecker gets a manual browser check (both adult profiles, a size fill, a
+partial estimate, a sleeveless garment, editing an auto-filled value).
 
 ## 9. Phase 2 seam (not built now)
 
@@ -178,6 +188,35 @@ estimate, a sleeveless garment, editing an auto-filled value).
 Later, a per-shop override stored as JSON on the shop row merges over the default
 — no customer-side rework. This honors the "default + override" choice without
 building the dashboard editor yet.
+
+## 10. Tagged future work (NOT implemented — design seams only)
+
+These are recorded so the phase-1 code doesn't need rework to add them. **None
+are built in this phase.** No fields, migrations, or UI ship for them now.
+
+### 10a. Teen / Kids body profiles
+The chart is keyed by `BodyProfile`, so adding `'teen_women'`, `'teen_men'`, or
+`'kids'` is additive — new rows + new toggle options, no restructuring. A kids
+profile likely keys rows by **age band or height** rather than S/M/L/XL, which is
+why §4 keeps the inner map's key type able to widen. Until then, teens and
+children use manual entry.
+
+### 10b. Age-data collection module
+**Idea (founder, 2026-09-16):** optionally collect a customer's age when they
+choose to enter it, to (a) improve size estimation over time and (b) unlock
+age-based kids sizing (10a).
+
+**Not implemented now. Seam left open:**
+- The size functions take a `BodyProfile`; an age-derived profile would slot in
+  at the same call site with no signature change beyond the profile union.
+- The fit-session record already stores per-`customer_token` measurements; an
+  optional `age` (or `age_band`) column could be added there when the module
+  lands — a purely additive migration, no rework of the phase-1 write path.
+- `/api/fit/evaluate` would gain an optional `age` field; today it is neither
+  sent nor expected, and adding it later is backward-compatible.
+
+When this module is built it needs its own spec (consent/PDPA considerations for
+collecting age in Thailand, especially any data relating to minors).
 
 ---
 
