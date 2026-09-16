@@ -62,6 +62,49 @@ commits ahead, while the live site showed none of it. Merged and deployed the sa
 
 ---
 
+## Size helper — BUILT ON A BRANCH 2026-09-16, NOT YET SHIPPED
+
+**Branch `feature/size-helper`, not merged to `main` — so it is not on the live site yet.**
+Ship it the usual way (`git checkout main && git merge --ff-only feature/size-helper && git
+push origin main`, then probe the live site) once the founder is ready.
+
+**Why:** customer feedback — most shoppers don't know all their own body measurements. The fit
+form now has a "Not sure of your measurements?" panel: pick a Women's/Men's adult size
+(S/M/L/XL) to fill the garment's applicable body fields, or enter what you know and tap
+"Estimate the rest" to fill the blanks from the nearest-matching size.
+
+**How it's built (no API or DB change — all client-side data + pure functions):**
+- `lib/config/sizeChart.ts` — the built-in **Thai adult** body size chart (women's + men's,
+  S/M/L/XL, columns shoulder/chest/waist/hip only). **The numbers are PROVISIONAL best-estimates
+  and are meant to be edited here in one place when real fit data lands** — the file header says
+  so. `getSizeChart()` is the single read point, left as the seam for a future per-shop override.
+- `lib/fit/sizeEstimate.ts` — `fillFromSize()` and `estimateFromPartial()`, pure, unit-tested
+  (12 new tests: 3 chart + 9 estimate; suite goes 155 → 167). Estimation is nearest-row by
+  summed absolute difference; exact ties resolve to
+  the **smaller** size (avoids over-sizing). Never overwrites a value the shopper typed; never
+  fills `length_cm`/`sleeve_cm` (those aren't body attributes, by design).
+- `FitChecker.tsx` — the panel. Filled values land in the normal editable inputs; the note
+  clears when the shopper edits a field by hand.
+- New i18n keys in `lib/i18n/strings.ts` (th + en).
+
+Verified in-browser on localhost against the live-DB `myshop-test` bottom garment: both
+profiles fill correctly, partial estimate infers the right size, empty estimate shows the
+"enter at least one" hint, length stays blank, TH/EN both render, no console errors.
+
+Design: **`specs/2026-09-16-size-helper-design.md`** (see §10 for the two deferred items below).
+Plan: **`plans/2026-09-16-size-helper.md`**.
+
+**Deferred, tagged in the spec (§10), NOT built:**
+- **Teen / Kids body profiles.** The chart is keyed by `BodyProfile` (not raw gender) so these
+  drop in as new profiles later; kids sizing likely keys rows by age band, not S/M/L/XL. Teens
+  and children use manual entry meanwhile.
+- **Age-data collection module.** Founder's idea, 2026-09-16 — optionally capture a shopper's age
+  to sharpen estimation and unlock kids sizing. Seams left open (profile arg, an additive
+  `age`/`age_band` column on the fit-session record, an optional `age` on `/api/fit/evaluate`).
+  Needs its own spec, including PDPA/consent for age data and especially minors.
+
+---
+
 ## Garment edit page — SHIPPED 2026-08-15
 
 **A retailer cannot apply a fit rule to a garment they already own.**
