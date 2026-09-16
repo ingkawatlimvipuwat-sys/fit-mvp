@@ -3,6 +3,9 @@ import { useEffect, useRef, useState } from 'react';
 import { t } from '@/lib/i18n/strings';
 import { getOrCreateCustomerToken } from '@/lib/customer-token';
 import { useLanguage } from '@/lib/hooks/useLanguage';
+import { fillFromSize, estimateFromPartial } from '@/lib/fit/sizeEstimate';
+import type { BodyProfile } from '@/lib/config/sizeChart';
+import type { DimensionKey } from '@/lib/config/dimensions';
 
 type DimInfo = {
   key: string;
@@ -45,7 +48,11 @@ export default function FitChecker({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [prefilled, setPrefilled] = useState(false);
+  const [profile, setProfile] = useState<BodyProfile>('women');
+  const [sizeNote, setSizeNote] = useState<string | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
+
+  const garmentDims = dimensions.map(d => d.key) as DimensionKey[];
 
   const verdictLabel: Record<Verdict, string> = {
     too_tight: t.verdictTooTight[lang], snug: t.verdictSnug[lang],
@@ -75,6 +82,39 @@ export default function FitChecker({
   useEffect(() => {
     if (result) resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [result]);
+
+  function applySize(size: 'S' | 'M' | 'L' | 'XL') {
+    const filled = fillFromSize(profile, size, garmentDims);
+    setValues(v => {
+      const next = { ...v };
+      for (const [k, num] of Object.entries(filled)) next[k] = String(num);
+      return next;
+    });
+    setPrefilled(false);
+    setError(null);
+    setSizeNote(t.filledFromSize[lang].replace('{size}', size));
+  }
+
+  function estimateRest() {
+    const known: Partial<Record<DimensionKey, number>> = {};
+    for (const d of garmentDims) {
+      const n = Number(values[d]);
+      if (values[d] && Number.isFinite(n) && n > 0) known[d] = n;
+    }
+    const res = estimateFromPartial(profile, known, garmentDims);
+    if (!res) {
+      setSizeNote(t.needMeasurementToEstimate[lang]);
+      return;
+    }
+    setValues(v => {
+      const next = { ...v };
+      for (const [k, num] of Object.entries(res.values)) next[k] = String(num);
+      return next;
+    });
+    setPrefilled(false);
+    setError(null);
+    setSizeNote(t.estimatedAs[lang].replace('{size}', res.inferredSize));
+  }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); setError(null);
@@ -115,6 +155,39 @@ export default function FitChecker({
     <section className="mt-8 space-y-6">
       <form className="space-y-4 rounded border bg-white p-4" onSubmit={onSubmit}>
         <h2 className="text-lg font-medium">{t.yourMeasurements[lang]}</h2>
+        <div className="space-y-2 rounded bg-gray-50 p-3">
+          <p className="text-sm font-medium text-gray-700">{t.sizeHelperTitle[lang]}</p>
+          <p className="text-xs text-gray-500">{t.sizeHelperIntro[lang]}</p>
+          <div className="flex gap-2">
+            {(['women', 'men'] as const).map(p => (
+              <button
+                key={p} type="button" onClick={() => setProfile(p)}
+                className={`rounded border px-3 py-1 text-sm ${
+                  profile === p ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-300 bg-white text-gray-700'
+                }`}
+              >
+                {p === 'women' ? t.profileWomen[lang] : t.profileMen[lang]}
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {(['S', 'M', 'L', 'XL'] as const).map(s => (
+              <button
+                key={s} type="button" onClick={() => applySize(s)}
+                className="rounded border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-700"
+              >
+                {s}
+              </button>
+            ))}
+            <button
+              type="button" onClick={estimateRest}
+              className="rounded border border-gray-300 bg-white px-3 py-1 text-sm text-gray-700"
+            >
+              {t.estimateRest[lang]}
+            </button>
+          </div>
+          {sizeNote && <p className="text-xs text-gray-600">{sizeNote}</p>}
+        </div>
         {prefilled && (
           <div className="flex items-center justify-between gap-3 rounded bg-gray-50 px-3 py-2">
             <span className="text-sm text-gray-500">{t.prefilledNotice[lang]}</span>
@@ -142,6 +215,7 @@ export default function FitChecker({
                 const val = e.target.value;
                 setValues(v => ({ ...v, [d.key]: val }));
                 setPrefilled(false);
+                setSizeNote(null);
               }}
               className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
             />
