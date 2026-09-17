@@ -50,8 +50,9 @@ npm test && npm run build
 - **`tsc` proves nothing about Supabase query shapes.** The clients are untyped, so
   `.from('garments')` returns `any`. A wrong field shape compiles clean and crashes at runtime.
   For anything touching a query result, tests and manual checks are the only real gate.
-- The suite is **pure unit tests over `lib/fit`** — no route or DB coverage at all. Currently
-  47 tests. Anything touching an API route or the database needs a manual check.
+- The suite is **unit tests over `lib/` plus a few `jsdom` component tests** (the colour &
+  fabric branch added the first component tests) — **no route or DB coverage at all**. Currently
+  167 tests across 16 files. Anything touching an API route or the database needs a manual check.
 
 ## Landmines — do not relearn these
 
