@@ -10,7 +10,8 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
-  const form = await req.formData();
+  const form = await req.formData().catch(() => null);
+  if (!form) return NextResponse.json({ error: 'ข้อมูลไม่ถูกต้อง' }, { status: 400 });
 
   const parsed = parseGarmentFields(form);
   if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });

@@ -51,7 +51,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     .eq('garment_id', params.id)
     .maybeSingle();
 
-  const form = await req.formData();
+  const form = await req.formData().catch(() => null);
+  if (!form) return NextResponse.json({ error: 'ข้อมูลไม่ถูกต้อง' }, { status: 400 });
 
   const parsed = parseGarmentFields(form);
   if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });

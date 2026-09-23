@@ -11,7 +11,8 @@ const SignupSchema = z.object({
 });
 
 export async function POST(req: Request) {
-  const body = await req.json();
+  // Malformed JSON becomes null, which the schema rejects as a 400 rather than a 500.
+  const body = await req.json().catch(() => null);
   const parsed = SignupSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
