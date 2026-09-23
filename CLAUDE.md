@@ -51,8 +51,8 @@ npm test && npm run build
   `.from('garments')` returns `any`. A wrong field shape compiles clean and crashes at runtime.
   For anything touching a query result, tests and manual checks are the only real gate.
 - The suite is **unit tests over `lib/` plus a few `jsdom` component tests** (the colour &
-  fabric branch added the first component tests) — **no route or DB coverage at all**. Currently
-  167 tests across 16 files. Anything touching an API route or the database needs a manual check.
+  fabric branch added the first component tests) — **no route or DB coverage at all**. Current
+  counts are in `resume.md`. Anything touching an API route or the database needs a manual check.
 
 ## Landmines — do not relearn these
 
@@ -71,19 +71,22 @@ npm test && npm run build
 
 | File | What it is |
 |---|---|
-| `docs/superpowers/resume.md` | **State of record** — current status, file map, open follow-ups. Update this. |
-| `docs/superpowers/handoff-2026-08-11-custom-fit-rules.md` | Historical. Design rationale (§3) and traps (§4) still worth reading. Status header is superseded by `resume.md`. |
-| `docs/superpowers/handoff-fable5.md` | Historical. Product intent (§2) and how to work with the founder (§3) still apply. Its §6 environment notes are stale. |
-| `docs/superpowers/specs/` | Design docs per feature. |
-| `docs/superpowers/plans/` | Task-by-task implementation plans. |
+| `docs/superpowers/resume.md` | **Status of record** — what's live, the one to-do list, environment, code map. Update it in place. |
+| `docs/superpowers/decisions-and-lessons.md` | Settled decisions and paid-for traps, by topic. Read the section for the area you touch; add new lessons there. |
+| `docs/superpowers/specs/`, `plans/` | Design doc and task plan per feature, as written at the time. Not updated afterwards. |
+| `docs/superpowers/archive/` | Old handoff docs and the 2026-08-18 UX audit. History only — their live content was moved into the two files above. |
 
-There are three handoff docs because each session wrote a new one. **Do not add a fourth** —
-update `resume.md` instead.
+**Do not write a new handoff document.** Earlier sessions each wrote one, and the founder got
+lost among them. Update `resume.md` and `decisions-and-lessons.md` instead.
 
 ## Working with the founder
 
 Non-technical. Give click-by-click instructions for anything they must do themselves (SQL,
 Vercel, `gh auth login`). Explain the why, not just the what. Never ask for credentials.
+
+The founder makes product calls; you make implementation calls. When a decision is genuinely
+theirs, ask with a recommendation rather than a survey of options. Features go brainstorm →
+spec → plan → build, and the founder checks each one in a browser before it ships.
 
 Cost-conscious: they have asked that mechanical/boilerplate edits be delegated to Sonnet
 subagents, with design and verification kept in the main session. **Verify every subagent
