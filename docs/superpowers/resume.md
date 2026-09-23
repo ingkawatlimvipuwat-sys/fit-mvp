@@ -27,12 +27,14 @@ Single-tenant web app for one Thai clothing retailer. Customers visit a public s
 
 ## Current state
 
-**Branch:** `main` — at `5b076b6`, pushed, deployed (verified by content probe on the live
-site, not assumed).
-**Status as of 2026-09-11:** Phase 1 + language toggle + **custom fit rules** + **garment
-edit page** + **colour & fabric reference** all live in production. Prototype. 155 tests
-(89 pure + 66 added by the colour & fabric branch, which includes this project's first
-component tests).
+**Branch:** `main` — at `d739a01`, pushed, deployed (verified 2026-09-23 by content probe:
+the size helper's `Estimate the rest` string is in the live garment-page JS bundle).
+**Status as of 2026-09-23:** Phase 1 + language toggle + **custom fit rules** + **garment
+edit page** + **colour & fabric reference** + **size helper** all live in production.
+Prototype. 167 tests across 16 files.
+
+**Last health check: 2026-09-23** — see "Health check 2026-09-23" below. The one item that
+matters: **Next.js 14.2 now carries a critical advisory and gets no more patches.**
 
 **Live:** https://fit-mvp-eight.vercel.app
 
@@ -62,11 +64,49 @@ commits ahead, while the live site showed none of it. Merged and deployed the sa
 
 ---
 
-## Size helper — BUILT ON A BRANCH 2026-09-16, NOT YET SHIPPED
+## Health check 2026-09-23
 
-**Branch `feature/size-helper`, not merged to `main` — so it is not on the live site yet.**
-Ship it the usual way (`git checkout main && git merge --ff-only feature/size-helper && git
-push origin main`, then probe the live site) once the founder is ready.
+Tests 167/167, build clean, `main` = `origin/main` = live. Every mutating API route checks
+auth and scopes by `retailer_id`. Fixed on `chore/health-check-2026-09-23`:
+
+- **Unreadable request bodies returned 500.** `req.json()` / `req.formData()` throw on a
+  malformed body; `/api/fit/evaluate`, `/api/signup` and both garment routes now answer 400.
+  (The fit-rules routes already used `.catch(() => null)`; this copies that idiom.)
+- **Image optimizer switched off** (`images: { unoptimized: true }` in `next.config.mjs`). The
+  app never uses `next/image`, so `/_next/image` was attack surface only.
+- **Untracked `AGENTS.md`** was a copy of `CLAUDE.md` with every "Claude" rewritten to "Codex",
+  so it named a checkout path that does not exist. Now a pointer to `CLAUDE.md`.
+- Stale lines in this file (size helper status, migrations, test counts, two resolved
+  follow-ups).
+
+**Open — the important one: upgrade Next.js.** `npm audit --omit=dev` reports 3 findings
+(1 critical, 2 high) covering ~18 Next advisories, and **14.2.35 is the last 14.x release —
+no fixes are coming.** Some do not apply (Windows-hosted RCE; Pages-Router i18n; Server
+Actions, which this app does not use; the image optimizer, now off). Others target App
+Router RSC caching and middleware redirects, which this app does use; whether Vercel's
+platform mitigates them was not verified. Target: latest 15.5.x (needs React 19), on its own
+branch with a full manual walkthrough, **before onboarding a second retailer**.
+
+**Open, lower priority:**
+- `/api/fit/evaluate` is public and inserts a `fit_sessions` row per call with no rate limit.
+  Anyone could flood the free-tier database. Fine at current traffic.
+- `/signup` is open to the public — anyone can create a shop. Confirm that is intended.
+  Combine with the `fit_ruleset_id` ownership gap under "Open follow-ups" before a second
+  retailer exists.
+- `feature/phase-1` (local + origin, last commit 2026-06-09) is unmerged, but its work was
+  rebuilt in `main` under different hashes. Looks superseded; confirm and delete.
+  `origin/feature/custom-fit-rules` is merged and can also go.
+- Minor dependency patches available within range (`@supabase/supabase-js` 2.117, `zod`
+  4.6.5, `postcss` 8.5.28). Take them with the Next upgrade.
+- **The dashboard still has not been walked in a browser with a real login** since the
+  2026-08-18 redesign. Not checked here either (needs the founder's session).
+
+---
+
+## Size helper — SHIPPED 2026-09-17
+
+Built on `feature/size-helper` 2026-09-16; on `origin/main` since 2026-09-17. Live presence
+confirmed by content probe 2026-09-23.
 
 **Why:** customer feedback — most shoppers don't know all their own body measurements. The fit
 form now has a "Not sure of your measurements?" panel: pick a Women's/Men's adult size
@@ -451,7 +491,7 @@ This is a working prototype. It is used in production but has rough edges that n
 | Types | `lib/i18n/strings.ts`: apply `as const` for narrower literal types |
 | Dashboard | `app/dashboard/layout.tsx`: add comment noting orphan-retailer-row is recoverable via Supabase Studio |
 | API | `app/api/garments/route.ts`: map raw dimension keys to Thai labels in error messages |
-| Security | `npm audit`: 5 vulnerabilities from Next.js 14.2 — unreachable in this app; fix with Next.js 15 upgrade post-launch |
+| Security | **Next.js 14.2 is end of line and carries a critical advisory** — see "Health check 2026-09-23". Upgrade to Next 15 before onboarding a second retailer. |
 | FitChecker | `garmentMeasurements` prop removed to fix ESLint build failure. Re-add in Phase 2 for client-side comparison display |
 | ~~UX~~ | ~~No loading skeleton on shop browse page~~ — done, `loading.tsx` exists for browse and garment pages. Stale entry, verified live 2026-08-18. |
 | ~~UX~~ | ~~No back-navigation from hero page to shop browse page~~ — done, `BackLink.tsx` ships `← กลับไปหน้าร้าน`. Stale entry, verified live 2026-08-18. |
@@ -473,8 +513,9 @@ This is a working prototype. It is used in production but has rough edges that n
 - **Supabase project:** `fit-mvp` (Singapore region, free tier). **One project serves both local
   dev and production — there is no staging.** Local data changes are live changes, and a
   migration applied from a dev session is applied to production.
-- **Migrations:** `supabase/migrations/` (`0001_initial.sql`, `0002_fit_rulesets.sql`). Applied
-  by hand through the Supabase SQL editor, not by tooling. Both are applied.
+- **Migrations:** `supabase/migrations/` (`0001_initial.sql`, `0002_fit_rulesets.sql`,
+  `0003_colour_fabric.sql`). Applied by hand through the Supabase SQL editor, not by tooling.
+  All three are applied (0003 verified against the live DB 2026-09-11).
 - **GitHub repo:** `ingkawatlimvipuwat-sys/fit-mvp`
 - **Storage bucket:** `garment-photos` (public-read).
 - **Test data left live** (deliberately, 2026-08-11): a garment named `TEST เสื้อผ้ายืด (ลบได้)`
@@ -516,7 +557,7 @@ lib/
     round-trip.test.ts   — stored columns survive ruleSelectionForGarment → buildGarmentFields
                            → parseGarmentFields unchanged, in all three rule states. The only
                            automated defence against a column-name slip, given untyped clients.
-                           (89 Vitest tests across 7 files, all passing)
+                           (the whole suite: 167 Vitest tests across 16 files, 2026-09-23)
   hooks/
     useLanguage.tsx      — LanguageProvider + useLanguage() hook (Lang = 'th' | 'en')
   i18n/
@@ -571,14 +612,17 @@ app/
 - **`FitRuleEditor` always seeds a new override from `DEFAULT_RULE`**, never from the profile or preset currently in force, so ticking the override on a `slim` garment silently starts at regular's numbers.
 - `app/dashboard/layout.tsx`: add TODO noting orphan-retailer-row is recoverable via Supabase Studio.
 - `app/api/garments/route.ts`: map raw dimension keys to Thai labels via `dimensionByKey()` in error messages.
-- `npm audit`: 5 vulnerabilities from Next.js 14.2 — unreachable; fix with Next.js 15 upgrade post-launch.
+- **Next.js 15 upgrade** — no longer "post-launch". See "Health check 2026-09-23".
 - `FitChecker.tsx` `garmentMeasurements` prop removed (ESLint). Re-add in Phase 2 for client-side comparison display.
 - ~~Fit engine boundary tests at diff = ±1 and ±5.~~ Done in `lib/fit/resolve.test.ts`.
-- **Fit rule summary reads wrong for negative ease.** `summarize()` in `app/dashboard/fit-rules/FitRulesManager.tsx` renders a rule as "พอดีเมื่อกว้างกว่าตัว {goodFrom}–{goodTo} ซม." That template assumes positive ease, so a stretchy rule shows "กว้างกว่าตัว -4–3 ซม." — "wider than the body by minus four cm". Verdicts are unaffected; only this one-line list summary. It misreads precisely for the stretchy case the feature exists for, so worth fixing before more retailers see the dashboard.
+- ~~**Fit rule summary reads wrong for negative ease.**~~ Fixed by UX audit item D4
+  (2026-08-18) — `summarize()` now says "แคบกว่าตัว". Stale entry, verified 2026-09-23.
+  Original note: `summarize()` in `app/dashboard/fit-rules/FitRulesManager.tsx` renders a rule as "พอดีเมื่อกว้างกว่าตัว {goodFrom}–{goodTo} ซม." That template assumes positive ease, so a stretchy rule shows "กว้างกว่าตัว -4–3 ซม." — "wider than the body by minus four cm". Verdicts are unaffected; only this one-line list summary. It misreads precisely for the stretchy case the feature exists for, so worth fixing before more retailers see the dashboard.
 - **Integration-test harness.** The suite is pure unit tests over `lib/fit` — no route or DB coverage anywhere. The one guarantee this leaves unverified by CI is that `/api/fit/evaluate` writes the correct `applied_rule` and that it stays put when a preset is edited. Verified manually for now.
 - **`tsc` clean does not mean `build` clean** on this project — `next lint` catches unused imports that the typechecker ignores. Run both before claiming green.
 - **Supabase clients are untyped** (no generated `Database` generic), so `.from('garments')` returns `any`. A wrong field shape compiles clean and fails at runtime. Do not treat a green typecheck as verification for anything touching a query result.
-- **Dashboard is Thai-only — no EN/TH toggle.** Every dashboard component hardcodes `t.x.th`; `LanguageProvider` wraps `app/shop/[shop_slug]/layout.tsx` only, so the toggle exists on customer-facing pages and nowhere else. `strings.ts` already carries `en` for everything, so the work is wiring the dashboard components to `useLanguage()` — plus a quality pass over the existing English, which was written as placeholder. Raised by the founder 2026-08-13; scoped out of the garment-edit work, which still writes correct `en` values for every new label so none of it needs redoing.
+- ~~**Dashboard is Thai-only — no EN/TH toggle.**~~ Done 2026-08-18 (see "Language
+  coverage"). Stale entry, verified 2026-09-23. Original note: Every dashboard component hardcodes `t.x.th`; `LanguageProvider` wraps `app/shop/[shop_slug]/layout.tsx` only, so the toggle exists on customer-facing pages and nowhere else. `strings.ts` already carries `en` for everything, so the work is wiring the dashboard components to `useLanguage()` — plus a quality pass over the existing English, which was written as placeholder. Raised by the founder 2026-08-13; scoped out of the garment-edit work, which still writes correct `en` values for every new label so none of it needs redoing.
 - **Dashboard visual design is bare.** The founder saw the brainstorming mockups on 2026-08-13 and preferred them to the live dashboard's unstyled Tailwind. A look-and-feel pass across the dashboard is wanted, deliberately deferred so it does not ride along with a functional fix.
 
 ---
