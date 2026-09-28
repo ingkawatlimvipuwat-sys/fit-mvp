@@ -16,23 +16,32 @@ Git worktrees made from it for agents are fine. Any other clone is not: a stale 
 
 ## Shipping — read before you say "done"
 
-**Pushing a `feature/*` branch does NOT update the live site.** Vercel builds `main` and only
-`main`. This cost a full session on 2026-08-11: 20 commits sat pushed-but-unmerged while the
-founder saw no change on the live site.
+**Pushing a `feature/*` branch does NOT update the live site.** Vercel's production site
+builds from `main` only. This cost a full session on 2026-08-11: 20 commits sat
+pushed-but-unmerged while the founder saw no change on the live site.
 
 **Agents cannot push `main`.** `.claude/settings.json` denies `git push` to `main`, bare
 `git push`, force pushes, `--no-verify` and Vercel production deploys — for every agent, in
 every permission mode. This is deliberate (2026-09-28): the founder runs agents unattended in
 Munder Difflin, a push to `main` is a live deploy, and the database has no staging copy. Do not
-work around it (no pushing from another shell, no `HEAD:refs/heads/main` tricks). When a
-branch is ready, report "ready to ship" and hand the founder this one command to paste into a
-terminal themselves:
+work around it (no pushing from another shell, no `HEAD:refs/heads/main` tricks). The rule
+matches `main` anywhere in a push command, so keep `main` out of branch names.
 
-```bash
-git checkout main && git merge --ff-only feature/your-branch && git push origin main
+**The founder ships by merging a pull request on GitHub** (decided 2026-09-28). When a branch
+is ready: push it (`git push -u origin feature/your-branch`) and give the founder this link,
+which opens a ready-to-fill pull request:
+
+```
+https://github.com/ingkawatlimvipuwat-sys/fit-mvp/compare/main...feature/your-branch?expand=1
 ```
 
-After they run it, confirm the deploy actually landed — don't assume. Probe a route that exists only in the
+On that page they press **Create pull request**, wait for Vercel's preview link to appear on
+it, check the change there, and press **Merge pull request**. Merging is the deploy. Warn them
+every time: **the preview site uses the live database**, so saving anything on it changes the
+real shop. (`gh` is not authenticated here, so agents cannot open or merge the PR themselves —
+that is fine; it keeps the button with the founder.)
+
+After they merge, confirm the deploy actually landed — don't assume. Probe a route that exists only in the
 new code and compare it against a route that doesn't:
 
 ```bash
@@ -91,9 +100,9 @@ of that. They apply to single sessions too.
   migration file and hand the founder click-by-click SQL-editor steps.
 - **Before reporting "ready to ship":** bring the branch up to date with `git merge
   origin/main` (not rebase — rebasing a pushed branch needs a force push, which is blocked),
-  re-run `npm test && npm run build`, push the branch, and update `resume.md` on the branch.
-  Your report says what changed, what the gates showed, and exactly what the founder should
-  click through in a browser before shipping.
+  re-run `npm test && npm run build`, update `resume.md` on the branch, and push it. Your
+  report gives the pull-request link (see Shipping), says what changed and what the gates
+  showed, and lists exactly what the founder should click through on the preview site.
 - **Questions for the founder go through `god`** as one short ASK ME card: the decision, your
   recommendation, and the options. Keep working on something else while you wait.
 - **Spend like it is the founder's money.** Mechanical edits belong on Sonnet. Do not start

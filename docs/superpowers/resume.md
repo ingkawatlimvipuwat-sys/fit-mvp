@@ -130,7 +130,8 @@ One list, most important first. When you finish an item, delete it (git keeps th
 Munder Difflin is the desktop app that runs a team of Claude agents. Michael (the orchestrator)
 takes your requests and hands them to temporary agents called "temps". Each temp works in its
 own copy of the code. Agents there act without asking permission, so the project has guardrails
-built in: **no agent can put anything on the live site.** Only you can, with one command.
+built in: **no agent can put anything on the live site.** Only you can, by pressing a button on
+GitHub.
 
 **Setting it up (once)**
 1. In Munder Difflin, add the fit-mvp folder as a project:
@@ -146,12 +147,16 @@ built in: **no agent can put anything on the live site.** Only you can, with one
    task at a time until you trust the setup.
 2. **Answer the ASK ME cards.** Those are the decisions that are yours. Each one comes with a
    recommendation.
-3. **When an agent says "ready to ship",** ask it to *"start the app so I can check it"*. Click
-   through the steps it lists. Only look around: saving anything writes to the real shop's
-   database.
-4. **Ship it yourself.** Paste the one command the agent gave you into a terminal opened in
-   the fit-mvp folder. Then ask the agent to *"confirm the deploy landed"*.
-5. **If something looks wrong,** tell Michael. Nothing reaches the live site until you run step 4.
+3. **When an agent says "ready to ship",** it gives you a GitHub link. Open it and press the
+   green **Create pull request** button.
+4. **Check the preview.** After a minute or two, Vercel adds a comment on that page with a
+   **Visit Preview** link. That link is a private test copy of the site with the change in it.
+   Click through the steps the agent listed. Only look around: the preview uses the real shop's
+   database, so saving anything there changes real data.
+5. **Ship it.** If it looks right, press **Merge pull request**, then **Confirm merge**. That
+   puts the change on the live site. Ask the agent to *"confirm the deploy landed"*.
+6. **If something looks wrong,** don't merge. Tell Michael what you saw. Nothing reaches the
+   live site until you press Merge.
 
 **What agents cannot do:** push to the live branch (`main`), deploy to Vercel, or force-push.
 They are also told not to change the database without you asking. The blocking rules are in
