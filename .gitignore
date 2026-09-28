@@ -1,5 +1,7 @@
-# Claude Code harness/session files
-.claude/
+# Claude Code harness/session files. settings.json is tracked: it holds the guardrails every
+# agent (including Munder Difflin temps in their own worktrees) must inherit.
+.claude/*
+!.claude/settings.json
 .git.bak/
 .superpowers/
 

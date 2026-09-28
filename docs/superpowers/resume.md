@@ -125,6 +125,38 @@ One list, most important first. When you finish an item, delete it (git keeps th
 
 ---
 
+## Running the work in Munder Difflin (for the founder, since 2026-09-28)
+
+Munder Difflin is the desktop app that runs a team of Claude agents. Michael (the orchestrator)
+takes your requests and hands them to temporary agents called "temps". Each temp works in its
+own copy of the code. Agents there act without asking permission, so the project has guardrails
+built in: **no agent can put anything on the live site.** Only you can, with one command.
+
+**Setting it up (once)**
+1. In Munder Difflin, add the fit-mvp folder as a project:
+   `C:\Users\Copter\Documents\Claude\Projects\Startup poor fools\fit-mvp`
+2. In Settings → Autonomy & Budgets: set the default model to Sonnet, set a token limit per
+   agent, and allow at most 2 temps at once to start with.
+3. Optional: turn off the "Hourly ops standup" when nothing is running. It wakes Michael every
+   hour, and each wake-up costs tokens.
+
+**The everyday loop**
+1. **Ask Michael for one thing**, naming the item on the to-do list above, for example: *"In
+   fit-mvp, do to-do item 2 (preset ownership). Follow the project's CLAUDE.md."* Stick to one
+   task at a time until you trust the setup.
+2. **Answer the ASK ME cards.** Those are the decisions that are yours. Each one comes with a
+   recommendation.
+3. **When an agent says "ready to ship",** ask it to *"start the app so I can check it"*. Click
+   through the steps it lists. Only look around: saving anything writes to the real shop's
+   database.
+4. **Ship it yourself.** Paste the one command the agent gave you into a terminal opened in
+   the fit-mvp folder. Then ask the agent to *"confirm the deploy landed"*.
+5. **If something looks wrong,** tell Michael. Nothing reaches the live site until you run step 4.
+
+**What agents cannot do:** push to the live branch (`main`), deploy to Vercel, or force-push.
+They are also told not to change the database without you asking. The blocking rules are in
+`.claude/settings.json`, and the agent rules are in `CLAUDE.md` under "Working as a team".
+
 ## Environment (as of 2026-09-23)
 
 - **Live site:** https://fit-mvp-eight.vercel.app — Vercel deploys **`main` only**.

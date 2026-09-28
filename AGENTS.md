@@ -5,4 +5,5 @@ this repo — shipping procedure, verification gates, landmines, and where the d
 
 This file exists only so tools that look for `AGENTS.md` find their way there. Do not copy
 content into it: a previous copy drifted and pointed agents at a folder that does not exist.
-The only checkout is `C:\Users\Copter\Documents\Claude\Projects\Startup poor fools\fit-mvp`.
+The main checkout is `C:\Users\Copter\Documents\Claude\Projects\Startup poor fools\fit-mvp`
+(git worktrees made from it are fine).
