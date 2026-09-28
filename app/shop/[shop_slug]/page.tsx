@@ -7,7 +7,8 @@ import ColourDots from './ColourDots';
 
 export const dynamic = 'force-dynamic';
 
-export async function generateMetadata({ params }: { params: { shop_slug: string } }) {
+export async function generateMetadata(props: { params: Promise<{ shop_slug: string }> }) {
+  const params = await props.params;
   const fallback = { title: 'Fit MVP — หาขนาดที่ใช่' };
   try {
     const supabase = createSupabaseAdminClient();
@@ -23,7 +24,8 @@ export async function generateMetadata({ params }: { params: { shop_slug: string
   }
 }
 
-export default async function ShopPage({ params }: { params: { shop_slug: string } }) {
+export default async function ShopPage(props: { params: Promise<{ shop_slug: string }> }) {
+  const params = await props.params;
   const supabase = createSupabaseAdminClient();
   const { data: shop, error } = await supabase
     .from('shops')

@@ -10,9 +10,10 @@ import type { Category, MeasurementBag } from '@/lib/supabase/types';
  * cannot share its result. Degrades to the generic title rather than
  * throwing — a generateMetadata that throws takes the whole page down.
  */
-export async function generateMetadata({ params }: { params: { id: string } }) {
+export async function generateMetadata(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
-    const supabase = createSupabaseServerClient();
+    const supabase = await createSupabaseServerClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { title: 'แก้ไขเสื้อผ้า — Fit MVP' };
     const { data } = await supabase
@@ -27,8 +28,9 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
   }
 }
 
-export default async function EditGarmentPage({ params }: { params: { id: string } }) {
-  const supabase = createSupabaseServerClient();
+export default async function EditGarmentPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null; // layout already redirects
 

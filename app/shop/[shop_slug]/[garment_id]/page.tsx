@@ -10,9 +10,8 @@ import type { Category, GarmentFabric } from '@/lib/supabase/types';
 
 export const dynamic = 'force-dynamic';
 
-export async function generateMetadata({
-  params,
-}: { params: { shop_slug: string; garment_id: string } }) {
+export async function generateMetadata(props: { params: Promise<{ shop_slug: string; garment_id: string }> }) {
+  const params = await props.params;
   const fallback = { title: 'Fit MVP — หาขนาดที่ใช่' };
   try {
     const supabase = createSupabaseAdminClient();
@@ -37,9 +36,8 @@ export async function generateMetadata({
   }
 }
 
-export default async function HeroPage({
-  params,
-}: { params: { shop_slug: string; garment_id: string } }) {
+export default async function HeroPage(props: { params: Promise<{ shop_slug: string; garment_id: string }> }) {
+  const params = await props.params;
   const supabase = createSupabaseAdminClient();
 
   // Resolve the shop first so the garment can be scoped to it — otherwise a

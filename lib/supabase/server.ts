@@ -7,8 +7,8 @@ import { cookies } from 'next/headers';
  * Server client tied to the request's cookies. Use in route handlers and
  * server components for any operation that runs as the logged-in user.
  */
-export function createSupabaseServerClient() {
-  const cookieStore = cookies();
+export async function createSupabaseServerClient() {
+  const cookieStore = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

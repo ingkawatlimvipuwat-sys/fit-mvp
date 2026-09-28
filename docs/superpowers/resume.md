@@ -9,7 +9,7 @@ Update it in place; do not start a new handoff document.
 
 ---
 
-## In plain words (as of 2026-09-23)
+## In plain words (as of 2026-09-29)
 
 The app works and is live at https://fit-mvp-eight.vercel.app. A shop owner adds clothes with
 their measurements and sets how tight or loose each item should fit. Shoppers open the shop's
@@ -17,18 +17,19 @@ link, type their body measurements (or pick their usual size and let the app est
 whether each part of the garment will be too tight, a good fit, or too loose. Shoppers can also
 check a garment's true colour and fabric details. Everything works in Thai and English.
 
-It is a prototype with one shop. **The main job before a second shop joins is a security
-upgrade of Next.js** (the framework the app is built on) — see "To do" below.
+It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 2026-09-29 from
+14.2/React 18 — see decisions-and-lessons.md §3).
 
 ---
 
-## Status snapshot (as of 2026-09-23)
+## Status snapshot (as of 2026-09-29, branch `feature/next-15` pending merge)
 
 | Check | Result |
 |---|---|
-| Live site matches `main` | Yes — verified by live content probe after the `ee19a98` deploy |
+| Live site matches `main` | Yes, as of the `ee19a98` deploy — this snapshot is from the pending Next 15 branch, not yet merged |
 | Tests (`npm test`) | 167 passing, 16 files |
 | Build (`npm run build`) | Clean |
+| `npm audit --omit=dev` | 2 vulnerabilities (1 high, 1 moderate) — down from 1 critical + 2 high (~18 Next advisories) on 14.2. The remaining high is `postcss@8.4.31` bundled *inside* `next`'s own `node_modules` (build-time CSS processing only, not user input); our own `postcss` dep is 8.5.28, already patched. Clears when Next ships its own postcss bump, or on a future Next 16 upgrade. |
 | Database migrations | 0001, 0002, 0003 — all applied to the live database |
 | Last health check | 2026-09-23 |
 
@@ -54,57 +55,49 @@ One list, most important first. When you finish an item, delete it (git keeps th
 
 ### Before a second shop joins
 
-1. **Upgrade Next.js 14.2 → 15.5** (needs React 19). As of 2026-09-23, `npm audit --omit=dev`
-   reports 1 critical and 2 high findings covering ~18 Next advisories, and 14.2.35 is the last
-   14.x release — no more fixes are coming. Some advisories do not apply here (Windows-hosted
-   servers, Pages Router, Server Actions, the image optimizer, which is now off). Others target
-   App Router caching and middleware redirects, which this app uses. Whether Vercel blocks them
-   is unverified. Do it on its own branch with a full manual walkthrough.
-2. **Check preset ownership.** `fit_ruleset_id` is checked to be a valid id but not that the
+1. **Check preset ownership.** `fit_ruleset_id` is checked to be a valid id but not that the
    preset belongs to the caller (`lib/garment/parse-form.ts`), so a hand-crafted request could
    attach another shop's preset.
-3. **Decide whether public signup is intended.** Anyone can create a shop at `/signup` today.
-4. **Decide on size labels** (S/M/L on garments) — see decisions-and-lessons §2.
-5. **Confirm the Supabase secret key was rotated.** A key was found in plain text in a deleted
+2. **Decide whether public signup is intended.** Anyone can create a shop at `/signup` today.
+3. **Decide on size labels** (S/M/L on garments) — see decisions-and-lessons §2.
+4. **Confirm the Supabase secret key was rotated.** A key was found in plain text in a deleted
    clone on 2026-08-11 (never pushed to GitHub). Rotation was advised; it was never confirmed.
    Ask the founder.
-6. **Proofread the copy.** The English was written as a fallback nobody expected to see and has
+5. **Proofread the copy.** The English was written as a fallback nobody expected to see and has
    never been proofread; the Thai has not had a native-speaker pass.
 
 ### Worth doing soon
 
-7. **Walk the dashboard in a browser with a real login.** Not done since the 2026-08-18
+6. **Walk the dashboard in a browser with a real login.** Not done since the 2026-08-18
    redesign — the header, tabs, fit-rules load-failure notice and discard guards are backed only
    by a clean build.
-8. **Rate-limit `/api/fit/evaluate`.** It is public and saves a database row per call.
-9. **A failed preset load shows `…` forever** in the garment form instead of an error
+7. **Rate-limit `/api/fit/evaluate`.** It is public and saves a database row per call.
+8. **A failed preset load shows `…` forever** in the garment form instead of an error
    (`GarmentForm.tsx`). Saving still keeps the right rule.
-10. **A new per-garment override always starts from the default rule**, not the rule in force,
-    so ticking it on a `slim` garment silently starts at regular's numbers (`FitRuleEditor`).
-11. **`strandedDimensions()` blames the retailer** for a category change they did not make, if
+9. **A new per-garment override always starts from the default rule**, not the rule in force,
+   so ticking it on a `slim` garment silently starts at regular's numbers (`FitRuleEditor`).
+10. **`strandedDimensions()` blames the retailer** for a category change they did not make, if
     a dimension ever moves between categories in `dimensions.ts`. Compare against the garment's
     original category.
-12. **Validation messages that are not Thai.** `parseGarmentFields()` returns English for four
+11. **Validation messages that are not Thai.** `parseGarmentFields()` returns English for four
     rare paths, and `app/api/garments/route.ts` shows raw dimension keys — map them with
     `dimensionByKey()`.
-13. **A fabric photo cannot be removed, only replaced**, so a retailer cannot fully withdraw
+12. **A fabric photo cannot be removed, only replaced**, so a retailer cannot fully withdraw
     fabric information.
-14. **A colour or fabric save can fail silently** — it logs and reports success.
-15. **Check colour fidelity on a real phone** — a real garment under daylight next to its
+13. **A colour or fabric save can fail silently** — it logs and reports success.
+14. **Check colour fidelity on a real phone** — a real garment under daylight next to its
     swatch on the live site. Planned after the 2026-09-11 deploy; not recorded as done.
 
 ### Housekeeping
 
-16. Delete old branches: `feature/phase-1` (last commit 2026-06-09; its work was rebuilt in
+15. Delete old branches: `feature/phase-1` (last commit 2026-06-09; its work was rebuilt in
     `main`) and the already-merged `origin/feature/custom-fit-rules`.
-17. Delete the typo Storage bucket `garmet-photos` (the real one is `garment-photos`).
-18. Delete live test data: the garment `TEST เสื้อผ้ายืด (ลบได้)` and the `ผ้ายืด` preset
+16. Delete the typo Storage bucket `garmet-photos` (the real one is `garment-photos`).
+17. Delete live test data: the garment `TEST เสื้อผ้ายืด (ลบได้)` and the `ผ้ายืด` preset
     (holds default values, not stretchy ones).
-19. Small code tidies: extract the file-extension sanitising duplicated in both garment routes;
+18. Small code tidies: extract the file-extension sanitising duplicated in both garment routes;
     make `ThresholdBand[]` `readonly` in `dimensions.ts`; note in `app/dashboard/layout.tsx`
     that an orphaned retailer row can be fixed in Supabase Studio.
-20. Take the minor dependency updates (`@supabase/supabase-js`, `zod`, `postcss`) with the
-    Next upgrade.
 
 ### Later — ideas and phases, not started
 

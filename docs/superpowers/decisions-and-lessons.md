@@ -89,6 +89,17 @@ to the right section rather than to a new document.
   attribute). Unmounting it would wipe a half-filled measurement form. Do not turn it into a
   conditional render, and do not put a `flex`/`grid` class on those wrappers — it beats
   `[hidden] { display: none }`.
+- **Next 15 (upgraded 2026-09-29 from 14.2, with React 19): `params` and `cookies()` are now
+  async.** Route `params` props became `Promise<{...}>` in every dynamic route and
+  `generateMetadata` — the official codemod (`npx @next/codemod@latest next-async-request-api .`)
+  handles those call sites correctly. It does **not** safely handle indirection: our
+  `createSupabaseServerClient()` in `lib/supabase/server.ts` wraps `cookies()`, and the codemod's
+  fallback for that case is the deprecated `UnsafeUnwrappedCookies` synchronous escape hatch. Do
+  not keep that — make the wrapper `async`, `await cookies()` inside it, and add `await` at
+  every one of its ~11 call sites (grep `= createSupabaseServerClient()` to find them all; every
+  caller was already inside an `async` function, so this is a pure mechanical `await` insert).
+  `middleware.ts` is unaffected — it reads `request.cookies` directly, not `next/headers`.
+  `useSearchParams()` in client components is also unaffected (`app/login/page.tsx`).
 
 ## 4. Data and Supabase
 
