@@ -6,7 +6,7 @@ import { t } from '@/lib/i18n/strings';
 import { PHOTO_BUCKET, uploadPhotoField } from '@/lib/garment/photo-upload';
 
 export async function POST(req: Request) {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 

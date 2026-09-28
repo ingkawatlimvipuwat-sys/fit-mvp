@@ -5,7 +5,7 @@ import DashboardHeader from './DashboardHeader';
 import DashboardNav from './DashboardNav';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login?reason=auth');
 

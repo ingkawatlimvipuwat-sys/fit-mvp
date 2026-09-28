@@ -5,7 +5,7 @@ import type { FitRulesetRow } from '@/lib/supabase/types';
 export const dynamic = 'force-dynamic';
 
 export default async function FitRulesPage() {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null; // middleware guards this route
 

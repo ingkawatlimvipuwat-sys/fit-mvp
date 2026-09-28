@@ -6,7 +6,7 @@ import GarmentGrid from './GarmentGrid';
 export const metadata = { title: 'แดชบอร์ด — Fit MVP' };
 
 export default async function DashboardPage() {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null; // layout already redirects
 
