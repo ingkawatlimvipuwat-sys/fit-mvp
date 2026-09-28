@@ -22,12 +22,12 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 
 ---
 
-## Status snapshot (as of 2026-09-29, branch `feature/next-15` pending merge)
+## Status snapshot (as of 2026-09-29, branch `feature/preset-ownership` pending merge)
 
 | Check | Result |
 |---|---|
-| Live site matches `main` | Yes, as of the `ee19a98` deploy — this snapshot is from the pending Next 15 branch, not yet merged |
-| Tests (`npm test`) | 167 passing, 16 files |
+| Live site matches `main` | Yes, as of the Next 15 merge (PR #3, `745d977`) — this snapshot is from the pending preset-ownership branch, not yet merged |
+| Tests (`npm test`) | 172 passing, 17 files |
 | Build (`npm run build`) | Clean |
 | `npm audit --omit=dev` | 2 vulnerabilities (1 high, 1 moderate) — down from 1 critical + 2 high (~18 Next advisories) on 14.2. The remaining high is `postcss@8.4.31` bundled *inside* `next`'s own `node_modules` (build-time CSS processing only, not user input); our own `postcss` dep is 8.5.28, already patched. Clears when Next ships its own postcss bump, or on a future Next 16 upgrade. |
 | Database migrations | 0001, 0002, 0003 — all applied to the live database |
@@ -55,47 +55,43 @@ One list, most important first. When you finish an item, delete it (git keeps th
 
 ### Before a second shop joins
 
-1. **Check preset ownership.** `fit_ruleset_id` is checked to be a valid id but not that the
-   preset belongs to the caller (`lib/garment/parse-form.ts`), so a hand-crafted request could
-   attach another shop's preset.
-2. **Decide whether public signup is intended.** Anyone can create a shop at `/signup` today.
-3. **Decide on size labels** (S/M/L on garments) — see decisions-and-lessons §2.
-4. **Confirm the Supabase secret key was rotated.** A key was found in plain text in a deleted
+1. **Decide on size labels** (S/M/L on garments) — see decisions-and-lessons §2.
+2. **Confirm the Supabase secret key was rotated.** A key was found in plain text in a deleted
    clone on 2026-08-11 (never pushed to GitHub). Rotation was advised; it was never confirmed.
    Ask the founder.
-5. **Proofread the copy.** The English was written as a fallback nobody expected to see and has
+3. **Proofread the copy.** The English was written as a fallback nobody expected to see and has
    never been proofread; the Thai has not had a native-speaker pass.
 
 ### Worth doing soon
 
-6. **Walk the dashboard in a browser with a real login.** Not done since the 2026-08-18
+4. **Walk the dashboard in a browser with a real login.** Not done since the 2026-08-18
    redesign — the header, tabs, fit-rules load-failure notice and discard guards are backed only
    by a clean build.
-7. **Rate-limit `/api/fit/evaluate`.** It is public and saves a database row per call.
-8. **A failed preset load shows `…` forever** in the garment form instead of an error
+5. **Rate-limit `/api/fit/evaluate`.** It is public and saves a database row per call.
+6. **A failed preset load shows `…` forever** in the garment form instead of an error
    (`GarmentForm.tsx`). Saving still keeps the right rule.
-9. **A new per-garment override always starts from the default rule**, not the rule in force,
+7. **A new per-garment override always starts from the default rule**, not the rule in force,
    so ticking it on a `slim` garment silently starts at regular's numbers (`FitRuleEditor`).
-10. **`strandedDimensions()` blames the retailer** for a category change they did not make, if
-    a dimension ever moves between categories in `dimensions.ts`. Compare against the garment's
-    original category.
-11. **Validation messages that are not Thai.** `parseGarmentFields()` returns English for four
-    rare paths, and `app/api/garments/route.ts` shows raw dimension keys — map them with
-    `dimensionByKey()`.
-12. **A fabric photo cannot be removed, only replaced**, so a retailer cannot fully withdraw
+8. **`strandedDimensions()` blames the retailer** for a category change they did not make, if
+   a dimension ever moves between categories in `dimensions.ts`. Compare against the garment's
+   original category.
+9. **Validation messages that are not Thai.** `parseGarmentFields()` returns English for four
+   rare paths, and `app/api/garments/route.ts` shows raw dimension keys — map them with
+   `dimensionByKey()`.
+10. **A fabric photo cannot be removed, only replaced**, so a retailer cannot fully withdraw
     fabric information.
-13. **A colour or fabric save can fail silently** — it logs and reports success.
-14. **Check colour fidelity on a real phone** — a real garment under daylight next to its
+11. **A colour or fabric save can fail silently** — it logs and reports success.
+12. **Check colour fidelity on a real phone** — a real garment under daylight next to its
     swatch on the live site. Planned after the 2026-09-11 deploy; not recorded as done.
 
 ### Housekeeping
 
-15. Delete old branches: `feature/phase-1` (last commit 2026-06-09; its work was rebuilt in
+13. Delete old branches: `feature/phase-1` (last commit 2026-06-09; its work was rebuilt in
     `main`) and the already-merged `origin/feature/custom-fit-rules`.
-16. Delete the typo Storage bucket `garmet-photos` (the real one is `garment-photos`).
-17. Delete live test data: the garment `TEST เสื้อผ้ายืด (ลบได้)` and the `ผ้ายืด` preset
+14. Delete the typo Storage bucket `garmet-photos` (the real one is `garment-photos`).
+15. Delete live test data: the garment `TEST เสื้อผ้ายืด (ลบได้)` and the `ผ้ายืด` preset
     (holds default values, not stretchy ones).
-18. Small code tidies: extract the file-extension sanitising duplicated in both garment routes;
+16. Small code tidies: extract the file-extension sanitising duplicated in both garment routes;
     make `ThresholdBand[]` `readonly` in `dimensions.ts`; note in `app/dashboard/layout.tsx`
     that an orphaned retailer row can be fixed in Supabase Studio.
 

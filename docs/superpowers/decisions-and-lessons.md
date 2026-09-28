@@ -62,6 +62,8 @@ to the right section rather than to a new document.
   retailer their rules are secret.** Reasoning: spec §4.2 and the comments in migration 0002.
 - **Size labels (S/M/L on garments) are deferred** — but must be decided **before onboarding a
   second retailer**, because after that the migration cost is someone else's re-typing.
+- **Public signup at `/signup` stays open** (2026-09-28, founder). Anyone can create a shop; this is
+  intended, not an oversight. Do not add an invite gate without a new decision.
 
 ## 3. Next.js and React traps
 
@@ -120,6 +122,11 @@ to the right section rather than to a new document.
   removes child rows, but Storage files are outside the database and would be orphaned.
 - **Colour and fabric writes log and continue on failure** rather than failing the save. A
   retailer whose colours failed to save sees success. Accepted for a one-retailer prototype.
+- **A garment may only reference a fit preset its own shop owns** (2026-09-29). Enforced in app code by
+  `checkRulesetOwnership()` (`lib/garment/ruleset-ownership.ts`), called by create and edit after the
+  pure `parseGarmentFields()`. The lookup is scoped by `retailer_id`, so another shop's preset looks
+  nonexistent (400), and a failed lookup is a 500, never a pass. No RLS or SQL change. Presets stay
+  publicly readable by design (§2). Covered by unit tests only; the routes have no automated coverage.
 - **`garments_public_read` looks vestigial** — no code reads garments with the anonymous client.
   Unverified whether removing it breaks anything.
 
