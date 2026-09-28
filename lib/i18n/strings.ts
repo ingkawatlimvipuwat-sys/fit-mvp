@@ -58,6 +58,7 @@ export const t = {
   saveFailed: { th: 'บันทึกไม่สำเร็จ กรุณาลองใหม่', en: 'Save failed. Please try again.' },
   photoUploadFailed: { th: 'อัปโหลดรูปไม่สำเร็จ กรุณาลองใหม่ หรือใช้รูปที่มีขนาดเล็กลง', en: 'Photo upload failed. Try again, or use a smaller image.' },
   garmentNameRequired: { th: 'กรุณากรอกชื่อเสื้อผ้า', en: 'Please enter a garment name' },
+  rulesetNotOwned: { th: 'ไม่พบกฎที่เลือก กรุณาเลือกกฎใหม่', en: 'The selected rule was not found. Please choose another.' },
   fitRuleInvalid: { th: 'กฎความพอดีไม่ถูกต้อง กรุณาตรวจสอบตัวเลข', en: 'The fit rule is not valid. Check the numbers.' },
   save: { th: 'บันทึก', en: 'Save' },
   editGarment: { th: 'แก้ไขเสื้อผ้า', en: 'Edit garment' },
