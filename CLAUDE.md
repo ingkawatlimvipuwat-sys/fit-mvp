@@ -138,8 +138,12 @@ fix uncommitted in the working tree.
 
 - `gh` CLI is at `C:\Program Files\GitHub CLI\gh.exe`, **not on PATH**, and not authenticated.
   Invoke by full path. The repo is private, so `WebFetch` cannot inspect PRs.
-- One Supabase project serves both local dev and production — there is no staging. Local
-  changes to data are live changes. Migrations in `supabase/migrations/` are applied by hand
-  via the Supabase SQL editor.
+- **Local dev does not use the hosted project.** `npm run setup:local` starts Postgres + Auth
+  + Storage in Docker (Colima on this Mac), applies `supabase/migrations/`, seeds a demo shop,
+  and writes `.env.local` to `http://127.0.0.1:54321`. Demo login: `demo@example.com` /
+  `password123`. Wipe with `npm run db:reset`.
+- The hosted Supabase project is production only (Vercel env vars). Migrations still have to
+  be applied there by hand via the SQL editor before merging schema-dependent code — local
+  apply does not reach production.
 - Env vars (`.env.local`, gitignored; also set in Vercel): `NEXT_PUBLIC_SUPABASE_URL`,
   `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.

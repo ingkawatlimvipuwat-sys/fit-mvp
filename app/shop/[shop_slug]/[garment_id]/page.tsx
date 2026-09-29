@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { createSupabaseAdminClient } from '@/lib/supabase/server';
 import { dimensionsForCategory } from '@/lib/config/dimensions';
 import FitChecker from './FitChecker';
+import TryOn from './TryOn';
 import BackLink from './BackLink';
 import OtherGarments from './OtherGarments';
 import GarmentTabs from './GarmentTabs';
@@ -100,6 +101,8 @@ export default async function HeroPage(props: { params: Promise<{ shop_slug: str
           <img src={garment.photo_url} alt={garment.name} className="h-full w-full object-cover" />
         </div>
         <h1 className="mt-4 text-2xl font-semibold">{garment.name}</h1>
+
+        <TryOn />
 
         <GarmentTabs
           colours={colourRows ?? []}
