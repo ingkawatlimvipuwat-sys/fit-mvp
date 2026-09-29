@@ -72,8 +72,13 @@ Supabase SQL editor — they are not run by the Vercel deploy.
 
 ## Documentation
 
-- `CLAUDE.md` — orientation for AI coding agents: shipping procedure, verification gates, known
-  landmines. Worth reading for humans too.
-- `docs/superpowers/resume.md` — state of record: current status, file map, open decisions.
-- `docs/superpowers/specs/` — design docs per feature.
-- `docs/superpowers/plans/` — task-by-task implementation plans.
+Start with **`docs/superpowers/resume.md`** — it opens with a plain-language summary of what
+the app does today, then lists what's live and everything still to do.
+
+- `docs/superpowers/resume.md` — status of record: what's live, the to-do list, environment.
+- `docs/superpowers/decisions-and-lessons.md` — why the product is built the way it is (§2),
+  and traps already paid for.
+- `CLAUDE.md` — orientation for AI coding agents: shipping procedure, checks, landmines.
+  Worth reading for humans too.
+- `docs/superpowers/specs/` and `plans/` — design doc and task plan per feature.
+- `docs/superpowers/archive/` — old handoff notes, kept for history.

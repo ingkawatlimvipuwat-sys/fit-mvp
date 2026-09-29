@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(git push)",
+      "Bash(git push *main*)",
+      "Bash(git push *--force*)",
+      "Bash(git push *-f *)",
+      "Bash(git push *--no-verify*)",
+      "Bash(*vercel*--prod*)",
+      "Bash(*vercel deploy*)",
+      "PowerShell(git push)",
+      "PowerShell(git push *main*)",
+      "PowerShell(git push *--force*)",
+      "PowerShell(git push *-f *)",
+      "PowerShell(git push *--no-verify*)",
+      "PowerShell(*vercel*--prod*)",
+      "PowerShell(*vercel deploy*)"
+    ]
+  }
+}

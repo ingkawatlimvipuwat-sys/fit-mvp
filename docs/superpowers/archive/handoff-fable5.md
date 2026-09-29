@@ -1,5 +1,10 @@
 # Handoff — Fit Recommendation MVP (for Fable 5)
 
+> **ARCHIVED 2026-09-23 — historical record, not current.** Everything in this file that is
+> still true now lives in [`../resume.md`](../resume.md) (status and to-do) or
+> [`../decisions-and-lessons.md`](../decisions-and-lessons.md) (decisions and traps). Counts,
+> commit ids, paths and "next steps" below are out of date. Kept for history only.
+
 > ⚠️ **PARTIALLY SUPERSEDED (2026-08-11).** Read
 > `handoff-2026-08-11-custom-fit-rules.md` first — there is an open PR with a known
 > blocking gap.

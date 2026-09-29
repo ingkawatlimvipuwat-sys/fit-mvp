@@ -10,23 +10,38 @@ deployed on Vercel.
 
 **Live:** https://fit-mvp-eight.vercel.app
 **Repo:** `ingkawatlimvipuwat-sys/fit-mvp`
-**Only checkout:** `C:\Users\Copter\Documents\Claude\Projects\Startup poor fools\fit-mvp`
-(A stale second clone at `Desktop\Claude code` was deleted 2026-08-11. If a session opens
-there, it is an empty leftover shell — `cd` here first.)
+**Main checkout:** `C:\Users\Copter\Documents\Claude\Projects\Startup poor fools\fit-mvp`.
+Git worktrees made from it for agents are fine. Any other clone is not: a stale one at
+`Desktop\Claude code` was deleted 2026-08-11 — if a session opens there, `cd` here first.
 
 ## Shipping — read before you say "done"
 
-**Pushing a `feature/*` branch does NOT update the live site.** Vercel builds `main` and only
-`main`. This cost a full session on 2026-08-11: 20 commits sat pushed-but-unmerged while the
-founder saw no change on the live site.
+**Pushing a `feature/*` branch does NOT update the live site.** Vercel's production site
+builds from `main` only. This cost a full session on 2026-08-11: 20 commits sat
+pushed-but-unmerged while the founder saw no change on the live site.
 
-To ship:
+**Agents cannot push `main`.** `.claude/settings.json` denies `git push` to `main`, bare
+`git push`, force pushes, `--no-verify` and Vercel production deploys — for every agent, in
+every permission mode. This is deliberate (2026-09-28): the founder runs agents unattended in
+Munder Difflin, a push to `main` is a live deploy, and the database has no staging copy. Do not
+work around it (no pushing from another shell, no `HEAD:refs/heads/main` tricks). The rule
+matches `main` anywhere in a push command, so keep `main` out of branch names.
 
-```bash
-git checkout main && git merge --ff-only feature/your-branch && git push origin main
+**The founder ships by merging a pull request on GitHub** (decided 2026-09-28). When a branch
+is ready: push it (`git push -u origin feature/your-branch`) and give the founder this link,
+which opens a ready-to-fill pull request:
+
+```
+https://github.com/ingkawatlimvipuwat-sys/fit-mvp/compare/main...feature/your-branch?expand=1
 ```
 
-Then confirm the deploy actually landed — don't assume. Probe a route that exists only in the
+On that page they press **Create pull request**, wait for Vercel's preview link to appear on
+it, check the change there, and press **Merge pull request**. Merging is the deploy. Warn them
+every time: **the preview site uses the live database**, so saving anything on it changes the
+real shop. (`gh` is not authenticated here, so agents cannot open or merge the PR themselves —
+that is fine; it keeps the button with the founder.)
+
+After they merge, confirm the deploy actually landed — don't assume. Probe a route that exists only in the
 new code and compare it against a route that doesn't:
 
 ```bash
@@ -50,8 +65,9 @@ npm test && npm run build
 - **`tsc` proves nothing about Supabase query shapes.** The clients are untyped, so
   `.from('garments')` returns `any`. A wrong field shape compiles clean and crashes at runtime.
   For anything touching a query result, tests and manual checks are the only real gate.
-- The suite is **pure unit tests over `lib/fit`** — no route or DB coverage at all. Currently
-  47 tests. Anything touching an API route or the database needs a manual check.
+- The suite is **unit tests over `lib/` plus a few `jsdom` component tests** (the colour &
+  fabric branch added the first component tests) — **no route or DB coverage at all**. Current
+  counts are in `resume.md`. Anything touching an API route or the database needs a manual check.
 
 ## Landmines — do not relearn these
 
@@ -66,23 +82,52 @@ npm test && npm run build
   Fixtures using garment 96 / customer 100 land exactly on the boundary. Use 97 / 100 for
   anything meant to demonstrate `good_fit`. This mistake has been made twice.
 
+## Working as a team (Munder Difflin)
+
+Since 2026-09-28 the founder may run several agents at once through Munder Difflin, a desktop
+app: an orchestrator ("Michael", address `god`) hands out tasks, and short-lived "temps" each
+work in their own git worktree with **no permission prompts**. The rules below exist because
+of that. They apply to single sessions too.
+
+- **One task, one branch, one worktree.** Branch `feature/<short-name>` from `origin/main`.
+  Never commit to another agent's branch. If your task needs files another agent is editing,
+  tell `god` before starting rather than racing them.
+- **A fresh worktree is not ready to run.** Run `npm install` (`node_modules/` is not shared)
+  and copy `.env.local` over from the main checkout (it is gitignored, so worktrees lack it and
+  the build fails without it). Never commit it and never print its contents.
+- **The database is live.** Do not run SQL, apply migrations, or submit forms against the dev
+  server unless the founder asked for that specific thing. For a schema change, write the
+  migration file and hand the founder click-by-click SQL-editor steps.
+- **Before reporting "ready to ship":** bring the branch up to date with `git merge
+  origin/main` (not rebase — rebasing a pushed branch needs a force push, which is blocked),
+  re-run `npm test && npm run build`, update `resume.md` on the branch, and push it. Your
+  report gives the pull-request link (see Shipping), says what changed and what the gates
+  showed, and lists exactly what the founder should click through on the preview site.
+- **Questions for the founder go through `god`** as one short ASK ME card: the decision, your
+  recommendation, and the options. Keep working on something else while you wait.
+- **Spend like it is the founder's money.** Mechanical edits belong on Sonnet. Do not start
+  helpers for work you can finish yourself.
+
 ## Where the docs are
 
 | File | What it is |
 |---|---|
-| `docs/superpowers/resume.md` | **State of record** — current status, file map, open follow-ups. Update this. |
-| `docs/superpowers/handoff-2026-08-11-custom-fit-rules.md` | Historical. Design rationale (§3) and traps (§4) still worth reading. Status header is superseded by `resume.md`. |
-| `docs/superpowers/handoff-fable5.md` | Historical. Product intent (§2) and how to work with the founder (§3) still apply. Its §6 environment notes are stale. |
-| `docs/superpowers/specs/` | Design docs per feature. |
-| `docs/superpowers/plans/` | Task-by-task implementation plans. |
+| `docs/superpowers/resume.md` | **Status of record** — what's live, the one to-do list, environment, code map. Update it in place. |
+| `docs/superpowers/decisions-and-lessons.md` | Settled decisions and paid-for traps, by topic. Read the section for the area you touch; add new lessons there. |
+| `docs/superpowers/specs/`, `plans/` | Design doc and task plan per feature, as written at the time. Not updated afterwards. |
+| `docs/superpowers/archive/` | Old handoff docs and the 2026-08-18 UX audit. History only — their live content was moved into the two files above. |
 
-There are three handoff docs because each session wrote a new one. **Do not add a fourth** —
-update `resume.md` instead.
+**Do not write a new handoff document.** Earlier sessions each wrote one, and the founder got
+lost among them. Update `resume.md` and `decisions-and-lessons.md` instead.
 
 ## Working with the founder
 
 Non-technical. Give click-by-click instructions for anything they must do themselves (SQL,
 Vercel, `gh auth login`). Explain the why, not just the what. Never ask for credentials.
+
+The founder makes product calls; you make implementation calls. When a decision is genuinely
+theirs, ask with a recommendation rather than a survey of options. Features go brainstorm →
+spec → plan → build, and the founder checks each one in a browser before it ships.
 
 Cost-conscious: they have asked that mechanical/boilerplate edits be delegated to Sonnet
 subagents, with design and verification kept in the main session. **Verify every subagent

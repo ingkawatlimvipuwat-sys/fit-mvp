@@ -1,5 +1,10 @@
 # Handoff — Custom Fit Rules (2026-08-11)
 
+> **ARCHIVED 2026-09-23 — historical record, not current.** Everything in this file that is
+> still true now lives in [`../resume.md`](../resume.md) (status and to-do) or
+> [`../decisions-and-lessons.md`](../decisions-and-lessons.md) (decisions and traps). Counts,
+> commit ids, paths and "next steps" below are out of date. Kept for history only.
+
 > ## ⚠️ SUPERSEDED — this is a historical document
 >
 > **The work described here was merged and deployed to production on 2026-08-11.** Sections 1

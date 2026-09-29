@@ -28,8 +28,9 @@ async function removeStoredPhoto(photoUrl: string | null, userId: string): Promi
   if (path) await removeStoredObject(path, userId);
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  const supabase = createSupabaseServerClient();
+export async function PATCH(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
@@ -51,7 +52,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     .eq('garment_id', params.id)
     .maybeSingle();
 
-  const form = await req.formData();
+  const form = await req.formData().catch(() => null);
+  if (!form) return NextResponse.json({ error: 'ข้อมูลไม่ถูกต้อง' }, { status: 400 });
 
   const parsed = parseGarmentFields(form);
   if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
@@ -168,8 +170,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   return NextResponse.json({ ok: true });
 }
 
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  const supabase = createSupabaseServerClient();
+export async function DELETE(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 

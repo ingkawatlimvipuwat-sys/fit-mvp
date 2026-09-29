@@ -268,6 +268,27 @@ export const t = {
   tryOnAgain: { th: 'ลองรูปอื่น', en: 'Try another photo' },
   tryOnNeedPhoto: { th: 'กรุณาเลือกรูปก่อน', en: 'Please choose a photo first' },
   tryOnChangePhoto: { th: 'เปลี่ยนรูป', en: 'Change photo' },
+  // --- Size helper (fit form) ---
+  sizeHelperTitle:   { th: 'ไม่แน่ใจขนาดตัวเอง?', en: 'Not sure of your measurements?' },
+  sizeHelperIntro:   {
+    th: 'เลือกไซซ์เพื่อกรอกให้อัตโนมัติ หรือกรอกที่รู้แล้วให้เราประมาณส่วนที่เหลือ (สำหรับผู้ใหญ่)',
+    en: 'Pick a size to fill the fields, or enter what you know and we\'ll estimate the rest (adult sizing).',
+  },
+  profileWomen:      { th: 'ผู้หญิง', en: "Women's" },
+  profileMen:        { th: 'ผู้ชาย', en: "Men's" },
+  estimateRest:      { th: 'ประมาณส่วนที่เหลือ', en: 'Estimate the rest' },
+  estimatedAs:       {
+    th: 'ประมาณว่าเป็นไซซ์ {size} — ปรับค่าที่ไม่ตรงได้',
+    en: 'Estimated as size {size} — adjust anything that\'s off.',
+  },
+  filledFromSize:    {
+    th: 'กรอกจากไซซ์ {size} แล้ว — ปรับค่าที่ไม่ตรงได้',
+    en: 'Filled from size {size} — adjust anything that\'s off.',
+  },
+  needMeasurementToEstimate: {
+    th: 'กรอกขนาดที่รู้อย่างน้อย 1 รายการก่อน',
+    en: 'Enter at least one measurement first.',
+  },
 } as const;
 
 export type StringKey = keyof typeof t;

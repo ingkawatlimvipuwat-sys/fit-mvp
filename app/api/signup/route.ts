@@ -11,7 +11,8 @@ const SignupSchema = z.object({
 });
 
 export async function POST(req: Request) {
-  const body = await req.json();
+  // Malformed JSON becomes null, which the schema rejects as a 400 rather than a 500.
+  const body = await req.json().catch(() => null);
   const parsed = SignupSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
@@ -19,7 +20,7 @@ export async function POST(req: Request) {
   const { email, password, shop_name, shop_slug } = parsed.data;
 
   // 1. Create the auth user (also signs them in via cookies)
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data: signupData, error: signupError } = await supabase.auth.signUp({ email, password });
   if (signupError || !signupData.user) {
     // Never surface raw English Supabase messages to the Thai UI.
