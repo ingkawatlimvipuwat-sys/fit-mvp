@@ -251,6 +251,23 @@ export const t = {
   // --- Colour & fabric: errors ---
   colourInvalid: { th: 'ข้อมูลสีไม่ถูกต้อง', en: 'Invalid colour data' },
   fabricInvalid: { th: 'ข้อมูลเนื้อผ้าไม่ถูกต้อง', en: 'Invalid fabric data' },
+
+  // --- Virtual try-on (stub: returns a hardcoded result image) ---
+  tryOnTitle: { th: 'ลองสวม', en: 'Try on' },
+  tryOnHint: {
+    th: 'ถ่ายหรืออัปโหลดรูปเต็มตัว เพื่อดูภาพคุณใส่สินค้านี้',
+    en: 'Take or upload a full-body photo to see yourself in this item',
+  },
+  tryOnUpload: { th: 'อัปโหลดรูป', en: 'Upload photo' },
+  tryOnCamera: { th: 'ถ่ายรูป', en: 'Take photo' },
+  tryOnSubmit: { th: 'ดูว่าใส่แล้วเป็นยังไง', en: 'See how it looks' },
+  tryOnWorking: { th: 'กำลังสร้างรูป…', en: 'Creating your photo…' },
+  tryOnResult: { th: 'รูปคุณใส่สินค้านี้', en: 'You in this item' },
+  tryOnPhotoAlt: { th: 'รูปคุณใส่สินค้านี้', en: 'You wearing this item' },
+  tryOnYourPhoto: { th: 'รูปที่อัปโหลด', en: 'Your photo' },
+  tryOnAgain: { th: 'ลองรูปอื่น', en: 'Try another photo' },
+  tryOnNeedPhoto: { th: 'กรุณาเลือกรูปก่อน', en: 'Please choose a photo first' },
+  tryOnChangePhoto: { th: 'เปลี่ยนรูป', en: 'Change photo' },
 } as const;
 
 export type StringKey = keyof typeof t;

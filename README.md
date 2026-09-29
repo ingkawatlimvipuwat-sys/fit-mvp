@@ -10,18 +10,39 @@ Next.js 14 (App Router) · TypeScript · Tailwind · Supabase (Auth + Postgres +
 
 ## Running locally
 
+Local development uses a **local** Postgres + Auth + Storage stack (via Docker). It does not
+talk to the hosted Supabase project, so nothing you do here can change live data.
+
+1. Install dependencies: `npm install`
+2. Start Docker. On this Mac that is Colima (`colima start`); Docker Desktop works too.
+3. One-time (or whenever the local stack is down):
+
 ```bash
-npm install
+npm run setup:local
+```
+
+That starts local Postgres/Auth/Storage, applies every file in `supabase/migrations/`, seeds a
+demo shop, and writes `.env.local` pointing at `http://127.0.0.1:54321`.
+
+4. Run the app:
+
+```bash
 npm run dev
 ```
 
 Open http://localhost:3000.
 
-Requires a `.env.local` with the three variables listed in `.env.example`. Get them from the
-Supabase dashboard under Settings → API.
+| | |
+|---|---|
+| Demo login | `demo@example.com` / `password123` |
+| Demo shop | http://localhost:3000/shop/demo |
+| Local Studio | http://127.0.0.1:54323 |
 
-> **Note:** one Supabase project serves both local dev and production — there is no staging.
-> Data you change locally is live data.
+Other database commands: `npm run db:stop`, `npm run db:reset` (wipe and re-seed),
+`npm run db:status`.
+
+Production on Vercel still uses the hosted project. Those keys live in the Vercel dashboard,
+not in `.env.local`.
 
 ## Checks
 
@@ -45,8 +66,9 @@ The deploy runs automatically and takes 1–2 minutes. Confirm it landed rather 
 open the Vercel dashboard's Deployments tab, or probe a route that exists only in the new code
 (a 404 means it hasn't deployed yet).
 
-Database migrations in `supabase/migrations/` are **applied by hand** through the Supabase SQL
-editor. They are not run by the deploy.
+Database migrations in `supabase/migrations/` are applied automatically to the **local** stack
+on `setup:local` / `db:reset`. The hosted project is still updated by hand through the
+Supabase SQL editor — they are not run by the Vercel deploy.
 
 ## Documentation
 

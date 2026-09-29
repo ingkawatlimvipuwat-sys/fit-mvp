@@ -427,13 +427,20 @@ This is a working prototype. It is used in production but has rough edges that n
 ## Environment
 
 - **Live site:** https://fit-mvp-eight.vercel.app — Vercel, auto-deploys from **`main` only**.
-- **Supabase project:** `fit-mvp` (Singapore region, free tier). **One project serves both local
-  dev and production — there is no staging.** Local data changes are live changes, and a
-  migration applied from a dev session is applied to production.
-- **Migrations:** `supabase/migrations/` (`0001_initial.sql`, `0002_fit_rulesets.sql`). Applied
-  by hand through the Supabase SQL editor, not by tooling. Both are applied.
+- **Local stack (2026-09-12):** Docker (Colima on this Mac) + `npx supabase start`. Postgres,
+  Auth, Storage, and Studio all run on this machine. `npm run setup:local` starts them, applies
+  every file in `supabase/migrations/`, seeds `demo@example.com` / `password123` (shop slug
+  `demo`), and writes `.env.local` to `http://127.0.0.1:54321`. Studio: http://127.0.0.1:54323.
+  This is now the default way to run the app; local data never touches production.
+- **Hosted Supabase project:** `fit-mvp` (Singapore region, free tier) — **production only**,
+  via Vercel env vars. Do not point `.env.local` at it.
+- **Migrations:** `supabase/migrations/` (`0001_initial.sql`, `0002_fit_rulesets.sql`,
+  `0003_colour_fabric.sql`). Applied automatically to the local stack. The hosted project is
+  still updated by hand through the Supabase SQL editor — local apply does not reach it. All
+  three are applied in production.
 - **GitHub repo:** `ingkawatlimvipuwat-sys/fit-mvp`
-- **Storage bucket:** `garment-photos` (public-read).
+- **Storage bucket:** `garment-photos` (public-read). Declared for local in
+  `supabase/config.toml`; policies in `supabase/seed.sql`.
 - **Test data left live** (deliberately, 2026-08-11): a garment named `TEST เสื้อผ้ายืด (ลบได้)`
   is on the public shop page, and the `ผ้ายืด` preset holds default values (`-1/1/5`) rather
   than stretchy ones — it was overwritten to prove a counterfactual. Safe to delete.
@@ -484,6 +491,14 @@ lib/
     types.ts             — DB row types, MeasurementBag, Category
   customer-token.ts      — getOrCreateCustomerToken() — UUID in localStorage
 
+scripts/
+  local-db.mjs           — `npm run setup:local`: start Docker/Colima, supabase start, write .env.local
+
+supabase/
+  config.toml            — local stack (Auth, Storage bucket garment-photos, site_url localhost)
+  seed.sql               — local-only: storage policies + demo@example.com / password123
+  migrations/            — 0001, 0002, 0003 (applied automatically locally)
+
 app/
   shop/[shop_slug]/
     layout.tsx           — LanguageProvider wrapper (server component rendering client provider)
@@ -493,6 +508,7 @@ app/
     [garment_id]/
       page.tsx           — hero page (server, force-dynamic)
       FitChecker.tsx     — measurements form + results (client, uses useLanguage)
+      TryOn.tsx          — photo upload / camera; stub VTO returns /try-on/result.png
   api/fit/
     evaluate/route.ts    — POST: validate → fetch garment → evaluateFit → insert fit_session
     last/route.ts        — GET: return last customer_measurements for token
@@ -548,6 +564,10 @@ Hooks already in place for Phase 2 Virtual Try-On:
 - `fit_profile` column on garments
 - `garment-photos` Storage bucket reusable
 - See spec §13 for full readiness checklist
+
+**Stub UI (2026-09-12).** `TryOn.tsx` on the shopper garment page lets the customer
+upload or take a full-body photo. The returned image is hardcoded
+`public/try-on/result.png` until a real model is wired. No session row is written.
 
 ## Phase 3 notes (Customer accounts)
 

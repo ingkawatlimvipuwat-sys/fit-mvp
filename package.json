@@ -8,7 +8,12 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "setup:local": "node scripts/local-db.mjs start",
+    "db:start": "node scripts/local-db.mjs start",
+    "db:stop": "npx supabase stop",
+    "db:reset": "npx supabase db reset && node scripts/local-db.mjs env",
+    "db:status": "npx supabase status"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
@@ -30,6 +35,7 @@
     "eslint-config-next": "14.2.35",
     "jsdom": "^30.0.1",
     "postcss": "^8",
+    "supabase": "^2.117.0",
     "tailwindcss": "^3.4.1",
     "typescript": "^5",
     "vitest": "^4.1.7"
