@@ -82,3 +82,4 @@ the app does today, then lists what's live and everything still to do.
   Worth reading for humans too.
 - `docs/superpowers/specs/` and `plans/` — design doc and task plan per feature.
 - `docs/superpowers/archive/` — old handoff notes, kept for history.
+- 
