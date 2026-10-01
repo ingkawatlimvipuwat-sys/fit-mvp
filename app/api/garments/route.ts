@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { parseGarmentFields } from '@/lib/garment/parse-form';
+import { checkRulesetOwnership } from '@/lib/garment/ruleset-ownership';
 import { parseColoursField, parseFabricField, isFabricEmpty } from '@/lib/garment/colour-fabric';
 import { t } from '@/lib/i18n/strings';
 import { PHOTO_BUCKET, uploadPhotoField } from '@/lib/garment/photo-upload';
@@ -15,6 +16,9 @@ export async function POST(req: Request) {
 
   const parsed = parseGarmentFields(form);
   if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
+
+  const owned = await checkRulesetOwnership(supabase, user.id, parsed.data.fit_ruleset_id);
+  if (!owned.ok) return NextResponse.json({ error: owned.error }, { status: owned.status });
 
   const coloursParse = parseColoursField(form);
   if (!coloursParse.ok) return NextResponse.json({ error: coloursParse.error }, { status: 400 });
