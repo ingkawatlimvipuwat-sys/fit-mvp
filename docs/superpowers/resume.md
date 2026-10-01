@@ -22,11 +22,11 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 
 ---
 
-## Status snapshot (as of 2026-09-29, branch `feature/preset-ownership` pending merge)
+## Status snapshot (as of 2026-10-01, branch `feature/unblock-deploy` pending merge)
 
 | Check | Result |
 |---|---|
-| Live site matches `main` | Yes, as of the Next 15 merge (PR #3, `745d977`) — this snapshot is from the pending preset-ownership branch, not yet merged |
+| Live site matches `main` | **No.** PR #4 (try-on, `552e030`) was blocked by Vercel (merged by a non-owner GitHub account), then `a512a8f` failed to build: PR #4 imports `./TryOn` but `TryOn.tsx` was never committed. `feature/unblock-deploy` removes the import so `main` builds again. Live is probably still on the PR #3 (Next 15) deploy — unconfirmed |
 | Tests (`npm test`) | 172 passing, 17 files |
 | Build (`npm run build`) | Clean |
 | `npm audit --omit=dev` | 2 vulnerabilities (1 high, 1 moderate) — down from 1 critical + 2 high (~18 Next advisories) on 14.2. The remaining high is `postcss@8.4.31` bundled *inside* `next`'s own `node_modules` (build-time CSS processing only, not user input); our own `postcss` dep is 8.5.28, already patched. Clears when Next ships its own postcss bump, or on a future Next 16 upgrade. |
@@ -52,6 +52,14 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 ## To do
 
 One list, most important first. When you finish an item, delete it (git keeps the history).
+
+### Now
+
+1. **Finish the try-on feature (PR #4).** Its component `app/shop/[shop_slug]/[garment_id]/TryOn.tsx`
+   was never committed, so `feature/unblock-deploy` took `<TryOn />` and its `tryOn*` strings
+   back out (restore them from commit `f071316` when the component lands). Also missing:
+   `scripts/local-db.mjs` and the Supabase local config that the new `db:*` npm scripts call.
+   `package.json` now lists `postcss` twice.
 
 ### Before a second shop joins
 
@@ -114,58 +122,75 @@ One list, most important first. When you finish an item, delete it (git keeps th
 
 ---
 
-## Running the work in Munder Difflin (for the founder, since 2026-09-28)
+## Architecture decisions in force
 
-Munder Difflin is the desktop app that runs a team of Claude agents. Michael (the orchestrator)
-takes your requests and hands them to temporary agents called "temps". Each temp works in its
-own copy of the code. Agents there act without asking permission, so the project has guardrails
-built in: **no agent can put anything on the live site.** Only you can, by pressing a button on
-GitHub.
+- **Fit logic:** customer vs garment thresholds — garment measurements = the garment's own size. `good_fit` = garment 1–5 cm roomier than body. Per-dimension config + named fit profiles (`regular`/`slim`/`relaxed`) override the bands.
+- **Modularity:** single `lib/config/dimensions.ts` is source of truth — forms, validation, fit engine, and dimension labels all read from it. Adding a new dimension = one entry there; no DB migration.
+- **Phase 2 readiness:** `fit_sessions.tryon_image_url` column reserved (always null in Phase 1). `customer_token` ties multiple sessions per anonymous customer. See spec §13.
+- **Server-only boundary:** `lib/supabase/server.ts` has `import 'server-only'`. Admin (service-role) client lives there. Client components import only from `lib/supabase/browser.ts`.
+- **MeasurementBag** typed as `Partial<Record<DimensionKey, number>>` — derived from `DimensionKey` in dimensions.ts.
+- **Language:** React Context via `LanguageProvider` (`lib/hooks/useLanguage.tsx`) wraps the shop route via `app/shop/[shop_slug]/layout.tsx`. `useLanguage()` hook reads/writes context + localStorage. All shop client components call `useLanguage()` — they share one context so toggling in ShopHeader reactively updates FitChecker and NoGarments.
+- **Language scope:** only built-in UI strings (from `lib/i18n/strings.ts` and `DIMENSIONS[*].labelEn/measureHintEn`). Retailer content (shop name, garment names) is never translated.
 
-**Setting it up (once)**
-1. In Munder Difflin, add the fit-mvp folder as a project:
-   `C:\Users\Copter\Documents\Claude\Projects\Startup poor fools\fit-mvp`
-2. In Settings → Autonomy & Budgets: set the default model to Sonnet, set a token limit per
-   agent, and allow at most 2 temps at once to start with.
-3. Optional: turn off the "Hourly ops standup" when nothing is running. It wakes Michael every
-   hour, and each wake-up costs tokens.
+---
 
-**The everyday loop**
-1. **Ask Michael for one thing**, naming the item on the to-do list above, for example: *"In
-   fit-mvp, do to-do item 2 (preset ownership). Follow the project's CLAUDE.md."* Stick to one
-   task at a time until you trust the setup.
-2. **Answer the ASK ME cards.** Those are the decisions that are yours. Each one comes with a
-   recommendation.
-3. **When an agent says "ready to ship",** it gives you a GitHub link. Open it and press the
-   green **Create pull request** button.
-4. **Check the preview.** After a minute or two, Vercel adds a comment on that page with a
-   **Visit Preview** link. That link is a private test copy of the site with the change in it.
-   Click through the steps the agent listed. Only look around: the preview uses the real shop's
-   database, so saving anything there changes real data.
-5. **Ship it.** If it looks right, press **Merge pull request**, then **Confirm merge**. That
-   puts the change on the live site. Ask the agent to *"confirm the deploy landed"*.
-6. **If something looks wrong,** don't merge. Tell Michael what you saw. Nothing reaches the
-   live site until you press Merge.
+## Prototype status
 
-**What agents cannot do:** push to the live branch (`main`), deploy to Vercel, or force-push.
-They are also told not to change the database without you asking. The blocking rules are in
-`.claude/settings.json`, and the agent rules are in `CLAUDE.md` under "Working as a team".
+This is a working prototype. It is used in production but has rough edges that need attention before a real launch.
 
-## Environment (as of 2026-09-23)
+### Known deferred-polish items
 
-- **Live site:** https://fit-mvp-eight.vercel.app — Vercel deploys **`main` only**.
-- **Code:** GitHub `ingkawatlimvipuwat-sys/fit-mvp` (private). Only checkout:
-  `C:\Users\Copter\Documents\Claude\Projects\Startup poor fools\fit-mvp`.
-- **Database:** Supabase project `fit-mvp`, Singapore, free tier. **Serves both local dev and
-  production — there is no staging.**
-- **Migrations:** `supabase/migrations/`, applied by hand in the Supabase SQL editor. The
-  deploy does not run them.
-- **Photos:** Storage bucket `garment-photos` (public read).
-- **Environment variables** (`.env.local`, gitignored; also set in Vercel):
-  `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
-- **Founder:** Ingkawat Limvipuwat, commits as `ingkawat.limvipuwat@gmail.com`.
+| Area | Item |
+|------|------|
+| ~~Fit engine~~ | ~~Boundary tests at diff = ±1 and ±5~~ — done, see `resolve.test.ts` |
+| Types | `lib/config/dimensions.ts`: make `ThresholdBand[]` `readonly` |
+| Types | `lib/i18n/strings.ts`: apply `as const` for narrower literal types |
+| Dashboard | `app/dashboard/layout.tsx`: add comment noting orphan-retailer-row is recoverable via Supabase Studio |
+| API | `app/api/garments/route.ts`: map raw dimension keys to Thai labels in error messages |
+| Security | `npm audit`: 5 vulnerabilities from Next.js 14.2 — unreachable in this app; fix with Next.js 15 upgrade post-launch |
+| FitChecker | `garmentMeasurements` prop removed to fix ESLint build failure. Re-add in Phase 2 for client-side comparison display |
+| ~~UX~~ | ~~No loading skeleton on shop browse page~~ — done, `loading.tsx` exists for browse and garment pages. Stale entry, verified live 2026-08-18. |
+| ~~UX~~ | ~~No back-navigation from hero page to shop browse page~~ — done, `BackLink.tsx` ships `← กลับไปหน้าร้าน`. Stale entry, verified live 2026-08-18. |
+| ~~UX~~ | ~~**Full UX audit 2026-08-18**~~ — executed 2026-08-18 on `feature/ux-audit-2026-08-18`. Sections A, B, C1/C3/C4/C5 and D2/D3/D4 are done. See "UX audit executed" below for what remains. The audit doc itself stays as the record of what was found. |
+| UX | Language preference tied to browser localStorage, not to a customer account — if the customer switches device or browser, preference resets |
+| Storage | Typo bucket `garmet-photos` exists in Supabase Storage alongside the correct `garment-photos` — unused, harmless, but delete it eventually |
 
-## Where the code is
+### Things that will definitely need changing before production
+
+- **Customer account system (Phase 3):** measurements and language preference should be tied to an account, not to device localStorage. The `customer_token` pattern is an anonymous MVP placeholder.
+- **Multi-shop support:** currently the app assumes one retailer = one shop. The schema supports more, but the UX, pricing, and onboarding flow don't.
+- **Fit engine calibration:** the threshold bands (±1 cm snug, 1–5 cm good fit, >5 cm loose) are best guesses. Real-world testing with actual garments + actual customers will produce better numbers.
+
+---
+
+## Environment
+
+- **Live site:** https://fit-mvp-eight.vercel.app — Vercel, auto-deploys from **`main` only**.
+- **Local stack (2026-09-12):** Docker (Colima on this Mac) + `npx supabase start`. Postgres,
+  Auth, Storage, and Studio all run on this machine. `npm run setup:local` starts them, applies
+  every file in `supabase/migrations/`, seeds `demo@example.com` / `password123` (shop slug
+  `demo`), and writes `.env.local` to `http://127.0.0.1:54321`. Studio: http://127.0.0.1:54323.
+  This is now the default way to run the app; local data never touches production.
+- **Hosted Supabase project:** `fit-mvp` (Singapore region, free tier) — **production only**,
+  via Vercel env vars. Do not point `.env.local` at it.
+- **Migrations:** `supabase/migrations/` (`0001_initial.sql`, `0002_fit_rulesets.sql`,
+  `0003_colour_fabric.sql`). Applied automatically to the local stack. The hosted project is
+  still updated by hand through the Supabase SQL editor — local apply does not reach it. All
+  three are applied in production.
+- **GitHub repo:** `ingkawatlimvipuwat-sys/fit-mvp`
+- **Storage bucket:** `garment-photos` (public-read). Declared for local in
+  `supabase/config.toml`; policies in `supabase/seed.sql`.
+- **Test data left live** (deliberately, 2026-08-11): a garment named `TEST เสื้อผ้ายืด (ลบได้)`
+  is on the public shop page, and the `ผ้ายืด` preset holds default values (`-1/1/5`) rather
+  than stretchy ones — it was overwritten to prove a counterfactual. Safe to delete.
+- **Env vars** (in `.env.local`, gitignored; also set in Vercel):
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+
+---
+
+## File map (key files for next agent)
 
 ```
 lib/                         pure logic — this is where the tests are
@@ -179,6 +204,14 @@ lib/                         pure logic — this is where the tests are
   supabase/server.ts         database clients for the server only (holds the secret key)
   supabase/browser.ts        database client safe for the browser
   customer-token.ts          anonymous shopper id kept in the browser
+
+scripts/
+  local-db.mjs           — `npm run setup:local`: start Docker/Colima, supabase start, write .env.local
+
+supabase/
+  config.toml            — local stack (Auth, Storage bucket garment-photos, site_url localhost)
+  seed.sql               — local-only: storage policies + demo@example.com / password123
+  migrations/            — 0001, 0002, 0003 (applied automatically locally)
 
 app/
   shop/[shop_slug]/          public shop page; [garment_id]/ is the garment page + FitChecker

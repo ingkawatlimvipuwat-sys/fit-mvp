@@ -172,3 +172,17 @@ to the right section rather than to a new document.
   Check the actual result lines, not the colour.
 - **The dev server dies after idle stretches.** Restart it; it comes up in about 5 seconds.
 - A fresh clone needs `npm install` before anything else.
+
+## 8. Shipping on Vercel
+
+- **Only the `ingkawatlimvipuwat-sys` GitHub account may press "Merge pull request."** Vercel is
+  on the Hobby plan, which blocks a deploy of this private repo when the latest commit's author
+  is anyone else ("The Hobby Plan does not support collaboration for private repositories").
+  Teammates can open PRs; the founder merges. Sharing a Vercel login does not help — Vercel
+  checks the GitHub author, not who is logged in to Vercel (2026-09-30, PR #4).
+- **Do not move the project to a new Vercel account to save seats.** A re-import gets a new
+  `*.vercel.app` address, and every shop link already handed to customers points at
+  `fit-mvp-eight.vercel.app` (`CopyPublicLink` builds links from the current origin).
+- **A merged PR can still be missing files.** PR #4 imported a component that only existed on
+  its author's machine, and `main` stopped building. A green build on the PR's Vercel preview
+  is the check: do not merge a PR whose preview failed or never appeared.
