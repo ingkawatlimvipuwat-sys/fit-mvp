@@ -38,7 +38,7 @@ export default async function EditGarmentPage(props: { params: Promise<{ id: str
   // malformed id fails the query the same way. Both land on notFound().
   const { data: g } = await supabase
     .from('garments')
-    .select('id, name, category, photo_url, true_colour_photo_url, measurements, fit_profile, fit_ruleset_id, fit_rule_override')
+    .select('id, name, category, size_label, photo_url, true_colour_photo_url, measurements, fit_profile, fit_ruleset_id, fit_rule_override')
     .eq('id', params.id)
     .eq('retailer_id', user.id)
     .single();
@@ -73,6 +73,7 @@ export default async function EditGarmentPage(props: { params: Promise<{ id: str
         id: g.id,
         name: g.name,
         category: g.category as Category,
+        sizeLabel: typeof g.size_label === 'string' ? g.size_label : '',
         photo_url: g.photo_url,
         measurements: (g.measurements ?? {}) as MeasurementBag,
         ...selection,

@@ -27,10 +27,10 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 | Check | Result |
 |---|---|
 | Live site matches `main` | **No.** PR #4 (try-on, `552e030`) was blocked by Vercel (merged by a non-owner GitHub account), then `a512a8f` failed to build: PR #4 imports `./TryOn` but `TryOn.tsx` was never committed. `feature/unblock-deploy` removes the import so `main` builds again. Live is probably still on the PR #3 (Next 15) deploy — unconfirmed |
-| Tests (`npm test`) | 172 passing, 17 files |
+| Tests (`npm test`) | 188 passing, 18 files |
 | Build (`npm run build`) | Clean |
 | `npm audit --omit=dev` | 2 vulnerabilities (1 high, 1 moderate) — down from 1 critical + 2 high (~18 Next advisories) on 14.2. The remaining high is `postcss@8.4.31` bundled *inside* `next`'s own `node_modules` (build-time CSS processing only, not user input); our own `postcss` dep is 8.5.28, already patched. Clears when Next ships its own postcss bump, or on a future Next 16 upgrade. |
-| Database migrations | 0001, 0002, 0003 — all applied to the live database |
+| Database migrations | 0001, 0002, 0003 applied to the live database. **0004 (size label) is written but NOT yet applied** — apply it before merging `feature/size-labels` |
 | Last health check | 2026-09-23 |
 
 ## What's live
@@ -63,7 +63,6 @@ One list, most important first. When you finish an item, delete it (git keeps th
 
 ### Before a second shop joins
 
-1. **Decide on size labels** (S/M/L on garments) — see decisions-and-lessons §2.
 2. **Confirm the Supabase secret key was rotated.** A key was found in plain text in a deleted
    clone on 2026-08-11 (never pushed to GitHub). Rotation was advised; it was never confirmed.
    Ask the founder.
@@ -211,7 +210,7 @@ scripts/
 supabase/
   config.toml            — local stack (Auth, Storage bucket garment-photos, site_url localhost)
   seed.sql               — local-only: storage policies + demo@example.com / password123
-  migrations/            — 0001, 0002, 0003 (applied automatically locally)
+  migrations/            — 0001–0004 (applied automatically locally; 0004 not yet on hosted)
 
 app/
   shop/[shop_slug]/          public shop page; [garment_id]/ is the garment page + FitChecker

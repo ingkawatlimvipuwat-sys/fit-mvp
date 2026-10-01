@@ -60,8 +60,12 @@ to the right section rather than to a new document.
 - **Fit rules are readable by anyone** (`fit_rule_override` and presets via `garments`' public
   read policy). They are the retailer's own thresholds, not customer data. **Never tell a
   retailer their rules are secret.** Reasoning: spec §4.2 and the comments in migration 0002.
-- **Size labels (S/M/L on garments) are deferred** — but must be decided **before onboarding a
-  second retailer**, because after that the migration cost is someone else's re-typing.
+- **Garments get an optional size label** (decided 2026-09-28, built 2026-10-01, migration 0004).
+  Fixed list XS, S, M, L, XL, XXL, Free size, stored as nullable text codes (`FREE` for Free size)
+  with a check constraint. Empty shows nothing. It is a display label only: not tied to the fit
+  engine or the size helper. Set on Add/Edit garment; shown on the dashboard card and the public
+  garment page. The code selects `size_label`, so apply 0004 to the live database BEFORE merging
+  (section 4).
 - **Public signup at `/signup` stays open** (2026-09-28, founder). Anyone can create a shop; this is
   intended, not an oversight. Do not add an invite gate without a new decision.
 

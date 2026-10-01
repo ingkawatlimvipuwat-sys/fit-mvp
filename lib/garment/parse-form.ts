@@ -4,6 +4,7 @@ import { FIT_PROFILES } from '@/lib/config/fit-profiles';
 import { FitRulesetSchema, firstIssueMessage } from '@/lib/fit/rule-schema';
 import { t } from '@/lib/i18n/strings';
 import type { FitRuleset } from '@/lib/fit/rules';
+import { isSizeLabel, type SizeLabel } from '@/lib/garment/size-label';
 import type { Category, MeasurementBag } from '@/lib/supabase/types';
 
 const CATEGORY = z.enum(['top', 'bottom', 'dress']);
@@ -16,6 +17,8 @@ export interface GarmentFields {
   fit_profile: string;
   fit_ruleset_id: string | null;
   fit_rule_override: FitRuleset | null;
+  /** Optional. Edit is a full replacement, so absent clears it. */
+  size_label: SizeLabel | null;
   measurements: MeasurementBag;
 }
 
@@ -67,6 +70,10 @@ export function parseGarmentFields(form: FormData): ParseResult {
     fit_ruleset_id = rulesetIdRaw;
   }
 
+  const sizeRaw = String(form.get('size_label') ?? '').trim();
+  if (sizeRaw !== '' && !isSizeLabel(sizeRaw)) return { ok: false, error: 'invalid size_label' };
+  const size_label: SizeLabel | null = sizeRaw === '' ? null : sizeRaw;
+
   // Collect measurements only for dimensions this category uses.
   const measurements: MeasurementBag = {};
   for (const d of dimensionsForCategory(category)) {
@@ -84,6 +91,6 @@ export function parseGarmentFields(form: FormData): ParseResult {
 
   return {
     ok: true,
-    data: { name, category, fit_profile, fit_ruleset_id, fit_rule_override, measurements },
+    data: { name, category, fit_profile, fit_ruleset_id, fit_rule_override, size_label, measurements },
   };
 }

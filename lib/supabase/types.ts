@@ -22,6 +22,8 @@ export interface Garment {
   /** Garment laid flat under daylight. Nullable: a colour reference, not a hero shot. */
   true_colour_photo_url: string | null;
   fit_profile: string;
+  /** Optional S/M/L label; null shows nothing. Migration 0004. */
+  size_label: string | null;
   /** Preset reference. Mutually exclusive with fit_rule_override. */
   fit_ruleset_id: string | null;
   /** Inline rule for this garment only. Replaces the preset, never merges. */
