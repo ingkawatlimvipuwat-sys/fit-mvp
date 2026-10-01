@@ -22,11 +22,11 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 
 ---
 
-## Status snapshot (as of 2026-09-29, branch `feature/next-15` pending merge)
+## Status snapshot (as of 2026-10-01, branch `feature/unblock-deploy` pending merge)
 
 | Check | Result |
 |---|---|
-| Live site matches `main` | Yes, as of the `ee19a98` deploy — this snapshot is from the pending Next 15 branch, not yet merged |
+| Live site matches `main` | **No.** PR #4 (try-on, `552e030`) was blocked by Vercel (merged by a non-owner GitHub account), then `a512a8f` failed to build: PR #4 imports `./TryOn` but `TryOn.tsx` was never committed. `feature/unblock-deploy` removes the import so `main` builds again. Live is probably still on the PR #3 (Next 15) deploy — unconfirmed |
 | Tests (`npm test`) | 167 passing, 16 files |
 | Build (`npm run build`) | Clean |
 | `npm audit --omit=dev` | 2 vulnerabilities (1 high, 1 moderate) — down from 1 critical + 2 high (~18 Next advisories) on 14.2. The remaining high is `postcss@8.4.31` bundled *inside* `next`'s own `node_modules` (build-time CSS processing only, not user input); our own `postcss` dep is 8.5.28, already patched. Clears when Next ships its own postcss bump, or on a future Next 16 upgrade. |
@@ -52,6 +52,14 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 ## To do
 
 One list, most important first. When you finish an item, delete it (git keeps the history).
+
+### Now
+
+1. **Finish the try-on feature (PR #4).** Its component `app/shop/[shop_slug]/[garment_id]/TryOn.tsx`
+   was never committed, so `feature/unblock-deploy` took `<TryOn />` back out of the garment page.
+   Also missing: `scripts/local-db.mjs` and the Supabase local config that the new `db:*` npm
+   scripts call. `package.json` now lists `postcss` twice. The `tryOn*` strings in
+   `lib/i18n/strings.ts` are kept for when the component lands.
 
 ### Before a second shop joins
 
