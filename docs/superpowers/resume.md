@@ -56,10 +56,10 @@ One list, most important first. When you finish an item, delete it (git keeps th
 ### Now
 
 1. **Finish the try-on feature (PR #4).** Its component `app/shop/[shop_slug]/[garment_id]/TryOn.tsx`
-   was never committed, so `feature/unblock-deploy` took `<TryOn />` back out of the garment page.
-   Also missing: `scripts/local-db.mjs` and the Supabase local config that the new `db:*` npm
-   scripts call. `package.json` now lists `postcss` twice. The `tryOn*` strings in
-   `lib/i18n/strings.ts` are kept for when the component lands.
+   was never committed, so `feature/unblock-deploy` took `<TryOn />` and its `tryOn*` strings
+   back out (restore them from commit `f071316` when the component lands). Also missing:
+   `scripts/local-db.mjs` and the Supabase local config that the new `db:*` npm scripts call.
+   `package.json` now lists `postcss` twice.
 
 ### Before a second shop joins
 
