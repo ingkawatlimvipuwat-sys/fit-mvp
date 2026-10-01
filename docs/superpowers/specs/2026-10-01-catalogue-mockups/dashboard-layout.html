@@ -1,0 +1,161 @@
+<style>
+  .dv { font: 12px/1.35 system-ui, sans-serif; color: #222; }
+  .frame { border: 1px solid #cfd4da; border-radius: 8px; background: #fff; overflow: hidden; }
+  .bar { background: #1f2937; color: #fff; padding: 6px 10px; font-weight: 600; display:flex; justify-content:space-between; }
+  .tools { display:flex; gap:6px; padding:6px 8px; border-bottom:1px solid #eee; background:#fafafa; flex-wrap:wrap }
+  .chip { border:1px solid #cfd4da; border-radius: 12px; padding:2px 8px; background:#fff; white-space:nowrap }
+  .chip.on { background:#e0ecff; border-color:#8db4f5 }
+  .search { flex:1; min-width:80px; border:1px solid #cfd4da; border-radius:6px; padding:2px 6px; color:#888; background:#fff }
+  .crumb { padding:5px 8px; color:#555; border-bottom:1px solid #eee }
+  .crumb b { color:#222 }
+  .side { width: 34%; border-right:1px solid #eee; padding:6px; background:#fbfbfb }
+  .side div { padding:2px 4px; border-radius:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+  .side .sel { background:#e0ecff; font-weight:600 }
+  .grid { flex:1; display:grid; grid-template-columns: repeat(3, 1fr); gap:6px; padding:6px }
+  .card { border:1px solid #e3e6ea; border-radius:6px; overflow:hidden; background:#fff }
+  .ph { height:38px; background: linear-gradient(135deg,#d9dee4,#eef1f4); display:flex; align-items:center; justify-content:center; color:#99a; font-size:10px }
+  .card .t { padding:3px 5px; font-weight:600; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+  .card .s { padding:0 5px 4px; color:#777; font-size:10px }
+  .fold .ph { background:#fff4d6; color:#b08400; font-size:16px }
+  .warn { color:#c2410c; font-weight:600 }
+  .row { display:flex; align-items:center; gap:6px; padding:5px 8px; border-bottom:1px solid #f0f0f0 }
+  .row .ic { width:22px; height:22px; border-radius:4px; background:#e5e9ee; flex:none; display:flex; align-items:center; justify-content:center; font-size:12px }
+  .row .ic.f { background:#fff4d6 }
+  .row .n { flex:1; font-weight:600 }
+  .row .m { color:#777; font-size:10px; white-space:nowrap }
+  .row.sub { padding-left:26px; background:#fcfcfd } .row.sub2 { padding-left:44px; background:#fafbfc; font-weight:400 }
+  .row.sub2 .n { font-weight:400 }
+  .phone { width: 150px; border:6px solid #222; border-radius:16px; overflow:hidden; background:#fff; flex:none }
+  .phone .bar { padding:4px 7px; font-size:11px }
+  .pair { display:flex; gap:12px; align-items:flex-start }
+  .pair > .frame { flex:1 }
+  .lbl { font-size:10px; color:#888; text-transform:uppercase; letter-spacing:.05em; margin:0 0 3px }
+  .why { margin-top:8px; font-size:13px }
+</style>
+
+<h2>How should the owner's dashboard be laid out?</h2>
+<p class="subtitle">Same shop in all three: a "Shirts" folder (with a "Linen" folder inside it), the "Linen Shirt" product with 12 versions, and tags like Sale and Summer. Each option shows computer on the left, phone on the right. Click the one that feels right.</p>
+
+<div class="options">
+
+  <!-- A -->
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content dv">
+      <h3>Folder list on the side, items as picture cards</h3>
+      <div class="pair">
+        <div>
+          <p class="lbl">Computer</p>
+          <div class="frame">
+            <div class="bar"><span>My shop</span><span>+ New ▾</span></div>
+            <div class="tools"><span class="search">🔍 Search…</span><span class="chip on">Sale ✕</span><span class="chip">Newest ▾</span><span class="chip">⚠ Needs attention</span></div>
+            <div style="display:flex; min-height:150px">
+              <div class="side">
+                <div>📁 All items</div>
+                <div>📁 Shirts</div>
+                <div class="sel">&nbsp;&nbsp;📁 Linen</div>
+                <div>📁 Trousers</div>
+                <div>📁 Dresses</div>
+                <div>📁 Summer 2026</div>
+              </div>
+              <div class="grid">
+                <div class="card"><div class="ph">photo</div><div class="t">Linen Shirt</div><div class="s">12 versions · Sale</div></div>
+                <div class="card"><div class="ph">photo</div><div class="t">Linen Tunic</div><div class="s">6 versions</div></div>
+                <div class="card"><div class="ph">photo</div><div class="t">Linen Blouse</div><div class="s warn">⚠ 1 missing</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <p class="lbl">Phone</p>
+          <div class="phone">
+            <div class="bar"><span>‹ Shirts</span><span>＋</span></div>
+            <div class="tools"><span class="search">🔍</span><span class="chip">Sale</span></div>
+            <div class="crumb"><b>Linen</b></div>
+            <div class="grid" style="grid-template-columns:1fr 1fr">
+              <div class="card"><div class="ph">photo</div><div class="t">Linen Shirt</div><div class="s">12 versions</div></div>
+              <div class="card"><div class="ph">photo</div><div class="t">Linen Tunic</div><div class="s">6 versions</div></div>
+              <div class="card"><div class="ph">photo</div><div class="t">Linen Blouse</div><div class="s warn">⚠ 1</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="why"><b>Like Google Drive.</b> Photos make it fast to spot an item by eye. On a phone the side list becomes a "back" button.</p>
+    </div>
+  </div>
+
+  <!-- B -->
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content dv">
+      <h3>One screen at a time: tap a folder to go into it</h3>
+      <div class="pair">
+        <div>
+          <p class="lbl">Computer</p>
+          <div class="frame">
+            <div class="bar"><span>My shop</span><span>+ New ▾</span></div>
+            <div class="tools"><span class="search">🔍 Search…</span><span class="chip on">Sale ✕</span><span class="chip">Newest ▾</span><span class="chip">⚠ Needs attention</span></div>
+            <div class="crumb">All items › Shirts › <b>Linen</b></div>
+            <div class="grid" style="grid-template-columns: repeat(4,1fr)">
+              <div class="card fold"><div class="ph">📁</div><div class="t">Short sleeve</div><div class="s">4 products</div></div>
+              <div class="card"><div class="ph">photo</div><div class="t">Linen Shirt</div><div class="s">12 versions · Sale</div></div>
+              <div class="card"><div class="ph">photo</div><div class="t">Linen Tunic</div><div class="s">6 versions</div></div>
+              <div class="card"><div class="ph">photo</div><div class="t">Linen Blouse</div><div class="s warn">⚠ 1 missing</div></div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <p class="lbl">Phone</p>
+          <div class="phone">
+            <div class="bar"><span>‹ Shirts</span><span>＋</span></div>
+            <div class="tools"><span class="search">🔍</span><span class="chip">Sale</span></div>
+            <div class="crumb"><b>Linen</b></div>
+            <div class="grid" style="grid-template-columns:1fr 1fr">
+              <div class="card fold"><div class="ph">📁</div><div class="t">Short sleeve</div></div>
+              <div class="card"><div class="ph">photo</div><div class="t">Linen Shirt</div><div class="s">12 versions</div></div>
+              <div class="card"><div class="ph">photo</div><div class="t">Linen Tunic</div><div class="s">6 versions</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="why"><b>Like the Files app on a phone.</b> The same design on computer and phone, so owners only learn it once. Folders and products sit side by side as cards.</p>
+    </div>
+  </div>
+
+  <!-- C -->
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content dv">
+      <h3>A list you open and close, like a table of contents</h3>
+      <div class="pair">
+        <div>
+          <p class="lbl">Computer</p>
+          <div class="frame">
+            <div class="bar"><span>My shop</span><span>+ New ▾</span></div>
+            <div class="tools"><span class="search">🔍 Search…</span><span class="chip on">Sale ✕</span><span class="chip">Name A–Z ▾</span><span class="chip">⚠ Needs attention</span></div>
+            <div class="row"><span class="ic f">📁</span><span class="n">▾ Shirts</span><span class="m">2 folders · 9 products</span></div>
+            <div class="row sub"><span class="ic f">📁</span><span class="n">▾ Linen</span><span class="m">3 products</span></div>
+            <div class="row sub2"><span class="ic">👕</span><span class="n">▸ Linen Shirt</span><span class="m">12 versions · Sale · Summer</span></div>
+            <div class="row sub2"><span class="ic">👕</span><span class="n">▸ Linen Tunic</span><span class="m">6 versions</span></div>
+            <div class="row sub2"><span class="ic">👕</span><span class="n">▸ Linen Blouse</span><span class="m warn">⚠ L / White missing chest</span></div>
+            <div class="row"><span class="ic f">📁</span><span class="n">▸ Trousers</span><span class="m">14 products</span></div>
+          </div>
+        </div>
+        <div>
+          <p class="lbl">Phone</p>
+          <div class="phone">
+            <div class="bar"><span>My shop</span><span>＋</span></div>
+            <div class="tools"><span class="search">🔍</span><span class="chip">Sale</span></div>
+            <div class="row"><span class="n">▾ Shirts</span></div>
+            <div class="row sub"><span class="n">▾ Linen</span></div>
+            <div class="row sub2"><span class="n">Linen Shirt</span></div>
+            <div class="row sub2"><span class="n">Linen Tunic</span></div>
+            <div class="row"><span class="n">▸ Trousers</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="why"><b>Like a spreadsheet or email folders.</b> You see the most items at once, which is good for hundreds of items. Fewer photos, more words.</p>
+    </div>
+  </div>
+
+</div>

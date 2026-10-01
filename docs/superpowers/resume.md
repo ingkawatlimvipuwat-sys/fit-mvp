@@ -53,13 +53,24 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 
 One list, most important first. When you finish an item, delete it (git keeps the history).
 
+### Fix first
+
+0. **`main` does not build (found 2026-10-01).** `app/shop/[shop_slug]/[garment_id]/page.tsx`
+   imports `./TryOn` (commit `f071316`, PR #4) but `TryOn.tsx` was never committed, so every
+   Vercel deploy since fails and the live site stays on the last good build. Ask the partner who
+   wrote it to commit the file, or remove the import. Small PR of its own.
+
 ### Before a second shop joins
 
 1. **Check preset ownership.** `fit_ruleset_id` is checked to be a valid id but not that the
    preset belongs to the caller (`lib/garment/parse-form.ts`), so a hand-crafted request could
    attach another shop's preset.
 2. **Decide whether public signup is intended.** Anyone can create a shop at `/signup` today.
-3. **Decide on size labels** (S/M/L on garments) — see decisions-and-lessons §2.
+3. **Build catalogue organisation and versions** — designed and approved 2026-10-01:
+   `specs/2026-10-01-catalogue-organisation-design.md`. Products (one per Shopee listing, one
+   shopper link) hold versions (each a full garment: L / Black…) the shopper picks between;
+   folders and tags for the owner. Three stages; **§10 of the spec is the handoff** — start
+   there. Stage 1 settles the old "size labels" decision. Waits on item 0 and item 1.
 4. **Confirm the Supabase secret key was rotated.** A key was found in plain text in a deleted
    clone on 2026-08-11 (never pushed to GitHub). Rotation was advised; it was never confirmed.
    Ask the founder.
@@ -101,7 +112,9 @@ One list, most important first. When you finish an item, delete it (git keeps th
 
 ### Later — ideas and phases, not started
 
-- **Catalogue organisation** — categories, variants, sorting for shops with hundreds of items.
+- **For the founder's partners, not agents:** Shopee's rule against outside links, a possible
+  Shopee partnership, a "Back to Shopee" button, picks carried in the link. See the catalogue
+  spec §11. Do not build any of these without a decision.
 - **Dashboard visual design pass** — the founder preferred the brainstorming mockups.
 - **Teen and kids sizing**, and an optional **age question** (needs its own spec, including
   consent rules for minors). See `specs/2026-09-16-size-helper-design.md` §10.

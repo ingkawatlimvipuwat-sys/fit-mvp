@@ -1,0 +1,86 @@
+<style>
+  .dv { font: 12px/1.35 system-ui, sans-serif; color: #222; }
+  .phone { width: 190px; border:7px solid #222; border-radius:20px; overflow:hidden; background:#fff; flex:none }
+  .sh { background:#fff; border-bottom:1px solid #eee; padding:5px 8px; font-weight:700; font-size:11px }
+  .photo { height:90px; background:linear-gradient(135deg,#d9dee4,#eef1f4); display:flex; align-items:center; justify-content:center; color:#99a; font-size:10px }
+  .nm { padding:6px 8px 2px; font-size:13px; font-weight:700 }
+  .pk { padding:3px 8px }
+  .pk .l { font-size:10px; color:#666; margin-bottom:2px }
+  .ch { display:inline-block; border:1px solid #cfd4da; border-radius:5px; padding:1px 7px; margin:0 2px 3px 0; font-size:11px; background:#fff }
+  .ch.on { border-color:#ee4d2d; color:#ee4d2d; background:#fff5f2; font-weight:600 }
+  .ch.off { color:#ccc; border-style:dashed }
+  .tabs { display:flex; border-bottom:1px solid #eee; margin-top:4px; font-size:11px }
+  .tabs span { flex:1; text-align:center; padding:4px 0; color:#777 } .tabs .on { color:#111; font-weight:700; border-bottom:2px solid #111 }
+  .in { margin:3px 8px; display:flex; justify-content:space-between; font-size:11px; border-bottom:1px solid #f0f0f0; padding:2px 0 }
+  .in b { font-weight:600 }
+  .btnx { margin:6px 8px; background:#1f2937; color:#fff; text-align:center; border-radius:6px; padding:5px; font-weight:600; font-size:11px }
+  .btnx.dis { background:#d1d5db; color:#fff }
+  .res { margin:4px 8px 8px; border-radius:6px; background:#f8fafc; padding:5px 7px; font-size:11px }
+  .g { color:#15803d; font-weight:600 } .t { color:#c2410c; font-weight:600 }
+  .hint { margin:2px 8px; font-size:10px; color:#999 }
+  .pair { display:flex; gap:14px; align-items:flex-start }
+  .steps { font-size:12.5px; color:inherit; margin:0; padding-left:18px }
+  .steps li { margin-bottom:4px }
+  .why { margin-top:8px; font-size:13px }
+</style>
+
+<h2>On the shopper's garment page, when do they pick the size and colour?</h2>
+<p class="subtitle">Shopper's phone, arriving from Shopee. Both options keep today's page (photo, name, Fit / Colour / Fabric tabs) and add the two pickers. The shopper always chooses. We never pick for them. Click the one that feels right.</p>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content dv">
+      <h3>Pick first, like Shopee, then check the fit</h3>
+      <div class="pair">
+        <div class="phone">
+          <div class="sh">Baan Linen</div>
+          <div class="photo">photo of L / Black</div>
+          <div class="nm">Linen Shirt</div>
+          <div class="pk"><div class="l">Colour</div><span class="ch on">Black</span><span class="ch">Green</span><span class="ch">White</span></div>
+          <div class="pk"><div class="l">Size</div><span class="ch">S</span><span class="ch">M</span><span class="ch on">L</span><span class="ch">XL</span><span class="ch">XXL</span></div>
+          <div class="tabs"><span class="on">Fit</span><span>Colour</span><span>Fabric</span></div>
+          <div class="in"><span>Chest</span><b>100 cm</b></div>
+          <div class="in"><span>Waist</span><b>86 cm</b></div>
+          <div class="btnx">Check fit for L / Black</div>
+        </div>
+        <ol class="steps">
+          <li>Shopper picks <b>Black</b> and <b>L</b>, the same as they just did on Shopee.</li>
+          <li>The photo, colour swatch and fabric switch to L / Black.</li>
+          <li>They type their measurements and press <b>Check fit</b>.</li>
+          <li>Until both pickers are chosen, the button stays grey: <i>"Pick a size and colour first"</i>.</li>
+        </ol>
+      </div>
+      <p class="why"><b>Same order as Shopee,</b> so nothing new to learn. To compare with XL they tap XL and press Check again. Their measurements stay filled in.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content dv">
+      <h3>Type measurements first, then tap sizes to see each one's fit</h3>
+      <div class="pair">
+        <div class="phone">
+          <div class="sh">Baan Linen</div>
+          <div class="photo">photo of L / Black</div>
+          <div class="nm">Linen Shirt</div>
+          <div class="pk"><div class="l">Colour</div><span class="ch on">Black</span><span class="ch">Green</span><span class="ch">White</span></div>
+          <div class="tabs"><span class="on">Fit</span><span>Colour</span><span>Fabric</span></div>
+          <div class="in"><span>Chest</span><b>100 cm</b></div>
+          <div class="in"><span>Waist</span><b>86 cm</b></div>
+          <div class="pk" style="margin-top:4px"><div class="l">Your fit in size…</div><span class="ch">S</span><span class="ch">M</span><span class="ch on">L</span><span class="ch">XL</span><span class="ch">XXL</span></div>
+          <div class="res">L / Black<br>Chest <span class="g">Good</span> · Waist <span class="g">Good</span></div>
+        </div>
+        <ol class="steps">
+          <li>Shopper picks colour <b>Black</b>.</li>
+          <li>They type their measurements once.</li>
+          <li>They tap <b>L</b>, and the result appears straight away. Tap <b>XL</b> and it updates instantly.</li>
+          <li>No size is pre-selected. The shopper taps the one they chose on Shopee.</li>
+        </ol>
+      </div>
+      <p class="why"><b>Comparing sizes is one tap,</b> and there's no Check button to press each time. The size picker sits next to the result instead of at the top, which is a little different from Shopee.</p>
+    </div>
+  </div>
+
+</div>
