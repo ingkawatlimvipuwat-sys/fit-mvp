@@ -55,11 +55,10 @@ One list, most important first. When you finish an item, delete it (git keeps th
 
 ### Now
 
-1. **Finish the try-on feature (PR #4).** Its component `app/shop/[shop_slug]/[garment_id]/TryOn.tsx`
-   was never committed, so `feature/unblock-deploy` took `<TryOn />` and its `tryOn*` strings
-   back out (restore them from commit `f071316` when the component lands). Also missing:
-   `scripts/local-db.mjs` and the Supabase local config that the new `db:*` npm scripts call.
-   `package.json` now lists `postcss` twice.
+1. **Ship the try-on upload.** `TryOn.tsx` is back on the garment page: the shopper picks a
+   photo and the page shows the fixed result image at `public/try-on/result.png`. It is not
+   on `main` yet. Still missing from the earlier try-on commit: `scripts/local-db.mjs` and
+   the Supabase local config that the `db:*` npm scripts call. `package.json` lists `postcss` twice.
 
 ### Before a second shop joins
 
