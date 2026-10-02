@@ -78,6 +78,7 @@ the app does today, then lists what's live and everything still to do.
 - `docs/superpowers/resume.md` — status of record: what's live, the to-do list, environment.
 - `docs/superpowers/decisions-and-lessons.md` — why the product is built the way it is (§2),
   and traps already paid for.
+  
 - `CLAUDE.md` — orientation for AI coding agents: shipping procedure, checks, landmines.
   Worth reading for humans too.
 - `docs/superpowers/specs/` and `plans/` — design doc and task plan per feature.
