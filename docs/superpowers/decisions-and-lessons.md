@@ -60,8 +60,17 @@ to the right section rather than to a new document.
 - **Fit rules are readable by anyone** (`fit_rule_override` and presets via `garments`' public
   read policy). They are the retailer's own thresholds, not customer data. **Never tell a
   retailer their rules are secret.** Reasoning: spec §4.2 and the comments in migration 0002.
-- **Size labels (S/M/L on garments) are deferred** — but must be decided **before onboarding a
-  second retailer**, because after that the migration cost is someone else's re-typing.
+- **Shoppers arrive from a Shopee listing, at one product page** (2026-09-30). "We aren't
+  looking to become a catalogue platform." No shopper-facing browse, search, filter, folders or
+  tags. Organisation is an owner-only tool, each shop's its own.
+- **Size labels — decided 2026-10-01 as products and versions.** A product = one Shopee
+  listing = one shopper link, and **is not a garment** (no measurements, photo or fit data of
+  its own). Each size/colour/etc. is a version = a full `garments` row with its own
+  measurements. The shopper picks the version; **the app never recommends a size**. Never say
+  "mother garment". Spec: `specs/2026-10-01-catalogue-organisation-design.md` §2–§3.
+- **MLG-4 size labels (S/M/L column on garments) parked 2026-10-05, superseded by the
+  catalogue.** Branch `feature/size-labels` is kept, not merged. Migration `0004_size_label`
+  was **never applied** to the live database. Do not apply it or merge that branch.
 - **Public signup at `/signup` stays open** (2026-09-28, founder). Anyone can create a shop; this is
   intended, not an oversight. Do not add an invite gate without a new decision.
 
