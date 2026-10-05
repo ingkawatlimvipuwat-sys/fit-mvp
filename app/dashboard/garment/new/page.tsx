@@ -42,7 +42,7 @@ export default async function NewGarmentPage(props: {
   // Duplicate: the source must be a version of THIS product and this shop's.
   const { data: g } = await supabase
     .from('garments')
-    .select('id, category, picks, photo_url, true_colour_photo_url, measurements, fit_profile, fit_ruleset_id, fit_rule_override')
+    .select('id, category, size_label, picks, photo_url, true_colour_photo_url, measurements, fit_profile, fit_ruleset_id, fit_rule_override')
     .eq('id', copy)
     .eq('product_id', productId)
     .eq('retailer_id', user.id)
@@ -65,7 +65,7 @@ export default async function NewGarmentPage(props: {
     id: g.id,
     name: ctx.name,
     category: g.category as Category,
-    sizeLabel: '',
+    sizeLabel: typeof g.size_label === 'string' ? g.size_label : '',
     picks: (g.picks ?? {}) as Record<string, string>,
     photo_url: g.photo_url,
     measurements: (g.measurements ?? {}) as MeasurementBag,

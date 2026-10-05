@@ -14,7 +14,9 @@
 
 **Standing rules:** database is live, so no SQL anywhere except writing the file. Never rebase; `git merge origin/main`. Never `npm run build` while a dev server runs. Never use the words "mother/parent/base/main version". Commit trailer: `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`.
 
-**Open items (asked of `god` 2026-10-05):**
+**Renumbering (confirmed by `god` 2026-10-05):** the spec says 0004 (catalogue) and 0005 (NOT NULL). `0004_size_label.sql` is taken and the founder chose to run it on live, so the catalogue migration is **`0005_catalogue.sql`** and the later NOT NULL step is **`0006`**. `size_label` stays and must keep working (form select, dashboard card, shopper page).
+
+**Open items (asked of `god` 2026-10-05; item 1 now answered, see above):**
 1. Migration file number. `0004_size_label.sql` already exists on `main`, so this plan names the file `0005_catalogue.sql` (recommended; the later NOT NULL step becomes `0006`). If `god` says otherwise, rename the file and the references in Task 1 and Task 12 only.
 2. No local database is available (`scripts/local-db.mjs` and `supabase/config.toml` are missing, no Docker). The migration is therefore **not executed anywhere**; Task 1 adds a static check of its text instead, and the report must say so.
 

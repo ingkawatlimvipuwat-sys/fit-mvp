@@ -53,7 +53,7 @@ export default async function ProductPage(props: { params: Promise<Params> }) {
     supabase.from('product_pickers').select('id, name, position')
       .eq('product_id', params.product_id).order('position', { ascending: true }),
     supabase.from('garments')
-      .select('id, category, photo_url, true_colour_photo_url, picks, created_at')
+      .select('id, category, size_label, photo_url, true_colour_photo_url, picks, created_at')
       .eq('product_id', params.product_id).eq('retailer_id', shop.id)
       .order('created_at', { ascending: true }),
     supabase.from('products').select('id, name')
@@ -97,6 +97,7 @@ export default async function ProductPage(props: { params: Promise<Params> }) {
     created_at: v.created_at,
     picks: v.picks ?? {},
     photo_url: v.photo_url,
+    size_label: v.size_label ?? null,
     true_colour_photo_url: v.true_colour_photo_url ?? null,
     colours: colours.get(v.id) ?? [],
     fabric: fabrics.get(v.id) ?? null,

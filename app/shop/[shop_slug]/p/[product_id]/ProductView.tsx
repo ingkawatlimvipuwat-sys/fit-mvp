@@ -9,6 +9,7 @@ import {
 import FitChecker from '../../[garment_id]/FitChecker';
 import GarmentTabs from '../../[garment_id]/GarmentTabs';
 import TryOn from '../../[garment_id]/TryOn';
+import SizeBadge from '../../[garment_id]/SizeBadge';
 import type { GarmentFabric } from '@/lib/supabase/types';
 
 type DimInfo = { key: string; labelTh: string; hintTh: string; labelEn: string; hintEn: string };
@@ -18,6 +19,7 @@ export interface ShopperVersion {
   created_at: string;
   picks: Picks;
   photo_url: string;
+  size_label: string | null;
   true_colour_photo_url: string | null;
   colours: { hex: string; name: string }[];
   fabric: GarmentFabric | null;
@@ -51,6 +53,7 @@ export default function ProductView({
         <img src={shown.photo_url} alt={name} className="h-full w-full object-cover" />
       </div>
       <h1 className="mt-4 text-2xl font-semibold">{name}</h1>
+      <SizeBadge sizeLabel={selected?.size_label ?? null} />
 
       {pickers.map(p => {
         const ok = availableValues(versions, pickerIds, selection, p.id);

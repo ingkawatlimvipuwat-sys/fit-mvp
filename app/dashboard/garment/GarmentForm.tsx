@@ -328,18 +328,16 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
         </select>
       </label>
 
-      {!productCtx && (
-        <label className="block">
-          <span className="text-sm text-gray-700">{t.sizeLabel[lang]}</span>
-          <select
-            value={sizeLabel} onChange={e => setSizeLabel(e.target.value)}
-            className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
-          >
-            <option value="">{t.sizeNone[lang]}</option>
-            {SIZE_LABELS.map(c => <option key={c} value={c}>{sizeLabelText(c, lang)}</option>)}
-          </select>
-        </label>
-      )}
+      <label className="block">
+        <span className="text-sm text-gray-700">{t.sizeLabel[lang]}</span>
+        <select
+          value={sizeLabel} onChange={e => setSizeLabel(e.target.value)}
+          className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
+        >
+          <option value="">{t.sizeNone[lang]}</option>
+          {SIZE_LABELS.map(c => <option key={c} value={c}>{sizeLabelText(c, lang)}</option>)}
+        </select>
+      </label>
 
       <label className="block">
         <span className="text-sm text-gray-700">{t.fitProfile[lang]}</span>

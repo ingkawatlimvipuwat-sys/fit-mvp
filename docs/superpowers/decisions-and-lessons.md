@@ -68,12 +68,14 @@ to the right section rather than to a new document.
   its own). Each size/colour/etc. is a version = a full `garments` row with its own
   measurements. The shopper picks the version; **the app never recommends a size**. Never say
   "mother garment". Spec: `specs/2026-10-01-catalogue-organisation-design.md` §2–§3.
-- **MLG-4 size labels (S/M/L column on garments) were superseded by the catalogue.** The code
-  and `0004_size_label.sql` did reach `main` (PR #13, 2026-10-05) although the work was meant to
-  be parked. The catalogue ignores the column: product pages never select it and the version
-  form hides the Size select (a pick named Size replaces it). Whether 0004 was run on the live
-  database is unconfirmed; the plain garment form (no product) still writes `size_label`, so
-  it needs the column to exist.
+- **Size labels stay (decided 2026-10-05).** The code and `0004_size_label.sql` reached `main` via
+  PR #13 and the founder chose to run 0004 on the live database. `garments.size_label` is not
+  dropped or renamed. It still works as an optional extra on every garment: the form's Size
+  select (also inside a product), the shopper page badge (for the picked version, or the plain
+  garment page). Pickers are the way to choose a size; the label is just decoration.
+- **Migration renumbering (2026-10-05, god).** The catalogue spec says 0004 (catalogue) and 0005
+  (NOT NULL). With 0004 taken by size labels, the catalogue is `0005_catalogue.sql` and the
+  later NOT NULL step is `0006`. Read "0004"/"0005" in the spec §4.3 and §8 as 0005/0006.
 - **Catalogue Stage 1 (built 2026-10-05).** Migration `0005_catalogue.sql` (the number moved
   because 0004 is taken). A backfilled product reuses its garment's id, so the old shopper link
   `/shop/<slug>/<garment_id>` is also a valid product id and redirects there. Picks are keyed by
