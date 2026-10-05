@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { render, screen, cleanup, fireEvent } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, act } from '@testing-library/react';
 import { LanguageProvider } from '@/lib/hooks/useLanguage';
 import { t } from '@/lib/i18n/strings';
 import TryOn, { TRYON_FAKE_DELAY_MS, TRYON_RESULT_SRC } from './TryOn';
@@ -52,7 +52,7 @@ describe('TryOn', () => {
     mount();
     pickPhoto();
     fireEvent.click(screen.getByRole('button', { name: t.tryOnSubmit.th }));
-    await vi.advanceTimersByTimeAsync(TRYON_FAKE_DELAY_MS);
+    await act(() => vi.advanceTimersByTimeAsync(TRYON_FAKE_DELAY_MS));
     const img = screen.getByAltText(t.tryOnPhotoAlt.th);
     expect(img.getAttribute('src')).toBe(TRYON_RESULT_SRC);
   });
@@ -62,7 +62,7 @@ describe('TryOn', () => {
     mount();
     pickPhoto();
     fireEvent.click(screen.getByRole('button', { name: t.tryOnSubmit.th }));
-    await vi.advanceTimersByTimeAsync(TRYON_FAKE_DELAY_MS);
+    await act(() => vi.advanceTimersByTimeAsync(TRYON_FAKE_DELAY_MS));
     fireEvent.click(screen.getByRole('button', { name: t.tryOnAgain.th }));
     expect(screen.queryByAltText(t.tryOnPhotoAlt.th)).toBeNull();
     expect(screen.getByRole('button', { name: t.tryOnSubmit.th })).toHaveProperty('disabled', true);
