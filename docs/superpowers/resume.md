@@ -22,15 +22,15 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 
 ---
 
-## Status snapshot (as of 2026-10-05, branch `feature/tryon-test-fix` pending merge)
+## Status snapshot (as of 2026-10-05, branch `feature/catalogue-stage-1`)
 
 | Check | Result |
 |---|---|
 | Live site matches `main` | Yes, as of `ed8da4b` (PR #9, try-on). Checked 2026-10-05: live serves `public/try-on/result.png` byte-for-byte |
-| Tests (`npm test`) | 192 passing, 19 files (on `feature/size-labels`; 0004 not applied, branch parked). On `main` itself 2 `TryOn.test.tsx` tests fail (timer advanced outside `act`); `feature/tryon-test-fix` fixes them |
+| Tests (`npm test`) | 255 passing, 29 files. The two `TryOn.test.tsx` failures were fixed by PR #10 and no longer occur |
 | Build (`npm run build`) | Clean |
 | `npm audit --omit=dev` | 2 vulnerabilities (1 high, 1 moderate) — down from 1 critical + 2 high (~18 Next advisories) on 14.2. The remaining high is `postcss@8.4.31` bundled *inside* `next`'s own `node_modules` (build-time CSS processing only, not user input); our own `postcss` dep is 8.5.28, already patched. Clears when Next ships its own postcss bump, or on a future Next 16 upgrade. |
-| Database migrations | 0001, 0002, 0003 applied to the live database. **0004 (size label) is written but NOT yet applied** — apply it before merging `feature/size-labels` |
+| Database migrations | 0001, 0002, 0003 applied to the live database. 0004 (size label) was merged to `main` by PR #13; whether it was run on the live database is **unconfirmed**. **0005 (catalogue) is written, NOT run anywhere** (no local database exists to try it on) — the founder runs it before merging Stage 1; steps are in that pull request |
 | Last health check | 2026-09-23 |
 
 ## What's live
@@ -47,6 +47,7 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 | Size helper | 2026-09-17 | "Not sure of your measurements?" — fill from a size, or estimate the blanks from what you know | `specs/2026-09-16-size-helper-design.md` |
 | Health-check fixes | 2026-09-23 | Bad requests get 400 instead of 500; unused image optimizer switched off | — |
 | Preset ownership check | 2026-10-01 | A garment can only use a fit-rule preset that belongs to the same shop | — |
+| Catalogue Stage 1 — products, versions, shopper pickers | built 2026-10-05, **not shipped** until the PR is merged and 0005 is run | Owner groups garments into products (one per Shopee listing, one shopper link `/shop/<slug>/p/<id>`); each version is a full garment with a pick per picker (Size, Colour, …); shopper picks, then checks fit. Old garment links redirect. Dashboard shows product cards | `specs/2026-10-01-catalogue-organisation-design.md`, `plans/2026-10-05-catalogue-stage-1.md` |
 | Try-on (stub) | 2026-10-03 | Shopper uploads or takes a photo; after a fake 0.9 s wait the page shows a fixed sample image (`public/try-on/result.png`). The photo never leaves the phone. No real try-on model yet | — |
 
 ---
@@ -64,11 +65,10 @@ One list, most important first. When you finish an item, delete it (git keeps th
 
 ### Before a second shop joins
 
-1. **Build catalogue organisation and versions** — designed and approved 2026-10-01:
-   `specs/2026-10-01-catalogue-organisation-design.md`. Products (one per Shopee listing, one
-   shopper link) hold versions (each a full garment: L / Black…) the shopper picks between;
-   folders and tags for the owner. Three stages; **§10 of the spec is the handoff** — start
-   there. Stage 1 settles the old "size labels" decision.
+1. **Catalogue Stages 2 and 3** (Stage 1 is built, see What's live): folders and tags,
+   Move to…, search, sort, filter, Needs attention filter; then drag-and-drop and reordering
+   picker values. `specs/2026-10-01-catalogue-organisation-design.md` §8. After Stage 1 is live,
+   a follow-up migration re-runs the backfill and sets `garments.product_id` NOT NULL.
 2. **Confirm the Supabase secret key was rotated.** A key was found in plain text in a deleted
    clone on 2026-08-11 (never pushed to GitHub). Rotation was advised; it was never confirmed.
    Ask the founder.
@@ -218,7 +218,7 @@ scripts/
 supabase/
   config.toml            — local stack (Auth, Storage bucket garment-photos, site_url localhost)
   seed.sql               — local-only: storage policies + demo@example.com / password123
-  migrations/            — 0001–0004 (applied automatically locally; 0004 not yet on hosted)
+  migrations/            — 0001–0005 (0004 size label, 0005 catalogue; hosted status: see snapshot)
 
 app/
   shop/[shop_slug]/          public shop page; [garment_id]/ is the garment page + FitChecker

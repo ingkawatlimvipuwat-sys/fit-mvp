@@ -68,9 +68,22 @@ to the right section rather than to a new document.
   its own). Each size/colour/etc. is a version = a full `garments` row with its own
   measurements. The shopper picks the version; **the app never recommends a size**. Never say
   "mother garment". Spec: `specs/2026-10-01-catalogue-organisation-design.md` §2–§3.
-- **MLG-4 size labels (S/M/L column on garments) parked 2026-10-05, superseded by the
-  catalogue.** Branch `feature/size-labels` is kept, not merged. Migration `0004_size_label`
-  was **never applied** to the live database. Do not apply it or merge that branch.
+- **MLG-4 size labels (S/M/L column on garments) were superseded by the catalogue.** The code
+  and `0004_size_label.sql` did reach `main` (PR #13, 2026-10-05) although the work was meant to
+  be parked. The catalogue ignores the column: product pages never select it and the version
+  form hides the Size select (a pick named Size replaces it). Whether 0004 was run on the live
+  database is unconfirmed; the plain garment form (no product) still writes `size_label`, so
+  it needs the column to exist.
+- **Catalogue Stage 1 (built 2026-10-05).** Migration `0005_catalogue.sql` (the number moved
+  because 0004 is taken). A backfilled product reuses its garment's id, so the old shopper link
+  `/shop/<slug>/<garment_id>` is also a valid product id and redirects there. Picks are keyed by
+  picker id, not name. `garments.name` for a version is copied from the product on save and not
+  kept in sync. Duplicate sends `copy_from`; the server copies each Storage object so no two
+  versions share a file. Rule 4 (no identical picks) is enforced in the garment routes through
+  `lib/catalogue/version-write.ts`. A garment created between running 0005 and merging has no
+  product: it stays visible under "Garments not in a product yet" and its old link still works.
+  The shopper `GarmentTabs` takes `stable` on product pages so `FitChecker` is never remounted
+  (typed measurements survive switching versions).
 - **Public signup at `/signup` stays open** (2026-09-28, founder). Anyone can create a shop; this is
   intended, not an oversight. Do not add an invite gate without a new decision.
 
