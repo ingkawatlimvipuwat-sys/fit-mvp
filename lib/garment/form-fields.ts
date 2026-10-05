@@ -19,6 +19,8 @@ export interface GarmentFormState {
    * fallback if that preset is deleted, so overwriting it loses a real choice.
    */
   fallbackProfile: string;
+  /** A SizeLabel code, or '' for none. */
+  sizeLabel?: string;
 }
 
 /** Non-empty measurements belonging to `category`, as [key, value] pairs. */
@@ -62,6 +64,8 @@ export function buildGarmentFields(s: GarmentFormState): Record<string, string> 
       ? s.ruleChoice.slice('profile:'.length)
       : s.fallbackProfile,
   };
+
+  if (s.sizeLabel) out.size_label = s.sizeLabel;
 
   for (const [k, v] of activeMeasurements(s.measurements, s.category)) out[k] = v;
 

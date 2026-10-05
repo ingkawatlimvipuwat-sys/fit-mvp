@@ -27,10 +27,10 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 | Check | Result |
 |---|---|
 | Live site matches `main` | Yes, as of `ed8da4b` (PR #9, try-on). Checked 2026-10-05: live serves `public/try-on/result.png` byte-for-byte |
-| Tests (`npm test`) | 176 passing, 18 files. On `main` itself 2 `TryOn.test.tsx` tests fail (timer advanced outside `act`); `feature/tryon-test-fix` fixes them |
+| Tests (`npm test`) | 192 passing, 19 files (on `feature/size-labels`; 0004 not applied, branch parked). On `main` itself 2 `TryOn.test.tsx` tests fail (timer advanced outside `act`); `feature/tryon-test-fix` fixes them |
 | Build (`npm run build`) | Clean |
 | `npm audit --omit=dev` | 2 vulnerabilities (1 high, 1 moderate) — down from 1 critical + 2 high (~18 Next advisories) on 14.2. The remaining high is `postcss@8.4.31` bundled *inside* `next`'s own `node_modules` (build-time CSS processing only, not user input); our own `postcss` dep is 8.5.28, already patched. Clears when Next ships its own postcss bump, or on a future Next 16 upgrade. |
-| Database migrations | 0001, 0002, 0003 — all applied to the live database |
+| Database migrations | 0001, 0002, 0003 applied to the live database. **0004 (size label) is written but NOT yet applied** — apply it before merging `feature/size-labels` |
 | Last health check | 2026-09-23 |
 
 ## What's live
@@ -218,7 +218,7 @@ scripts/
 supabase/
   config.toml            — local stack (Auth, Storage bucket garment-photos, site_url localhost)
   seed.sql               — local-only: storage policies + demo@example.com / password123
-  migrations/            — 0001, 0002, 0003 (applied automatically locally)
+  migrations/            — 0001–0004 (applied automatically locally; 0004 not yet on hosted)
 
 app/
   shop/[shop_slug]/          public shop page; [garment_id]/ is the garment page + FitChecker

@@ -12,7 +12,7 @@ export default async function DashboardPage() {
 
   const [{ data: retailer }, { data: garments }] = await Promise.all([
     supabase.from('retailers').select('shop_slug, shop_name').eq('id', user.id).single(),
-    supabase.from('garments').select('id, name, category, photo_url, created_at').eq('retailer_id', user.id).order('created_at', { ascending: false }),
+    supabase.from('garments').select('id, name, category, size_label, photo_url, created_at').eq('retailer_id', user.id).order('created_at', { ascending: false }),
   ]);
 
   return (

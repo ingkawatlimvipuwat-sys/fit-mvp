@@ -4,9 +4,10 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { t } from '@/lib/i18n/strings';
 import { useLanguage } from '@/lib/hooks/useLanguage';
+import { displaySizeLabel } from '@/lib/garment/size-label';
 import type { Category } from '@/lib/supabase/types';
 
-type Garment = { id: string; name: string; category: Category; photo_url: string };
+type Garment = { id: string; name: string; category: Category; size_label?: string | null; photo_url: string };
 
 export default function GarmentCard({
   garment, shopSlug,
@@ -40,6 +41,9 @@ export default function GarmentCard({
     }
   }
 
+  const size = displaySizeLabel(garment.size_label, lang);
+  const categoryLine = size ? `${CATEGORY_LABEL[garment.category]} · ${size}` : CATEGORY_LABEL[garment.category];
+
   const preview = shopSlug ? `/shop/${shopSlug}/${garment.id}` : null;
 
   return (
@@ -61,7 +65,7 @@ export default function GarmentCard({
           </div>
           <div className="p-3">
             <div className="text-sm font-medium">{garment.name}</div>
-            <div className="text-xs text-gray-500">{CATEGORY_LABEL[garment.category]}</div>
+            <div className="text-xs text-gray-500">{categoryLine}</div>
           </div>
         </Link>
       ) : (
@@ -74,7 +78,7 @@ export default function GarmentCard({
           </div>
           <div className="p-3">
             <div className="text-sm font-medium">{garment.name}</div>
-            <div className="text-xs text-gray-500">{CATEGORY_LABEL[garment.category]}</div>
+            <div className="text-xs text-gray-500">{categoryLine}</div>
           </div>
         </>
       )}

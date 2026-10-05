@@ -13,6 +13,7 @@ import type { FitRuleset } from '@/lib/fit/rules';
 import { activeMeasurements, strandedDimensions, buildGarmentFields } from '@/lib/garment/form-fields';
 import ColoursSection from '@/app/dashboard/garment/ColoursSection';
 import FabricSection from '@/app/dashboard/garment/FabricSection';
+import { SIZE_LABELS, sizeLabelText } from '@/lib/garment/size-label';
 import { emptyFabricForm, type FabricFormState, type Colour } from '@/lib/garment/colour-fabric';
 
 type PresetOption = { id: string; name: string; rule: FitRuleset };
@@ -62,6 +63,7 @@ export interface GarmentFormInitial {
   id: string;
   name: string;
   category: Category;
+  sizeLabel: string;
   photo_url: string;
   measurements: MeasurementBag;
   /** From ruleSelectionForGarment() — see lib/fit/rule-selection.ts. */
@@ -87,6 +89,7 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
 
   const [name, setName] = useState(initial?.name ?? '');
   const [category, setCategory] = useState<Category>(initial?.category ?? 'top');
+  const [sizeLabel, setSizeLabel] = useState(initial?.sizeLabel ?? '');
   const [ruleChoice, setRuleChoice] = useState(initial?.ruleChoice ?? 'profile:regular');
   const [useOverride, setUseOverride] = useState(initial?.useOverride ?? false);
   const [override, setOverride] = useState<FitRuleset>(
@@ -113,6 +116,7 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
   const [initialSnapshot] = useState(() => JSON.stringify({
     name: initial?.name ?? '',
     category: initial?.category ?? 'top',
+    sizeLabel: initial?.sizeLabel ?? '',
     ruleChoice: initial?.ruleChoice ?? 'profile:regular',
     useOverride: initial?.useOverride ?? false,
     override: initial?.override ?? { base: DEFAULT_RULE, perDimension: {} },
@@ -131,7 +135,7 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
   // enough for this MVP-sized, plain-object state.
   function isDirty(): boolean {
     const current = JSON.stringify({
-      name, category, ruleChoice, useOverride, override, measurements, colours, fabric,
+      name, category, sizeLabel, ruleChoice, useOverride, override, measurements, colours, fabric,
     });
     return current !== initialSnapshot || (photoRef.current?.files?.length ?? 0) > 0;
   }
@@ -219,7 +223,7 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
 
     const form = new FormData();
     for (const [k, v] of Object.entries(buildGarmentFields({
-      name, category, ruleChoice, useOverride, override, measurements,
+      name, category, sizeLabel, ruleChoice, useOverride, override, measurements,
       fallbackProfile: initial?.profileKey ?? 'regular',
     }))) form.set(k, v);
     if (photo) form.set('photo', photo);
@@ -276,6 +280,17 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
           <option value="top">{t.catTop[lang]}</option>
           <option value="bottom">{t.catBottom[lang]}</option>
           <option value="dress">{t.catDress[lang]}</option>
+        </select>
+      </label>
+
+      <label className="block">
+        <span className="text-sm text-gray-700">{t.sizeLabel[lang]}</span>
+        <select
+          value={sizeLabel} onChange={e => setSizeLabel(e.target.value)}
+          className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
+        >
+          <option value="">{t.sizeNone[lang]}</option>
+          {SIZE_LABELS.map(c => <option key={c} value={c}>{sizeLabelText(c, lang)}</option>)}
         </select>
       </label>
 
