@@ -68,6 +68,11 @@ to the right section rather than to a new document.
   its own). Each size/colour/etc. is a version = a full `garments` row with its own
   measurements. The shopper picks the version; **the app never recommends a size**. Never say
   "mother garment". Spec: `specs/2026-10-01-catalogue-organisation-design.md` §2–§3.
+- **MLG-4 size labels (S/M/L column on garments) parked 2026-10-05, superseded by the
+  catalogue.** Branch `feature/size-labels` is kept, not merged. Migration `0004_size_label`
+  was **never applied** to the live database. Do not apply it or merge that branch.
+- **Public signup at `/signup` stays open** (2026-09-28, founder). Anyone can create a shop; this is
+  intended, not an oversight. Do not add an invite gate without a new decision.
 
 ## 3. Next.js and React traps
 
@@ -126,6 +131,11 @@ to the right section rather than to a new document.
   removes child rows, but Storage files are outside the database and would be orphaned.
 - **Colour and fabric writes log and continue on failure** rather than failing the save. A
   retailer whose colours failed to save sees success. Accepted for a one-retailer prototype.
+- **A garment may only reference a fit preset its own shop owns** (2026-09-29). Enforced in app code by
+  `checkRulesetOwnership()` (`lib/garment/ruleset-ownership.ts`), called by create and edit after the
+  pure `parseGarmentFields()`. The lookup is scoped by `retailer_id`, so another shop's preset looks
+  nonexistent (400), and a failed lookup is a 500, never a pass. No RLS or SQL change. Presets stay
+  publicly readable by design (§2). Covered by unit tests only; the routes have no automated coverage.
 - **`garments_public_read` looks vestigial** — no code reads garments with the anonymous client.
   Unverified whether removing it breaks anything.
 
@@ -171,3 +181,17 @@ to the right section rather than to a new document.
   Check the actual result lines, not the colour.
 - **The dev server dies after idle stretches.** Restart it; it comes up in about 5 seconds.
 - A fresh clone needs `npm install` before anything else.
+
+## 8. Shipping on Vercel
+
+- **Only the `ingkawatlimvipuwat-sys` GitHub account may press "Merge pull request."** Vercel is
+  on the Hobby plan, which blocks a deploy of this private repo when the latest commit's author
+  is anyone else ("The Hobby Plan does not support collaboration for private repositories").
+  Teammates can open PRs; the founder merges. Sharing a Vercel login does not help — Vercel
+  checks the GitHub author, not who is logged in to Vercel (2026-09-30, PR #4).
+- **Do not move the project to a new Vercel account to save seats.** A re-import gets a new
+  `*.vercel.app` address, and every shop link already handed to customers points at
+  `fit-mvp-eight.vercel.app` (`CopyPublicLink` builds links from the current origin).
+- **A merged PR can still be missing files.** PR #4 imported a component that only existed on
+  its author's machine, and `main` stopped building. A green build on the PR's Vercel preview
+  is the check: do not merge a PR whose preview failed or never appeared.

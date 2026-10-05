@@ -102,8 +102,6 @@ export default async function HeroPage(props: { params: Promise<{ shop_slug: str
         </div>
         <h1 className="mt-4 text-2xl font-semibold">{garment.name}</h1>
 
-        <TryOn />
-
         <GarmentTabs
           colours={colourRows ?? []}
           trueColourPhotoUrl={garment.true_colour_photo_url ?? null}
@@ -120,6 +118,8 @@ export default async function HeroPage(props: { params: Promise<{ shop_slug: str
             }))}
           />
         </GarmentTabs>
+
+        <TryOn />
 
         <OtherGarments shopSlug={params.shop_slug} others={others ?? []} />
       </main>

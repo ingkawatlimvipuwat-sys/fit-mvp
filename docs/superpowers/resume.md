@@ -22,12 +22,12 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 
 ---
 
-## Status snapshot (as of 2026-09-29, branch `feature/next-15` pending merge)
+## Status snapshot (as of 2026-10-05, branch `feature/tryon-test-fix` pending merge)
 
 | Check | Result |
 |---|---|
-| Live site matches `main` | Yes, as of the `ee19a98` deploy — this snapshot is from the pending Next 15 branch, not yet merged |
-| Tests (`npm test`) | 167 passing, 16 files |
+| Live site matches `main` | Yes, as of `ed8da4b` (PR #9, try-on). Checked 2026-10-05: live serves `public/try-on/result.png` byte-for-byte |
+| Tests (`npm test`) | 176 passing, 18 files. On `main` itself 2 `TryOn.test.tsx` tests fail (timer advanced outside `act`); `feature/tryon-test-fix` fixes them |
 | Build (`npm run build`) | Clean |
 | `npm audit --omit=dev` | 2 vulnerabilities (1 high, 1 moderate) — down from 1 critical + 2 high (~18 Next advisories) on 14.2. The remaining high is `postcss@8.4.31` bundled *inside* `next`'s own `node_modules` (build-time CSS processing only, not user input); our own `postcss` dep is 8.5.28, already patched. Clears when Next ships its own postcss bump, or on a future Next 16 upgrade. |
 | Database migrations | 0001, 0002, 0003 — all applied to the live database |
@@ -46,6 +46,8 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 | Colour & fabric | 2026-09-11 | Colour swatches with hex codes, fabric chips (finish, thickness, stretch, feel), Fit / Colour / Fabric tabs | `specs/2026-09-10-colour-fabric-design.md` |
 | Size helper | 2026-09-17 | "Not sure of your measurements?" — fill from a size, or estimate the blanks from what you know | `specs/2026-09-16-size-helper-design.md` |
 | Health-check fixes | 2026-09-23 | Bad requests get 400 instead of 500; unused image optimizer switched off | — |
+| Preset ownership check | 2026-10-01 | A garment can only use a fit-rule preset that belongs to the same shop | — |
+| Try-on (stub) | 2026-10-03 | Shopper uploads or takes a photo; after a fake 0.9 s wait the page shows a fixed sample image (`public/try-on/result.png`). The photo never leaves the phone. No real try-on model yet | — |
 
 ---
 
@@ -53,60 +55,56 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 
 One list, most important first. When you finish an item, delete it (git keeps the history).
 
-### Fix first
+### Now
 
-0. **`main` does not build (found 2026-10-01).** `app/shop/[shop_slug]/[garment_id]/page.tsx`
-   imports `./TryOn` (commit `f071316`, PR #4) but `TryOn.tsx` was never committed, so every
-   Vercel deploy since fails and the live site stays on the last good build. Ask the partner who
-   wrote it to commit the file, or remove the import. Small PR of its own.
+1. **Try-on leftovers.** The stub is live (PR #9). Still missing from the first try-on commit:
+   `scripts/local-db.mjs` and the Supabase local config that the `db:*` npm scripts call, so
+   those scripts fail. `package.json` lists `postcss` twice. Ask patriya-piyawiroj for the files
+   or delete the scripts.
 
 ### Before a second shop joins
 
-1. **Check preset ownership.** `fit_ruleset_id` is checked to be a valid id but not that the
-   preset belongs to the caller (`lib/garment/parse-form.ts`), so a hand-crafted request could
-   attach another shop's preset.
-2. **Decide whether public signup is intended.** Anyone can create a shop at `/signup` today.
-3. **Build catalogue organisation and versions** — designed and approved 2026-10-01:
+1. **Build catalogue organisation and versions** — designed and approved 2026-10-01:
    `specs/2026-10-01-catalogue-organisation-design.md`. Products (one per Shopee listing, one
    shopper link) hold versions (each a full garment: L / Black…) the shopper picks between;
    folders and tags for the owner. Three stages; **§10 of the spec is the handoff** — start
-   there. Stage 1 settles the old "size labels" decision. Waits on item 0 and item 1.
-4. **Confirm the Supabase secret key was rotated.** A key was found in plain text in a deleted
+   there. Stage 1 settles the old "size labels" decision.
+2. **Confirm the Supabase secret key was rotated.** A key was found in plain text in a deleted
    clone on 2026-08-11 (never pushed to GitHub). Rotation was advised; it was never confirmed.
    Ask the founder.
-5. **Proofread the copy.** The English was written as a fallback nobody expected to see and has
+3. **Proofread the copy.** The English was written as a fallback nobody expected to see and has
    never been proofread; the Thai has not had a native-speaker pass.
 
 ### Worth doing soon
 
-6. **Walk the dashboard in a browser with a real login.** Not done since the 2026-08-18
+4. **Walk the dashboard in a browser with a real login.** Not done since the 2026-08-18
    redesign — the header, tabs, fit-rules load-failure notice and discard guards are backed only
    by a clean build.
-7. **Rate-limit `/api/fit/evaluate`.** It is public and saves a database row per call.
-8. **A failed preset load shows `…` forever** in the garment form instead of an error
+5. **Rate-limit `/api/fit/evaluate`.** It is public and saves a database row per call.
+6. **A failed preset load shows `…` forever** in the garment form instead of an error
    (`GarmentForm.tsx`). Saving still keeps the right rule.
-9. **A new per-garment override always starts from the default rule**, not the rule in force,
+7. **A new per-garment override always starts from the default rule**, not the rule in force,
    so ticking it on a `slim` garment silently starts at regular's numbers (`FitRuleEditor`).
-10. **`strandedDimensions()` blames the retailer** for a category change they did not make, if
-    a dimension ever moves between categories in `dimensions.ts`. Compare against the garment's
-    original category.
-11. **Validation messages that are not Thai.** `parseGarmentFields()` returns English for four
-    rare paths, and `app/api/garments/route.ts` shows raw dimension keys — map them with
-    `dimensionByKey()`.
-12. **A fabric photo cannot be removed, only replaced**, so a retailer cannot fully withdraw
+8. **`strandedDimensions()` blames the retailer** for a category change they did not make, if
+   a dimension ever moves between categories in `dimensions.ts`. Compare against the garment's
+   original category.
+9. **Validation messages that are not Thai.** `parseGarmentFields()` returns English for four
+   rare paths, and `app/api/garments/route.ts` shows raw dimension keys — map them with
+   `dimensionByKey()`.
+10. **A fabric photo cannot be removed, only replaced**, so a retailer cannot fully withdraw
     fabric information.
-13. **A colour or fabric save can fail silently** — it logs and reports success.
-14. **Check colour fidelity on a real phone** — a real garment under daylight next to its
+11. **A colour or fabric save can fail silently** — it logs and reports success.
+12. **Check colour fidelity on a real phone** — a real garment under daylight next to its
     swatch on the live site. Planned after the 2026-09-11 deploy; not recorded as done.
 
 ### Housekeeping
 
-15. Delete old branches: `feature/phase-1` (last commit 2026-06-09; its work was rebuilt in
+13. Delete old branches: `feature/phase-1` (last commit 2026-06-09; its work was rebuilt in
     `main`) and the already-merged `origin/feature/custom-fit-rules`.
-16. Delete the typo Storage bucket `garmet-photos` (the real one is `garment-photos`).
-17. Delete live test data: the garment `TEST เสื้อผ้ายืด (ลบได้)` and the `ผ้ายืด` preset
+14. Delete the typo Storage bucket `garmet-photos` (the real one is `garment-photos`).
+15. Delete live test data: the garment `TEST เสื้อผ้ายืด (ลบได้)` and the `ผ้ายืด` preset
     (holds default values, not stretchy ones).
-18. Small code tidies: extract the file-extension sanitising duplicated in both garment routes;
+16. Small code tidies: extract the file-extension sanitising duplicated in both garment routes;
     make `ThresholdBand[]` `readonly` in `dimensions.ts`; note in `app/dashboard/layout.tsx`
     that an orphaned retailer row can be fixed in Supabase Studio.
 
