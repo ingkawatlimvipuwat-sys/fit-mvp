@@ -333,7 +333,6 @@ export const t = {
   noVersions: { th: 'ยังไม่มีแบบ เพิ่มแบบแรกได้เลย', en: 'No versions yet. Add the first one.' },
   legacyGarments: { th: 'เสื้อผ้าที่ยังไม่อยู่ในสินค้า', en: 'Garments not in a product yet' },
   editProduct: { th: 'จัดการสินค้า', en: 'Manage product' },
-  backToDashboard: { th: '‹ กลับ', en: '‹ Back' },
 } as const;
 
 export type StringKey = keyof typeof t;
