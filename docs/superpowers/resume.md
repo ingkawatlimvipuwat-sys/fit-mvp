@@ -22,12 +22,12 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 
 ---
 
-## Status snapshot (as of 2026-10-01, branch `feature/unblock-deploy` pending merge)
+## Status snapshot (as of 2026-10-05, branch `feature/tryon-test-fix` pending merge)
 
 | Check | Result |
 |---|---|
-| Live site matches `main` | **No.** PR #4 (try-on, `552e030`) was blocked by Vercel (merged by a non-owner GitHub account), then `a512a8f` failed to build: PR #4 imports `./TryOn` but `TryOn.tsx` was never committed. `feature/unblock-deploy` removes the import so `main` builds again. Live is probably still on the PR #3 (Next 15) deploy — unconfirmed |
-| Tests (`npm test`) | 172 passing, 17 files |
+| Live site matches `main` | Yes, as of `ed8da4b` (PR #9, try-on). Checked 2026-10-05: live serves `public/try-on/result.png` byte-for-byte |
+| Tests (`npm test`) | 176 passing, 18 files. On `main` itself 2 `TryOn.test.tsx` tests fail (timer advanced outside `act`); `feature/tryon-test-fix` fixes them |
 | Build (`npm run build`) | Clean |
 | `npm audit --omit=dev` | 2 vulnerabilities (1 high, 1 moderate) — down from 1 critical + 2 high (~18 Next advisories) on 14.2. The remaining high is `postcss@8.4.31` bundled *inside* `next`'s own `node_modules` (build-time CSS processing only, not user input); our own `postcss` dep is 8.5.28, already patched. Clears when Next ships its own postcss bump, or on a future Next 16 upgrade. |
 | Database migrations | 0001, 0002, 0003 — all applied to the live database |
@@ -46,6 +46,8 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 | Colour & fabric | 2026-09-11 | Colour swatches with hex codes, fabric chips (finish, thickness, stretch, feel), Fit / Colour / Fabric tabs | `specs/2026-09-10-colour-fabric-design.md` |
 | Size helper | 2026-09-17 | "Not sure of your measurements?" — fill from a size, or estimate the blanks from what you know | `specs/2026-09-16-size-helper-design.md` |
 | Health-check fixes | 2026-09-23 | Bad requests get 400 instead of 500; unused image optimizer switched off | — |
+| Preset ownership check | 2026-10-01 | A garment can only use a fit-rule preset that belongs to the same shop | — |
+| Try-on (stub) | 2026-10-03 | Shopper uploads or takes a photo; after a fake 0.9 s wait the page shows a fixed sample image (`public/try-on/result.png`). The photo never leaves the phone. No real try-on model yet | — |
 
 ---
 
@@ -55,10 +57,10 @@ One list, most important first. When you finish an item, delete it (git keeps th
 
 ### Now
 
-1. **Ship the try-on upload.** `TryOn.tsx` is back on the garment page: the shopper picks a
-   photo and the page shows the fixed result image at `public/try-on/result.png`. It is not
-   on `main` yet. Still missing from the earlier try-on commit: `scripts/local-db.mjs` and
-   the Supabase local config that the `db:*` npm scripts call. `package.json` lists `postcss` twice.
+1. **Try-on leftovers.** The stub is live (PR #9). Still missing from the first try-on commit:
+   `scripts/local-db.mjs` and the Supabase local config that the `db:*` npm scripts call, so
+   those scripts fail. `package.json` lists `postcss` twice. Ask patriya-piyawiroj for the files
+   or delete the scripts.
 
 ### Before a second shop joins
 
