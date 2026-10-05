@@ -186,3 +186,8 @@ to the right section rather than to a new document.
 - **A merged PR can still be missing files.** PR #4 imported a component that only existed on
   its author's machine, and `main` stopped building. A green build on the PR's Vercel preview
   is the check: do not merge a PR whose preview failed or never appeared.
+- **A signed-in `gh` can deploy.** By 2026-10-01 `gh` was signed in as the founder, and the
+  push denies did not cover `gh pr merge`. An agent merging through it would pass Vercel's author
+  check and go live with no preview check. Since 2026-10-05 `.claude/settings.json` also denies
+  `gh pr merge`, `gh api …merge…` and `gh api …contents…`. Agents open PRs; only the founder merges.
+  Agents' worktrees only pick up a new deny rule after they `git merge origin/main`.
