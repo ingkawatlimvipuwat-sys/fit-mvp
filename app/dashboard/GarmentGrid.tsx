@@ -8,9 +8,10 @@ import GarmentCard from './GarmentCard';
 // dashboard page selects (created_at) that GarmentCard doesn't need.
 type Garment = ComponentProps<typeof GarmentCard>['garment'] & { created_at: string };
 
+/** Garments that belong to no product yet. `heading="legacy"` labels the list as such. */
 export default function GarmentGrid({
-  garments, shopSlug,
-}: { garments: Garment[]; shopSlug: string | null }) {
+  garments, shopSlug, heading,
+}: { garments: Garment[]; shopSlug: string | null; heading?: 'legacy' }) {
   const [lang] = useLanguage();
 
   if (garments.length === 0) {
@@ -18,12 +19,17 @@ export default function GarmentGrid({
   }
 
   return (
-    <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-      {garments.map(g => (
-        <li key={g.id}>
-          <GarmentCard garment={g} shopSlug={shopSlug} />
-        </li>
-      ))}
-    </ul>
+    <section className="space-y-3">
+      {heading === 'legacy' && (
+        <h2 className="text-sm font-medium text-gray-700">{t.legacyGarments[lang]}</h2>
+      )}
+      <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+        {garments.map(g => (
+          <li key={g.id}>
+            <GarmentCard garment={g} shopSlug={shopSlug} />
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

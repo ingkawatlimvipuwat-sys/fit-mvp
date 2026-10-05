@@ -81,3 +81,8 @@ export function clashesAfterRemoval<T extends VersionPicks>(
   }
   return pairs;
 }
+
+/** Per picker id, the values the product already uses, for the form's suggestions. */
+export function usedValuesByPicker(versions: VersionPicks[], pickers: PickerDef[]): Record<string, string[]> {
+  return Object.fromEntries(pickers.map(p => [p.id, valueOrder(versions, p.id)]));
+}
