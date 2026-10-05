@@ -60,12 +60,17 @@ to the right section rather than to a new document.
 - **Fit rules are readable by anyone** (`fit_rule_override` and presets via `garments`' public
   read policy). They are the retailer's own thresholds, not customer data. **Never tell a
   retailer their rules are secret.** Reasoning: spec §4.2 and the comments in migration 0002.
-- **Garments get an optional size label** (decided 2026-09-28, built 2026-10-01, migration 0004).
-  Fixed list XS, S, M, L, XL, XXL, Free size, stored as nullable text codes (`FREE` for Free size)
-  with a check constraint. Empty shows nothing. It is a display label only: not tied to the fit
-  engine or the size helper. Set on Add/Edit garment; shown on the dashboard card and the public
-  garment page. The code selects `size_label`, so apply 0004 to the live database BEFORE merging
-  (section 4).
+- **Shoppers arrive from a Shopee listing, at one product page** (2026-09-30). "We aren't
+  looking to become a catalogue platform." No shopper-facing browse, search, filter, folders or
+  tags. Organisation is an owner-only tool, each shop's its own.
+- **Size labels — decided 2026-10-01 as products and versions.** A product = one Shopee
+  listing = one shopper link, and **is not a garment** (no measurements, photo or fit data of
+  its own). Each size/colour/etc. is a version = a full `garments` row with its own
+  measurements. The shopper picks the version; **the app never recommends a size**. Never say
+  "mother garment". Spec: `specs/2026-10-01-catalogue-organisation-design.md` §2–§3.
+- **MLG-4 size labels (S/M/L column on garments) parked 2026-10-05, superseded by the
+  catalogue.** Branch `feature/size-labels` is kept, not merged. Migration `0004_size_label`
+  was **never applied** to the live database. Do not apply it or merge that branch.
 - **Public signup at `/signup` stays open** (2026-09-28, founder). Anyone can create a shop; this is
   intended, not an oversight. Do not add an invite gate without a new decision.
 
@@ -190,3 +195,8 @@ to the right section rather than to a new document.
 - **A merged PR can still be missing files.** PR #4 imported a component that only existed on
   its author's machine, and `main` stopped building. A green build on the PR's Vercel preview
   is the check: do not merge a PR whose preview failed or never appeared.
+- **A signed-in `gh` can deploy.** By 2026-10-01 `gh` was signed in as the founder, and the
+  push denies did not cover `gh pr merge`. An agent merging through it would pass Vercel's author
+  check and go live with no preview check. Since 2026-10-05 `.claude/settings.json` also denies
+  `gh pr merge`, `gh api …merge…` and `gh api …contents…`. Agents open PRs; only the founder merges.
+  Agents' worktrees only pick up a new deny rule after they `git merge origin/main`.

@@ -38,8 +38,14 @@ https://github.com/ingkawatlimvipuwat-sys/fit-mvp/compare/main...feature/your-br
 On that page they press **Create pull request**, wait for Vercel's preview link to appear on
 it, check the change there, and press **Merge pull request**. Merging is the deploy. Warn them
 every time: **the preview site uses the live database**, so saving anything on it changes the
-real shop. (`gh` is not authenticated here, so agents cannot open or merge the PR themselves —
-that is fine; it keeps the button with the founder.)
+real shop.
+
+**`gh` is signed in as the founder** (found 2026-10-05). Agents may use it to open a PR
+(`gh pr create`) and read checks, which saves the founder the "Create pull request" click. They
+must never merge: a merge through `gh` runs as the founder, so Vercel accepts it and it goes
+live without anyone checking the preview. `.claude/settings.json` denies `gh pr merge`, `gh
+api` calls containing `merge`, and `gh api` file edits (`contents`). Do not work around it. The
+founder alone presses **Merge pull request**.
 
 After they merge, confirm the deploy actually landed — don't assume. Probe a route that exists only in the
 new code and compare it against a route that doesn't:
@@ -136,8 +142,9 @@ fix uncommitted in the working tree.
 
 ## Environment notes
 
-- `gh` CLI is at `C:\Program Files\GitHub CLI\gh.exe`, **not on PATH**, and not authenticated.
-  Invoke by full path. The repo is private, so `WebFetch` cannot inspect PRs.
+- `gh` CLI is at `C:\Program Files\GitHub CLI\gh.exe`, **not on PATH**. Signed in as
+  `ingkawatlimvipuwat-sys` (repo scope) since at least 2026-10-01; merging through it is denied (see
+  Shipping). Invoke by full path. The repo is private, so `WebFetch` cannot inspect PRs.
 - **Local dev does not use the hosted project.** `npm run setup:local` starts Postgres + Auth
   + Storage in Docker (Colima on this Mac), applies `supabase/migrations/`, seeds a demo shop,
   and writes `.env.local` to `http://127.0.0.1:54321`. Demo login: `demo@example.com` /

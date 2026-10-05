@@ -1,0 +1,144 @@
+<style>
+  .dv { font: 12px/1.35 system-ui, sans-serif; color: #222; }
+  .frame { border: 1px solid #cfd4da; border-radius: 8px; background: #fff; overflow: hidden; }
+  .bar { background: #1f2937; color: #fff; padding: 6px 10px; font-weight: 600; display:flex; justify-content:space-between; gap:8px }
+  .head { padding:8px 10px; border-bottom:1px solid #eee; display:flex; gap:8px; align-items:center }
+  .head .ph { width:36px; height:36px; border-radius:6px; background:linear-gradient(135deg,#d9dee4,#eef1f4); flex:none }
+  .head .n { font-weight:700; font-size:13px }
+  .head .m { color:#777; font-size:11px }
+  .btn { border:1px solid #cfd4da; border-radius:6px; padding:2px 8px; background:#fff; white-space:nowrap; font-size:11px }
+  .btn.p { background:#1f6feb; color:#fff; border-color:#1f6feb }
+  .tag { border-radius:10px; padding:1px 7px; background:#eef2f7; font-size:10px; margin-left:3px }
+  table.mx { border-collapse:collapse; margin:8px 10px; font-size:11px }
+  .mx th { padding:4px 8px; color:#555; font-weight:600 }
+  .mx td { border:1px solid #e3e6ea; width:62px; height:30px; text-align:center }
+  .ok { background:#ecfdf3; color:#15803d } .bad { background:#fff7ed; color:#c2410c; font-weight:600 } .no { background:#f6f7f8; color:#bbb }
+  .sel { outline:2px solid #1f6feb; outline-offset:-2px }
+  .vcard { border:1px solid #e3e6ea; border-radius:6px; padding:6px 8px; display:flex; gap:8px; align-items:center; margin:6px 10px }
+  .vcard .sw { width:16px; height:16px; border-radius:50%; flex:none; border:1px solid #ccc }
+  .vcard .n { flex:1; font-weight:600 } .vcard .m { color:#777; font-size:10px }
+  table.sh { border-collapse:collapse; margin:8px 10px; font-size:11px; width:calc(100% - 20px) }
+  .sh th { background:#f6f7f8; padding:3px 4px; border:1px solid #e3e6ea; font-weight:600; text-align:left }
+  .sh td { border:1px solid #e3e6ea; padding:3px 4px }
+  .sh td.e { color:#1f2937; background:#fff } .sh td.miss { background:#fff7ed }
+  .phone { width: 150px; border:6px solid #222; border-radius:16px; overflow:hidden; background:#fff; flex:none }
+  .phone .bar { padding:4px 7px; font-size:11px }
+  .pair { display:flex; gap:12px; align-items:flex-start } .pair > div:first-child { flex:1 }
+  .lbl { font-size:10px; color:#888; text-transform:uppercase; letter-spacing:.05em; margin:0 0 3px }
+  .why { margin-top:8px; font-size:13px }
+  .pills { display:flex; gap:4px; flex-wrap:wrap; padding:6px 8px }
+  .pill { border:1px solid #cfd4da; border-radius:12px; padding:1px 7px; font-size:10px } .pill.on { background:#1f2937; color:#fff }
+</style>
+
+<h2>Inside a product: how should the owner see and edit its versions?</h2>
+<p class="subtitle">"Linen Shirt": sizes S, M, L, XL × colours Black, Green, White. One version (L / White) is still missing its chest measurement, and XL / Green doesn't exist. Click the one that feels right.</p>
+
+<div class="options">
+
+  <!-- A: grid -->
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content dv">
+      <h3>A size × colour grid: each square is one version</h3>
+      <div class="pair">
+        <div>
+          <p class="lbl">Computer</p>
+          <div class="frame">
+            <div class="bar"><span>‹ Linen</span><span>Copy shopper link 🔗</span></div>
+            <div class="head"><div class="ph"></div><div style="flex:1"><div class="n">Linen Shirt <span class="tag">Sale</span><span class="tag">Summer</span></div><div class="m">Pickers: Size · Colour</div></div></div>
+            <table class="mx">
+              <tr><th></th><th>Black</th><th>Green</th><th>White</th></tr>
+              <tr><th>S</th><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td></tr>
+              <tr><th>M</th><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td></tr>
+              <tr><th>L</th><td class="ok sel">✓</td><td class="ok">✓</td><td class="bad">⚠</td></tr>
+              <tr><th>XL</th><td class="ok">✓</td><td class="no">＋</td><td class="ok">✓</td></tr>
+            </table>
+            <div style="padding:0 10px 8px; color:#555; font-size:11px">Click a square to edit it. <b>＋</b> = create it by copying a neighbour. Selected: <b>L / Black</b> <span class="btn">Duplicate to…</span></div>
+          </div>
+        </div>
+        <div>
+          <p class="lbl">Phone</p>
+          <div class="phone">
+            <div class="bar"><span>‹ Linen</span><span>🔗</span></div>
+            <div style="padding:6px 8px; font-weight:700">Linen Shirt</div>
+            <table class="mx" style="margin:4px 6px">
+              <tr><th></th><th>Bk</th><th>Gr</th><th>Wh</th></tr>
+              <tr><th>S</th><td class="ok" style="width:30px">✓</td><td class="ok" style="width:30px">✓</td><td class="ok" style="width:30px">✓</td></tr>
+              <tr><th>M</th><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td></tr>
+              <tr><th>L</th><td class="ok">✓</td><td class="ok">✓</td><td class="bad">⚠</td></tr>
+              <tr><th>XL</th><td class="ok">✓</td><td class="no">＋</td><td class="ok">✓</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+      <p class="why"><b>See everything at a glance.</b> Gaps and missing measurements jump out. Works best with two pickers. With one picker it's a single row.</p>
+    </div>
+  </div>
+
+  <!-- B: list of version cards -->
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content dv">
+      <h3>A list of versions, each with its own Duplicate button</h3>
+      <div class="pair">
+        <div>
+          <p class="lbl">Computer</p>
+          <div class="frame">
+            <div class="bar"><span>‹ Linen</span><span>Copy shopper link 🔗</span></div>
+            <div class="head"><div class="ph"></div><div style="flex:1"><div class="n">Linen Shirt <span class="tag">Sale</span><span class="tag">Summer</span></div><div class="m">11 versions</div></div><span class="btn p">+ Add version</span></div>
+            <div class="vcard"><span class="sw" style="background:#111"></span><span class="n">L / Black</span><span class="m">chest 104 · waist 98 · length 72</span><span class="btn">Edit</span><span class="btn">Duplicate</span></div>
+            <div class="vcard"><span class="sw" style="background:#2f7d4a"></span><span class="n">L / Green</span><span class="m">chest 104 · waist 98 · length 72</span><span class="btn">Edit</span><span class="btn">Duplicate</span></div>
+            <div class="vcard" style="background:#fff7ed"><span class="sw" style="background:#fff"></span><span class="n">L / White</span><span class="m" style="color:#c2410c">⚠ chest missing</span><span class="btn">Edit</span><span class="btn">Duplicate</span></div>
+            <div style="padding:0 10px 8px; color:#999">… 8 more</div>
+          </div>
+        </div>
+        <div>
+          <p class="lbl">Phone</p>
+          <div class="phone">
+            <div class="bar"><span>‹ Linen</span><span>＋</span></div>
+            <div style="padding:6px 8px; font-weight:700">Linen Shirt</div>
+            <div class="vcard" style="margin:4px 6px"><span class="sw" style="background:#111"></span><span class="n">L / Black</span><span>⋯</span></div>
+            <div class="vcard" style="margin:4px 6px"><span class="sw" style="background:#2f7d4a"></span><span class="n">L / Green</span><span>⋯</span></div>
+            <div class="vcard" style="margin:4px 6px;background:#fff7ed"><span class="sw" style="background:#fff"></span><span class="n">L / White ⚠</span><span>⋯</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="why"><b>Simple and familiar.</b> Works with any number of pickers. Gets long with many versions. Shows key numbers on each row.</p>
+    </div>
+  </div>
+
+  <!-- C: spreadsheet -->
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content dv">
+      <h3>A spreadsheet: type every version's measurements on one screen</h3>
+      <div class="pair">
+        <div>
+          <p class="lbl">Computer</p>
+          <div class="frame">
+            <div class="bar"><span>‹ Linen</span><span>Copy shopper link 🔗</span></div>
+            <div class="head"><div class="ph"></div><div style="flex:1"><div class="n">Linen Shirt <span class="tag">Sale</span></div><div class="m">Type straight into the table · Tab to move</div></div><span class="btn p">+ Add row</span></div>
+            <table class="sh">
+              <tr><th>Size</th><th>Colour</th><th>Chest</th><th>Waist</th><th>Length</th><th>Sleeve</th><th></th></tr>
+              <tr><td>L</td><td>Black</td><td class="e">104</td><td class="e">98</td><td class="e">72</td><td class="e">22</td><td>⧉</td></tr>
+              <tr><td>L</td><td>Green</td><td class="e">104</td><td class="e">98</td><td class="e">72</td><td class="e">22</td><td>⧉</td></tr>
+              <tr><td>L</td><td>White</td><td class="e miss">—</td><td class="e">98</td><td class="e">72</td><td class="e">22</td><td>⧉</td></tr>
+              <tr><td>XL</td><td>Black</td><td class="e">110</td><td class="e">104</td><td class="e">74</td><td class="e">23</td><td>⧉</td></tr>
+            </table>
+            <div style="padding:0 10px 8px; color:#555; font-size:11px">⧉ = duplicate this row. Photos, fabric and fit rule open in a side panel.</div>
+          </div>
+        </div>
+        <div>
+          <p class="lbl">Phone</p>
+          <div class="phone">
+            <div class="bar"><span>‹ Linen</span><span>＋</span></div>
+            <div class="pills"><span class="pill on">L / Black</span><span class="pill">L / Green</span><span class="pill">L / White ⚠</span><span class="pill">XL…</span></div>
+            <div style="padding:2px 8px 8px; font-size:11px">Chest <b>104</b><br>Waist <b>98</b><br>Length <b>72</b><br>Sleeve <b>22</b></div>
+          </div>
+        </div>
+      </div>
+      <p class="why"><b>Fastest typing on a computer.</b> Good for owners entering lots of numbers at once. On a phone it turns into one version at a time.</p>
+    </div>
+  </div>
+
+</div>

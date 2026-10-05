@@ -22,12 +22,12 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 
 ---
 
-## Status snapshot (as of 2026-10-01, branch `feature/unblock-deploy` pending merge)
+## Status snapshot (as of 2026-10-05, branch `feature/tryon-test-fix` pending merge)
 
 | Check | Result |
 |---|---|
-| Live site matches `main` | **No.** PR #4 (try-on, `552e030`) was blocked by Vercel (merged by a non-owner GitHub account), then `a512a8f` failed to build: PR #4 imports `./TryOn` but `TryOn.tsx` was never committed. `feature/unblock-deploy` removes the import so `main` builds again. Live is probably still on the PR #3 (Next 15) deploy — unconfirmed |
-| Tests (`npm test`) | 188 passing, 18 files |
+| Live site matches `main` | Yes, as of `ed8da4b` (PR #9, try-on). Checked 2026-10-05: live serves `public/try-on/result.png` byte-for-byte |
+| Tests (`npm test`) | 192 passing, 19 files (on `feature/size-labels`; 0004 not applied, branch parked). On `main` itself 2 `TryOn.test.tsx` tests fail (timer advanced outside `act`); `feature/tryon-test-fix` fixes them |
 | Build (`npm run build`) | Clean |
 | `npm audit --omit=dev` | 2 vulnerabilities (1 high, 1 moderate) — down from 1 critical + 2 high (~18 Next advisories) on 14.2. The remaining high is `postcss@8.4.31` bundled *inside* `next`'s own `node_modules` (build-time CSS processing only, not user input); our own `postcss` dep is 8.5.28, already patched. Clears when Next ships its own postcss bump, or on a future Next 16 upgrade. |
 | Database migrations | 0001, 0002, 0003 applied to the live database. **0004 (size label) is written but NOT yet applied** — apply it before merging `feature/size-labels` |
@@ -46,6 +46,8 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 | Colour & fabric | 2026-09-11 | Colour swatches with hex codes, fabric chips (finish, thickness, stretch, feel), Fit / Colour / Fabric tabs | `specs/2026-09-10-colour-fabric-design.md` |
 | Size helper | 2026-09-17 | "Not sure of your measurements?" — fill from a size, or estimate the blanks from what you know | `specs/2026-09-16-size-helper-design.md` |
 | Health-check fixes | 2026-09-23 | Bad requests get 400 instead of 500; unused image optimizer switched off | — |
+| Preset ownership check | 2026-10-01 | A garment can only use a fit-rule preset that belongs to the same shop | — |
+| Try-on (stub) | 2026-10-03 | Shopper uploads or takes a photo; after a fake 0.9 s wait the page shows a fixed sample image (`public/try-on/result.png`). The photo never leaves the phone. No real try-on model yet | — |
 
 ---
 
@@ -55,14 +57,18 @@ One list, most important first. When you finish an item, delete it (git keeps th
 
 ### Now
 
-1. **Finish the try-on feature (PR #4).** Its component `app/shop/[shop_slug]/[garment_id]/TryOn.tsx`
-   was never committed, so `feature/unblock-deploy` took `<TryOn />` and its `tryOn*` strings
-   back out (restore them from commit `f071316` when the component lands). Also missing:
-   `scripts/local-db.mjs` and the Supabase local config that the new `db:*` npm scripts call.
-   `package.json` now lists `postcss` twice.
+1. **Try-on leftovers.** The stub is live (PR #9). Still missing from the first try-on commit:
+   `scripts/local-db.mjs` and the Supabase local config that the `db:*` npm scripts call, so
+   those scripts fail. `package.json` lists `postcss` twice. Ask patriya-piyawiroj for the files
+   or delete the scripts.
 
 ### Before a second shop joins
 
+1. **Build catalogue organisation and versions** — designed and approved 2026-10-01:
+   `specs/2026-10-01-catalogue-organisation-design.md`. Products (one per Shopee listing, one
+   shopper link) hold versions (each a full garment: L / Black…) the shopper picks between;
+   folders and tags for the owner. Three stages; **§10 of the spec is the handoff** — start
+   there. Stage 1 settles the old "size labels" decision.
 2. **Confirm the Supabase secret key was rotated.** A key was found in plain text in a deleted
    clone on 2026-08-11 (never pushed to GitHub). Rotation was advised; it was never confirmed.
    Ask the founder.
@@ -104,7 +110,9 @@ One list, most important first. When you finish an item, delete it (git keeps th
 
 ### Later — ideas and phases, not started
 
-- **Catalogue organisation** — categories, variants, sorting for shops with hundreds of items.
+- **For the founder's partners, not agents:** Shopee's rule against outside links, a possible
+  Shopee partnership, a "Back to Shopee" button, picks carried in the link. See the catalogue
+  spec §11. Do not build any of these without a decision.
 - **Dashboard visual design pass** — the founder preferred the brainstorming mockups.
 - **Teen and kids sizing**, and an optional **age question** (needs its own spec, including
   consent rules for minors). See `specs/2026-09-16-size-helper-design.md` §10.

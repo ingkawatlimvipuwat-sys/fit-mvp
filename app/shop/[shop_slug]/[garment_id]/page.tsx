@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { createSupabaseAdminClient } from '@/lib/supabase/server';
 import { dimensionsForCategory } from '@/lib/config/dimensions';
 import FitChecker from './FitChecker';
+import TryOn from './TryOn';
 import BackLink from './BackLink';
 import OtherGarments from './OtherGarments';
 import GarmentTabs from './GarmentTabs';
@@ -119,6 +120,8 @@ export default async function HeroPage(props: { params: Promise<{ shop_slug: str
             }))}
           />
         </GarmentTabs>
+
+        <TryOn />
 
         <OtherGarments shopSlug={params.shop_slug} others={others ?? []} />
       </main>
