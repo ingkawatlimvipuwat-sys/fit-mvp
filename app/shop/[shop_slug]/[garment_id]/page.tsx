@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { createSupabaseAdminClient } from '@/lib/supabase/server';
 import { dimensionsForCategory } from '@/lib/config/dimensions';
 import FitChecker from './FitChecker';
@@ -6,7 +6,6 @@ import TryOn from './TryOn';
 import BackLink from './BackLink';
 import OtherGarments from './OtherGarments';
 import GarmentTabs from './GarmentTabs';
-import SizeBadge from './SizeBadge';
 import ShopHeader from '../ShopHeader';
 import type { Category, GarmentFabric } from '@/lib/supabase/types';
 
@@ -62,7 +61,7 @@ export default async function HeroPage(props: { params: Promise<{ shop_slug: str
   ] = await Promise.all([
     supabase
       .from('garments')
-      .select('id, name, category, size_label, photo_url, true_colour_photo_url, fit_profile, measurements')
+      .select('id, name, category, product_id, photo_url, true_colour_photo_url, fit_profile, measurements')
       .eq('id', params.garment_id)
       .eq('retailer_id', shop.id)
       .single(),
@@ -90,6 +89,10 @@ export default async function HeroPage(props: { params: Promise<{ shop_slug: str
   }
   if (!garment) notFound();
 
+  // Every garment is a version of a product; the old link goes to its product page.
+  // A garment with no product (made between the migration and the backfill) still renders here.
+  if (garment.product_id) redirect(`/shop/${params.shop_slug}/p/${garment.product_id}`);
+
   const dims = dimensionsForCategory(garment.category as Category);
 
   return (
@@ -102,7 +105,6 @@ export default async function HeroPage(props: { params: Promise<{ shop_slug: str
           <img src={garment.photo_url} alt={garment.name} className="h-full w-full object-cover" />
         </div>
         <h1 className="mt-4 text-2xl font-semibold">{garment.name}</h1>
-        <SizeBadge sizeLabel={garment.size_label ?? null} />
 
         <GarmentTabs
           colours={colourRows ?? []}
@@ -123,7 +125,9 @@ export default async function HeroPage(props: { params: Promise<{ shop_slug: str
 
         <TryOn />
 
-        <OtherGarments shopSlug={params.shop_slug} others={others ?? []} />
+        <OtherGarments
+          others={(others ?? []).map(o => ({ ...o, href: `/shop/${params.shop_slug}/${o.id}` }))}
+        />
       </main>
     </>
   );

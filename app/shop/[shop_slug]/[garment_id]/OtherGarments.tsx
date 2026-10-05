@@ -3,11 +3,9 @@ import Link from 'next/link';
 import { t } from '@/lib/i18n/strings';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 
-type OtherGarment = { id: string; name: string; photo_url: string };
+type OtherGarment = { id: string; name: string; photo_url: string; href: string };
 
-export default function OtherGarments({
-  shopSlug, others,
-}: { shopSlug: string; others: OtherGarment[] }) {
+export default function OtherGarments({ others }: { others: OtherGarment[] }) {
   const [lang] = useLanguage();
 
   if (others.length === 0) return null;
@@ -19,7 +17,7 @@ export default function OtherGarments({
         {others.map(g => (
           <Link
             key={g.id}
-            href={`/shop/${shopSlug}/${g.id}`}
+            href={g.href}
             className="flex w-24 shrink-0 flex-col gap-1"
           >
             <div className="h-24 w-24 overflow-hidden rounded bg-gray-100">
