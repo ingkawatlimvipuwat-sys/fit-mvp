@@ -29,7 +29,26 @@ export interface Garment {
   /** Inline rule for this garment only. Replaces the preset, never merges. */
   fit_rule_override: FitRuleset | null;
   measurements: MeasurementBag;
+  /** The product this garment is a version of. Null only for garments created before backfill. */
+  product_id: string | null;
+  /** One value per picker, keyed by product_pickers.id. */
+  picks: Record<string, string>;
   created_at: string;
+}
+
+export interface Product {
+  id: string;
+  retailer_id: string;
+  folder_id: string | null;
+  name: string;
+  created_at: string;
+}
+
+export interface ProductPicker {
+  id: string;
+  product_id: string;
+  name: string;
+  position: number;
 }
 
 export interface FitSession {

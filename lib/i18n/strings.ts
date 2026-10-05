@@ -294,6 +294,46 @@ export const t = {
     th: 'กรอกขนาดที่รู้อย่างน้อย 1 รายการก่อน',
     en: 'Enter at least one measurement first.',
   },
+
+  // ---- Catalogue: products and versions (Stage 1) ----
+  newProduct: { th: 'เพิ่มสินค้า', en: 'New product' },
+  productName: { th: 'ชื่อสินค้า', en: 'Product name' },
+  versionsCount: { th: '{n} แบบ', en: '{n} versions' },
+  addVersion: { th: '+ เพิ่มแบบ', en: '+ Add version' },
+  duplicateVersion: { th: 'ทำซ้ำ', en: 'Duplicate' },
+  copyShopperLink: { th: 'คัดลอกลิงก์ลูกค้า', en: 'Copy shopper link' },
+  pickerSize: { th: 'ไซส์', en: 'Size' },
+  pickerColour: { th: 'สี', en: 'Colour' },
+  addPicker: { th: '+ เพิ่มตัวเลือก', en: '+ Add picker' },
+  pickerName: { th: 'ชื่อตัวเลือก', en: 'Picker name' },
+  pickerValuesPrompt: {
+    th: 'กรอกค่าของแบบที่มีอยู่ (เว้นว่างได้)',
+    en: "Fill in the existing versions' values (can be left blank)",
+  },
+  removePicker: { th: 'ลบตัวเลือก', en: 'Remove picker' },
+  needsAttention: { th: 'ต้องแก้ไข', en: 'Needs attention' },
+  attentionNoVersions: { th: 'ยังไม่มีแบบ', en: 'No versions yet' },
+  attentionMissingMeasurement: { th: 'ขาดขนาดตัวเลข', en: 'Missing a measurement' },
+  attentionMissingPick: { th: 'ขาดตัวเลือก', en: 'Missing a pick' },
+  duplicatePicks: { th: '{label} มีอยู่แล้ว', en: '{label} already exists' },
+  pickRequired: { th: 'เลือกให้ครบทุกตัวเลือก', en: 'Fill in every picker' },
+  addPickersFirst: {
+    th: 'เพิ่มตัวเลือก (ไซส์ สี ฯลฯ) ก่อนเพิ่มแบบที่สอง',
+    en: 'Add pickers (size, colour…) before a second version',
+  },
+  removePickerClash: {
+    th: 'ลบไม่ได้: {a} กับ {b} จะซ้ำกัน',
+    en: "Can't remove: {a} and {b} would become identical",
+  },
+  confirmDeleteProduct: {
+    th: 'ลบสินค้านี้และทุกแบบ? ลบแล้วกู้คืนไม่ได้',
+    en: 'Delete this product and all its versions? This cannot be undone.',
+  },
+  pickFirst: { th: 'เลือก {names} ก่อน', en: 'Pick {names} first' },
+  noVersions: { th: 'ยังไม่มีแบบ เพิ่มแบบแรกได้เลย', en: 'No versions yet. Add the first one.' },
+  legacyGarments: { th: 'เสื้อผ้าที่ยังไม่อยู่ในสินค้า', en: 'Garments not in a product yet' },
+  editProduct: { th: 'จัดการสินค้า', en: 'Manage product' },
+  backToDashboard: { th: '‹ กลับ', en: '‹ Back' },
 } as const;
 
 export type StringKey = keyof typeof t;
