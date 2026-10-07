@@ -27,7 +27,7 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 | Check | Result |
 |---|---|
 | Live site matches `main` | Yes, as of `ed8da4b` (PR #9, try-on). Checked 2026-10-05: live serves `public/try-on/result.png` byte-for-byte |
-| Tests (`npm test`) | 255 passing, 29 files. The two `TryOn.test.tsx` failures were fixed by PR #10 and no longer occur |
+| Tests (`npm test`) | 258 passing, 29 files. The two `TryOn.test.tsx` failures were fixed by PR #10 and no longer occur |
 | Build (`npm run build`) | Clean |
 | `npm audit --omit=dev` | 2 vulnerabilities (1 high, 1 moderate) — down from 1 critical + 2 high (~18 Next advisories) on 14.2. The remaining high is `postcss@8.4.31` bundled *inside* `next`'s own `node_modules` (build-time CSS processing only, not user input); our own `postcss` dep is 8.5.28, already patched. Clears when Next ships its own postcss bump, or on a future Next 16 upgrade. |
 | Database migrations | 0001, 0002, 0003 and 0004 (size label) applied to the live database (0004 verified with a read-only select, 2026-10-07). **0005 (catalogue) is written, NOT run anywhere** (no local database exists to try it on) — one transaction, run once; the founder runs it before merging Stage 1, steps are in PR #14 |
