@@ -3,7 +3,13 @@
 -- Spec: docs/superpowers/specs/2026-10-01-catalogue-organisation-design.md section 4
 -- ADDITIVE ONLY. Old code never names the new columns, so it keeps working
 -- between running this and merging Stage 1.
+--
+-- RUN ONCE. All-or-nothing: it is one transaction, so if any statement fails
+-- it rolls back and nothing is changed. Running it a second time will fail on
+-- the first create table (the tables already exist).
 -- =============================================================
+
+begin;
 
 create table public.folders (
   id          uuid primary key default gen_random_uuid(),
@@ -76,15 +82,19 @@ create policy "product_tags_owner_all" on public.product_tags for all
   using      (exists (select 1 from public.products p where p.id = product_id and p.retailer_id = auth.uid()))
   with check (exists (select 1 from public.products p where p.id = product_id and p.retailer_id = auth.uid()));
 
--- ---------- Backfill (safe to run twice) ----------
+-- ---------- Backfill ----------
 -- Every garment without a product gets its own, with the SAME id as the
 -- garment, so an old shopper link /shop/<slug>/<garment_id> is also a valid
 -- product id. No pickers: a one-version, no-picker product renders exactly
 -- like today's page.
 insert into public.products (id, retailer_id, name, created_at)
-select g.id, g.retailer_id, g.name, g.created_at
+-- garments.name has no length check but products.name needs 1-120 characters,
+-- so a blank or very long name must not abort the whole migration.
+select g.id, g.retailer_id, coalesce(nullif(left(btrim(g.name), 120), ''), 'Untitled'), g.created_at
 from public.garments g
 where g.product_id is null
 on conflict (id) do nothing;
 
 update public.garments set product_id = id where product_id is null;
+
+commit;

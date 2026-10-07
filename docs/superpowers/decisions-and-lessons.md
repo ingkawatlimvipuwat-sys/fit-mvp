@@ -210,6 +210,7 @@ to the right section rather than to a new document.
 - **A merged PR can still be missing files.** PR #4 imported a component that only existed on
   its author's machine, and `main` stopped building. A green build on the PR's Vercel preview
   is the check: do not merge a PR whose preview failed or never appeared.
+- **Incident 2026-10-05: a parked branch was merged before its migration ran.** PR #13 (`feature/size-labels`) was merged by mistake before 0004 ran. The code selects `size_label`, so the live dashboard, the garment edit page and the shop garment pages errored with Postgres error 42703 (column does not exist) until the founder ran `0004_size_label.sql`. Lesson: a pushed branch that is ahead of `main` makes GitHub show a "Compare & pull request" banner, which invites a merge. Warn the founder before pushing any parked branch, and never push one at all unless asked.
 - **A signed-in `gh` can deploy.** By 2026-10-01 `gh` was signed in as the founder, and the
   push denies did not cover `gh pr merge`. An agent merging through it would pass Vercel's author
   check and go live with no preview check. Since 2026-10-05 `.claude/settings.json` also denies

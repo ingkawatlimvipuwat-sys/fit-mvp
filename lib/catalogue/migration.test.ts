@@ -21,6 +21,19 @@ describe('0005_catalogue.sql stays additive (spec §4)', () => {
     expect(sql).toMatch(/add column product_id uuid references public\.products\(id\) on delete cascade,/);
     expect(sql).toMatch(/add column picks jsonb not null default '\{\}'/);
   });
+  it('is one transaction, so a failure leaves nothing half-made', () => {
+    expect(sql.trim().startsWith('begin;')).toBe(true);
+    expect(sql.trim().endsWith('commit;')).toBe(true);
+    expect(sql.split("begin;")).toHaveLength(2);
+    expect(sql.split("commit;")).toHaveLength(2);
+  });
+  it('backfill survives blank and over-long garment names', () => {
+    expect(sql).toContain("coalesce(nullif(left(btrim(g.name), 120), ''), 'untitled')");
+  });
+  it('does not claim to be safe to run twice', () => {
+    const raw = readFileSync(join(process.cwd(), 'supabase/migrations/0005_catalogue.sql'), 'utf8').toLowerCase();
+    expect(raw).not.toContain('safe to run twice');
+  });
   it('gives anon no read policy', () => {
     expect(sql).not.toMatch(/to anon/);
   });

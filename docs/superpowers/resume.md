@@ -30,8 +30,10 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 | Tests (`npm test`) | 255 passing, 29 files. The two `TryOn.test.tsx` failures were fixed by PR #10 and no longer occur |
 | Build (`npm run build`) | Clean |
 | `npm audit --omit=dev` | 2 vulnerabilities (1 high, 1 moderate) — down from 1 critical + 2 high (~18 Next advisories) on 14.2. The remaining high is `postcss@8.4.31` bundled *inside* `next`'s own `node_modules` (build-time CSS processing only, not user input); our own `postcss` dep is 8.5.28, already patched. Clears when Next ships its own postcss bump, or on a future Next 16 upgrade. |
-| Database migrations | 0001, 0002, 0003 applied to the live database. 0004 (size label) is on `main` (PR #13); the founder chose to run it on live (god, 2026-10-05) — confirm it ran. **0005 (catalogue) is written, NOT run anywhere** (no local database exists to try it on) — the founder runs it before merging Stage 1; steps are in that pull request |
+| Database migrations | 0001, 0002, 0003 and 0004 (size label) applied to the live database (0004 verified with a read-only select, 2026-10-07). **0005 (catalogue) is written, NOT run anywhere** (no local database exists to try it on) — one transaction, run once; the founder runs it before merging Stage 1, steps are in PR #14 |
 | Last health check | 2026-09-23 |
+
+**Incident, 2026-10-05:** PR #13 (`feature/size-labels`, a branch meant to stay parked) was merged by mistake on 2026-10-05 before migration 0004 had been run. The code selects `size_label`, so the live dashboard, the garment edit page and the shop garment pages errored with Postgres error 42703 (column does not exist) until the founder ran `0004_size_label.sql`. Lesson: a pushed branch that is ahead of `main` makes GitHub show a "Compare & pull request" banner, which invites a merge. Warn the founder before pushing any parked branch, and never push one at all unless asked.
 
 ## What's live
 
