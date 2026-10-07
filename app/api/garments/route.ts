@@ -19,22 +19,20 @@ export async function POST(req: Request) {
   const form = await req.formData().catch(() => null);
   if (!form) return NextResponse.json({ error: 'ข้อมูลไม่ถูกต้อง' }, { status: 400 });
 
-  // A new version of a product. Without product_id this is today's create,
-  // byte for byte. The product, its pickers and any copy_from garment are all
-  // read scoped to the caller, so another shop's ids look nonexistent.
-  let productFields: { product_id: string; picks: Record<string, string> } | Record<string, never> = {};
+  // Every garment is a version of a product (garments.product_id is NOT NULL).
+  // The product, its pickers and any copy_from garment are all read scoped to
+  // the caller, so another shop's ids look nonexistent.
   const productIdRaw = String(form.get('product_id') ?? '').trim();
-  if (productIdRaw) {
-    if (!z.uuid().safeParse(productIdRaw).success) return NextResponse.json({ error: 'invalid product_id' }, { status: 400 });
-    const product = await loadProductContext(supabase, user.id, productIdRaw);
-    if (!product.ok) return NextResponse.json({ error: product.error }, { status: product.status });
-    form.set('name', product.ctx.name);
-    const picksParse = parsePicksField(form.get('picks'), product.ctx.pickers.map(p => p.id));
-    if (!picksParse.ok) return NextResponse.json({ error: picksParse.error }, { status: 400 });
-    const writable = checkPicksForWrite(product.ctx, picksParse.picks);
-    if (!writable.ok) return NextResponse.json({ error: writable.error }, { status: 400 });
-    productFields = { product_id: product.ctx.id, picks: picksParse.picks };
-  }
+  if (!productIdRaw) return NextResponse.json({ error: 'product_id is required' }, { status: 400 });
+  if (!z.uuid().safeParse(productIdRaw).success) return NextResponse.json({ error: 'invalid product_id' }, { status: 400 });
+  const product = await loadProductContext(supabase, user.id, productIdRaw);
+  if (!product.ok) return NextResponse.json({ error: product.error }, { status: product.status });
+  form.set('name', product.ctx.name);
+  const picksParse = parsePicksField(form.get('picks'), product.ctx.pickers.map(p => p.id));
+  if (!picksParse.ok) return NextResponse.json({ error: picksParse.error }, { status: 400 });
+  const writable = checkPicksForWrite(product.ctx, picksParse.picks);
+  if (!writable.ok) return NextResponse.json({ error: writable.error }, { status: 400 });
+  const productFields = { product_id: product.ctx.id, picks: picksParse.picks };
 
   // Duplicate: the files of this garment are copied (never shared) when the form sends no new file.
   let copySource: { photo_url: string | null; true_colour_photo_url: string | null; fabric_photo_url: string | null } | null = null;
