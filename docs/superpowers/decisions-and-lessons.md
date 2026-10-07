@@ -68,9 +68,24 @@ to the right section rather than to a new document.
   its own). Each size/colour/etc. is a version = a full `garments` row with its own
   measurements. The shopper picks the version; **the app never recommends a size**. Never say
   "mother garment". Spec: `specs/2026-10-01-catalogue-organisation-design.md` §2–§3.
-- **MLG-4 size labels (S/M/L column on garments) parked 2026-10-05, superseded by the
-  catalogue.** Branch `feature/size-labels` is kept, not merged. Migration `0004_size_label`
-  was **never applied** to the live database. Do not apply it or merge that branch.
+- **Size labels stay (decided 2026-10-05).** The code and `0004_size_label.sql` reached `main` via
+  PR #13 and the founder chose to run 0004 on the live database. `garments.size_label` is not
+  dropped or renamed. It still works as an optional extra on every garment: the form's Size
+  select (also inside a product), the shopper page badge (for the picked version, or the plain
+  garment page). Pickers are the way to choose a size; the label is just decoration.
+- **Migration renumbering (2026-10-05, god).** The catalogue spec says 0004 (catalogue) and 0005
+  (NOT NULL). With 0004 taken by size labels, the catalogue is `0005_catalogue.sql` and the
+  later NOT NULL step is `0006`. Read "0004"/"0005" in the spec §4.3 and §8 as 0005/0006.
+- **Catalogue Stage 1 (built 2026-10-05).** Migration `0005_catalogue.sql` (the number moved
+  because 0004 is taken). A backfilled product reuses its garment's id, so the old shopper link
+  `/shop/<slug>/<garment_id>` is also a valid product id and redirects there. Picks are keyed by
+  picker id, not name. `garments.name` for a version is copied from the product on save and not
+  kept in sync. Duplicate sends `copy_from`; the server copies each Storage object so no two
+  versions share a file. Rule 4 (no identical picks) is enforced in the garment routes through
+  `lib/catalogue/version-write.ts`. A garment created between running 0005 and merging has no
+  product: it stays visible under "Garments not in a product yet" and its old link still works.
+  The shopper `GarmentTabs` takes `stable` on product pages so `FitChecker` is never remounted
+  (typed measurements survive switching versions).
 - **Public signup at `/signup` stays open** (2026-09-28, founder). Anyone can create a shop; this is
   intended, not an oversight. Do not add an invite gate without a new decision.
 
@@ -195,6 +210,7 @@ to the right section rather than to a new document.
 - **A merged PR can still be missing files.** PR #4 imported a component that only existed on
   its author's machine, and `main` stopped building. A green build on the PR's Vercel preview
   is the check: do not merge a PR whose preview failed or never appeared.
+- **Incident 2026-10-05: a parked branch was merged before its migration ran.** PR #13 (`feature/size-labels`) was merged by mistake before 0004 ran. The code selects `size_label`, so the live dashboard, the garment edit page and the shop garment pages errored with Postgres error 42703 (column does not exist) until the founder ran `0004_size_label.sql`. Lesson: a pushed branch that is ahead of `main` makes GitHub show a "Compare & pull request" banner, which invites a merge. Warn the founder before pushing any parked branch, and never push one at all unless asked.
 - **A signed-in `gh` can deploy.** By 2026-10-01 `gh` was signed in as the founder, and the
   push denies did not cover `gh pr merge`. An agent merging through it would pass Vercel's author
   check and go live with no preview check. Since 2026-10-05 `.claude/settings.json` also denies

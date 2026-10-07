@@ -8,7 +8,7 @@ export default function DashboardNav() {
   const pathname = usePathname();
   const [lang] = useLanguage();
 
-  const isGarmentsActive = pathname === '/dashboard' || pathname.startsWith('/dashboard/garment');
+  const isGarmentsActive = pathname === '/dashboard' || pathname.startsWith('/dashboard/garment') || pathname.startsWith('/dashboard/product');
   const isFitRulesActive = pathname.startsWith('/dashboard/fit-rules');
 
   const tabClass = (active: boolean) =>

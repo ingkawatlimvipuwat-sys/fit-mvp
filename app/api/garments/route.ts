@@ -4,7 +4,12 @@ import { parseGarmentFields } from '@/lib/garment/parse-form';
 import { checkRulesetOwnership } from '@/lib/garment/ruleset-ownership';
 import { parseColoursField, parseFabricField, isFabricEmpty } from '@/lib/garment/colour-fabric';
 import { t } from '@/lib/i18n/strings';
-import { PHOTO_BUCKET, uploadPhotoField } from '@/lib/garment/photo-upload';
+import { PHOTO_BUCKET, uploadPhotoField, type PhotoUpload } from '@/lib/garment/photo-upload';
+import { copyStoredObject } from '@/lib/garment/storage-copy';
+import { loadProductContext, checkGarmentOwnership } from '@/lib/catalogue/ownership';
+import { parsePicksField } from '@/lib/catalogue/parse';
+import { checkPicksForWrite } from '@/lib/catalogue/version-write';
+import { z } from 'zod';
 
 export async function POST(req: Request) {
   const supabase = await createSupabaseServerClient();
@@ -13,6 +18,41 @@ export async function POST(req: Request) {
 
   const form = await req.formData().catch(() => null);
   if (!form) return NextResponse.json({ error: 'ข้อมูลไม่ถูกต้อง' }, { status: 400 });
+
+  // A new version of a product. Without product_id this is today's create,
+  // byte for byte. The product, its pickers and any copy_from garment are all
+  // read scoped to the caller, so another shop's ids look nonexistent.
+  let productFields: { product_id: string; picks: Record<string, string> } | Record<string, never> = {};
+  const productIdRaw = String(form.get('product_id') ?? '').trim();
+  if (productIdRaw) {
+    if (!z.uuid().safeParse(productIdRaw).success) return NextResponse.json({ error: 'invalid product_id' }, { status: 400 });
+    const product = await loadProductContext(supabase, user.id, productIdRaw);
+    if (!product.ok) return NextResponse.json({ error: product.error }, { status: product.status });
+    form.set('name', product.ctx.name);
+    const picksParse = parsePicksField(form.get('picks'), product.ctx.pickers.map(p => p.id));
+    if (!picksParse.ok) return NextResponse.json({ error: picksParse.error }, { status: 400 });
+    const writable = checkPicksForWrite(product.ctx, picksParse.picks);
+    if (!writable.ok) return NextResponse.json({ error: writable.error }, { status: 400 });
+    productFields = { product_id: product.ctx.id, picks: picksParse.picks };
+  }
+
+  // Duplicate: the files of this garment are copied (never shared) when the form sends no new file.
+  let copySource: { photo_url: string | null; true_colour_photo_url: string | null; fabric_photo_url: string | null } | null = null;
+  const copyFromRaw = String(form.get('copy_from') ?? '').trim();
+  if (copyFromRaw) {
+    if (!z.uuid().safeParse(copyFromRaw).success) return NextResponse.json({ error: 'invalid copy_from' }, { status: 400 });
+    const own = await checkGarmentOwnership(supabase, user.id, copyFromRaw);
+    if (!own.ok) return NextResponse.json({ error: own.error }, { status: own.status });
+    const [{ data: g }, { data: f }] = await Promise.all([
+      supabase.from('garments').select('photo_url, true_colour_photo_url').eq('id', copyFromRaw).eq('retailer_id', user.id).maybeSingle(),
+      supabase.from('garment_fabric').select('fabric_photo_url').eq('garment_id', copyFromRaw).maybeSingle(),
+    ]);
+    copySource = {
+      photo_url: g?.photo_url ?? null,
+      true_colour_photo_url: g?.true_colour_photo_url ?? null,
+      fabric_photo_url: f?.fabric_photo_url ?? null,
+    };
+  }
 
   const parsed = parseGarmentFields(form);
   if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
@@ -29,7 +69,10 @@ export async function POST(req: Request) {
   // Photo is required on create, so it is checked here rather than in the
   // shared validator, which edit also uses and where it is optional.
   // uploadPhotoField() returns null for exactly the "absent or empty" case.
-  const uploaded = await uploadPhotoField(supabase, user.id, form, 'photo');
+  let uploaded: PhotoUpload | null | 'failed' = await uploadPhotoField(supabase, user.id, form, 'photo');
+  if (uploaded === null && copySource) {
+    uploaded = await copyStoredObject(supabase, user.id, copySource.photo_url);
+  }
   if (uploaded === null) {
     return NextResponse.json({ error: t.photoRequired.th }, { status: 400 });
   }
@@ -41,14 +84,20 @@ export async function POST(req: Request) {
   // Every object uploaded so far, so a later failure can clean all of them up.
   const uploadedPaths: string[] = [path];
 
-  const trueColour = await uploadPhotoField(supabase, user.id, form, 'true_colour_photo');
+  let trueColour: PhotoUpload | null | 'failed' = await uploadPhotoField(supabase, user.id, form, 'true_colour_photo');
+  if (trueColour === null && copySource) {
+    trueColour = await copyStoredObject(supabase, user.id, copySource.true_colour_photo_url);
+  }
   if (trueColour === 'failed') {
     await supabase.storage.from(PHOTO_BUCKET).remove(uploadedPaths).catch(() => {});
     return NextResponse.json({ error: t.photoUploadFailed.th }, { status: 500 });
   }
   if (trueColour) uploadedPaths.push(trueColour.path);
 
-  const fabricPhoto = await uploadPhotoField(supabase, user.id, form, 'fabric_photo');
+  let fabricPhoto: PhotoUpload | null | 'failed' = await uploadPhotoField(supabase, user.id, form, 'fabric_photo');
+  if (fabricPhoto === null && copySource && fabricParse.present) {
+    fabricPhoto = await copyStoredObject(supabase, user.id, copySource.fabric_photo_url);
+  }
   if (fabricPhoto === 'failed') {
     await supabase.storage.from(PHOTO_BUCKET).remove(uploadedPaths).catch(() => {});
     return NextResponse.json({ error: t.photoUploadFailed.th }, { status: 500 });
@@ -65,6 +114,7 @@ export async function POST(req: Request) {
       // identical to today's for a garment with no true-colour photo.
       ...(trueColour ? { true_colour_photo_url: trueColour.url } : {}),
       ...parsed.data,
+      ...productFields,
     })
     .select('id')
     .single();

@@ -14,6 +14,7 @@ import { activeMeasurements, strandedDimensions, buildGarmentFields } from '@/li
 import ColoursSection from '@/app/dashboard/garment/ColoursSection';
 import FabricSection from '@/app/dashboard/garment/FabricSection';
 import { SIZE_LABELS, sizeLabelText } from '@/lib/garment/size-label';
+import type { PickerDef } from '@/lib/catalogue/picks';
 import { emptyFabricForm, type FabricFormState, type Colour } from '@/lib/garment/colour-fabric';
 
 type PresetOption = { id: string; name: string; rule: FitRuleset };
@@ -64,6 +65,8 @@ export interface GarmentFormInitial {
   name: string;
   category: Category;
   sizeLabel: string;
+  /** One value per picker, keyed by picker id. Only used inside a product. */
+  picks?: Record<string, string>;
   photo_url: string;
   measurements: MeasurementBag;
   /** From ruleSelectionForGarment() — see lib/fit/rule-selection.ts. */
@@ -77,17 +80,27 @@ export interface GarmentFormInitial {
   fabric_photo_url: string | null;
 }
 
-type GarmentFormProps =
-  | { mode: 'create'; initial?: undefined }
-  | { mode: 'edit'; initial: GarmentFormInitial };
+/** Set when the garment is a version of a product: the name is the product's and picks replace the size label. */
+export interface ProductCtx {
+  id: string;
+  name: string;
+  pickers: PickerDef[];
+  /** Values already used per picker id, in first-used order, offered as suggestions. */
+  usedValues: Record<string, string[]>;
+}
 
-export default function GarmentForm({ mode, initial }: GarmentFormProps) {
+type GarmentFormProps =
+  | { mode: 'create'; initial?: GarmentFormInitial; copyFrom?: string; productCtx?: ProductCtx }
+  | { mode: 'edit'; initial: GarmentFormInitial; copyFrom?: undefined; productCtx?: ProductCtx };
+
+export default function GarmentForm({ mode, initial, copyFrom, productCtx }: GarmentFormProps) {
   const router = useRouter();
   const [lang] = useLanguage();
   const isEdit = mode === 'edit';
   const photoRef = useRef<HTMLInputElement>(null);
 
-  const [name, setName] = useState(initial?.name ?? '');
+  const [name, setName] = useState(productCtx?.name ?? initial?.name ?? '');
+  const [picks, setPicks] = useState<Record<string, string>>(initial?.picks ?? {});
   const [category, setCategory] = useState<Category>(initial?.category ?? 'top');
   const [sizeLabel, setSizeLabel] = useState(initial?.sizeLabel ?? '');
   const [ruleChoice, setRuleChoice] = useState(initial?.ruleChoice ?? 'profile:regular');
@@ -117,6 +130,7 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
     name: initial?.name ?? '',
     category: initial?.category ?? 'top',
     sizeLabel: initial?.sizeLabel ?? '',
+    picks: initial?.picks ?? {},
     ruleChoice: initial?.ruleChoice ?? 'profile:regular',
     useOverride: initial?.useOverride ?? false,
     override: initial?.override ?? { base: DEFAULT_RULE, perDimension: {} },
@@ -135,7 +149,7 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
   // enough for this MVP-sized, plain-object state.
   function isDirty(): boolean {
     const current = JSON.stringify({
-      name, category, sizeLabel, ruleChoice, useOverride, override, measurements, colours, fabric,
+      name, category, sizeLabel, picks, ruleChoice, useOverride, override, measurements, colours, fabric,
     });
     return current !== initialSnapshot || (photoRef.current?.files?.length ?? 0) > 0;
   }
@@ -189,8 +203,13 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
       return;
     }
 
+    if (productCtx && productCtx.pickers.some(pk => (picks[pk.id] ?? '').trim() === '')) {
+      setError(t.pickRequired[lang]);
+      return;
+    }
+
     const photo = photoRef.current?.files?.[0] ?? null;
-    if (!photo && !isEdit) {
+    if (!photo && !isEdit && !copyFrom) {
       setError(t.photoRequired[lang]);
       return;
     }
@@ -227,6 +246,12 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
       fallbackProfile: initial?.profileKey ?? 'regular',
     }))) form.set(k, v);
     if (photo) form.set('photo', photo);
+    if (productCtx) {
+      form.set('picks', JSON.stringify(picks));
+      // Edit keeps the stored product; only a new version names one.
+      if (!isEdit) form.set('product_id', productCtx.id);
+      if (copyFrom) form.set('copy_from', copyFrom);
+    }
 
     // colours/fabric must ALWAYS be set, even when empty: presence tells the
     // API "this is the truth, replace it" — omitting them when empty would
@@ -247,7 +272,7 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
         setError(typeof data.error === 'string' ? data.error : t.authError[lang]);
         return;
       }
-      router.push('/dashboard');
+      router.push(productCtx ? `/dashboard/product/${productCtx.id}` : '/dashboard');
       router.refresh();
     } catch {
       // Network failure (offline, timeout, DNS) — distinct from a rejection
@@ -262,13 +287,33 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
     <form className="space-y-5" onSubmit={onSubmit}>
       <h1 className="text-xl font-semibold">{isEdit ? t.editGarment[lang] : t.addGarment[lang]}</h1>
 
-      <label className="block">
-        <span className="text-sm text-gray-700">{t.garmentName[lang]}</span>
-        <input
-          required value={name} onChange={e => setName(e.target.value)}
-          className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
-        />
-      </label>
+      {productCtx ? (
+        <>
+          <p className="text-sm text-gray-600">{productCtx.name}</p>
+          {productCtx.pickers.map(pk => (
+            <label key={pk.id} className="block">
+              <span className="text-sm text-gray-700">{pk.name}</span>
+              <input
+                required list={`picker-values-${pk.id}`}
+                value={picks[pk.id] ?? ''}
+                onChange={e => setPicks(prev => ({ ...prev, [pk.id]: e.target.value }))}
+                className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
+              />
+              <datalist id={`picker-values-${pk.id}`}>
+                {(productCtx.usedValues[pk.id] ?? []).map(v => <option key={v} value={v} />)}
+              </datalist>
+            </label>
+          ))}
+        </>
+      ) : (
+        <label className="block">
+          <span className="text-sm text-gray-700">{t.garmentName[lang]}</span>
+          <input
+            required value={name} onChange={e => setName(e.target.value)}
+            className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
+          />
+        </label>
+      )}
 
       <label className="block">
         <span className="text-sm text-gray-700">{t.category[lang]}</span>
@@ -361,8 +406,8 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
       </div>
 
       <label className="block">
-        <span className="text-sm text-gray-700">{isEdit ? t.replacePhoto[lang] : t.photo[lang]}</span>
-        {isEdit && initial?.photo_url && (
+        <span className="text-sm text-gray-700">{isEdit || copyFrom ? t.replacePhoto[lang] : t.photo[lang]}</span>
+        {(isEdit || copyFrom) && initial?.photo_url && (
           <span className="mt-2 flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -373,7 +418,7 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
           </span>
         )}
         <input
-          ref={photoRef} required={!isEdit} type="file" accept="image/*"
+          ref={photoRef} required={!isEdit && !copyFrom} type="file" accept="image/*"
           className="mt-1 block w-full text-sm"
         />
       </label>
@@ -414,7 +459,7 @@ export default function GarmentForm({ mode, initial }: GarmentFormProps) {
           {loading ? t.saving[lang] : t.save[lang]}
         </button>
         <Link
-          href="/dashboard"
+          href={productCtx ? `/dashboard/product/${productCtx.id}` : '/dashboard'}
           className="text-sm text-gray-600 underline"
           onClick={e => {
             // Only prompt when there's actually something to lose — a confirm

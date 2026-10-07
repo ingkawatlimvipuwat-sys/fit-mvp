@@ -6,6 +6,7 @@ import { useLanguage } from '@/lib/hooks/useLanguage';
 import { fillFromSize, estimateFromPartial } from '@/lib/fit/sizeEstimate';
 import type { BodyProfile } from '@/lib/config/sizeChart';
 import type { DimensionKey } from '@/lib/config/dimensions';
+import { keepSharedValues } from '@/lib/catalogue/keep-shared';
 
 type DimInfo = {
   key: string;
@@ -40,7 +41,8 @@ function diffPhrase(diff: number, lang: 'th' | 'en'): string {
 export default function FitChecker({
   garmentId, dimensions,
 }: {
-  garmentId: string; dimensions: DimInfo[];
+  /** Null while a product page has no version picked yet; the check is then disabled. */
+  garmentId: string | null; dimensions: DimInfo[];
 }) {
   const [lang] = useLanguage();
   const [values, setValues] = useState<Record<string, string>>({});
@@ -78,6 +80,19 @@ export default function FitChecker({
       })
       .catch(() => {});
   }, []);
+
+  // The shopper switched to another version of the product: the old verdict no
+  // longer applies, and typed numbers survive only for dimensions the new
+  // garment also asks for (spec 6). Skipped on first render.
+  const lastGarmentId = useRef(garmentId);
+  const dimensionKeys = dimensions.map(d => d.key).join(',');
+  useEffect(() => {
+    if (lastGarmentId.current === garmentId) return;
+    lastGarmentId.current = garmentId;
+    setResult(null);
+    setError(null);
+    setValues(v => keepSharedValues(v, dimensionKeys ? dimensionKeys.split(',') : []));
+  }, [garmentId, dimensionKeys]);
 
   useEffect(() => {
     if (result) resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -118,6 +133,7 @@ export default function FitChecker({
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); setError(null);
+    if (garmentId === null) return;
     const measurements: Record<string, number> = {};
     for (const d of dimensions) {
       const v = values[d.key];
@@ -222,7 +238,7 @@ export default function FitChecker({
           </label>
         ))}
         <button
-          type="submit" disabled={loading}
+          type="submit" disabled={loading || garmentId === null}
           className="w-full rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-60"
         >
           {loading ? '…' : t.checkFit[lang]}

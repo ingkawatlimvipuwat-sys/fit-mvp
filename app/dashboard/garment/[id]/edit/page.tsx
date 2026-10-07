@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { ruleSelectionForGarment } from '@/lib/fit/rule-selection';
 import GarmentForm from '@/app/dashboard/garment/GarmentForm';
+import { loadProductContext } from '@/lib/catalogue/ownership';
+import { usedValuesByPicker } from '@/lib/catalogue/picks';
 import { emptyFabricForm, FABRIC_FIELDS, type Colour } from '@/lib/garment/colour-fabric';
 import type { Category, MeasurementBag } from '@/lib/supabase/types';
 
@@ -38,11 +40,28 @@ export default async function EditGarmentPage(props: { params: Promise<{ id: str
   // malformed id fails the query the same way. Both land on notFound().
   const { data: g } = await supabase
     .from('garments')
-    .select('id, name, category, size_label, photo_url, true_colour_photo_url, measurements, fit_profile, fit_ruleset_id, fit_rule_override')
+    .select('id, name, category, size_label, product_id, picks, photo_url, true_colour_photo_url, measurements, fit_profile, fit_ruleset_id, fit_rule_override')
     .eq('id', params.id)
     .eq('retailer_id', user.id)
     .single();
   if (!g) notFound();
+
+  // A version of a product edits its picks in place of a name. A garment with no
+  // product (made before the backfill) keeps the plain form.
+  let productCtx;
+  if (g.product_id) {
+    const found = await loadProductContext(supabase, user.id, g.product_id);
+    if (!found.ok) {
+      if (found.status === 404) notFound();
+      throw new Error('product data unavailable');
+    }
+    productCtx = {
+      id: found.ctx.id,
+      name: found.ctx.name,
+      pickers: found.ctx.pickers,
+      usedValues: usedValuesByPicker(found.ctx.versions, found.ctx.pickers),
+    };
+  }
 
   const selection = ruleSelectionForGarment({
     fit_profile: g.fit_profile,
@@ -69,11 +88,13 @@ export default async function EditGarmentPage(props: { params: Promise<{ id: str
   return (
     <GarmentForm
       mode="edit"
+      productCtx={productCtx}
       initial={{
         id: g.id,
         name: g.name,
         category: g.category as Category,
         sizeLabel: typeof g.size_label === 'string' ? g.size_label : '',
+        picks: (g.picks ?? {}) as Record<string, string>,
         photo_url: g.photo_url,
         measurements: (g.measurements ?? {}) as MeasurementBag,
         ...selection,

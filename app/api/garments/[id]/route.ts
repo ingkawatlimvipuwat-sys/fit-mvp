@@ -1,33 +1,14 @@
 import { NextResponse } from 'next/server';
-import { createSupabaseServerClient, createSupabaseAdminClient } from '@/lib/supabase/server';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { parseGarmentFields } from '@/lib/garment/parse-form';
 import { checkRulesetOwnership } from '@/lib/garment/ruleset-ownership';
 import { parseColoursField, parseFabricField, isFabricEmpty } from '@/lib/garment/colour-fabric';
 import { t } from '@/lib/i18n/strings';
-import { PHOTO_BUCKET, pathFromPublicUrl, uploadPhotoField, type PhotoUpload } from '@/lib/garment/photo-upload';
-
-/**
- * Delete one object from the garment-photos bucket. Never throws: by the time
- * this runs the database is already correct, so an orphaned file is a far
- * smaller problem than a failed request. The owner-prefix check is what stops
- * a doctored photo_url aiming a service-role delete at another retailer.
- */
-async function removeStoredObject(path: string, userId: string): Promise<void> {
-  if (!path.startsWith(`${userId}/`)) return;
-  const admin = createSupabaseAdminClient();
-  try {
-    const { error } = await admin.storage.from(PHOTO_BUCKET).remove([path]);
-    if (error) console.error('storage cleanup failed (non-fatal):', error);
-  } catch (e) {
-    console.error('storage cleanup failed (non-fatal):', e);
-  }
-}
-
-/** As removeStoredObject, but locating the object from a stored public URL. */
-async function removeStoredPhoto(photoUrl: string | null, userId: string): Promise<void> {
-  const path = pathFromPublicUrl(photoUrl);
-  if (path) await removeStoredObject(path, userId);
-}
+import { PHOTO_BUCKET, uploadPhotoField, type PhotoUpload } from '@/lib/garment/photo-upload';
+import { removeStoredObject, removeStoredPhoto } from '@/lib/garment/storage-cleanup';
+import { loadProductContext } from '@/lib/catalogue/ownership';
+import { parsePicksField } from '@/lib/catalogue/parse';
+import { checkPicksForWrite } from '@/lib/catalogue/version-write';
 
 export async function PATCH(req: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -39,7 +20,7 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
   // means another shop's id is indistinguishable from a nonexistent one.
   const { data: existing } = await supabase
     .from('garments')
-    .select('photo_url, true_colour_photo_url')
+    .select('photo_url, true_colour_photo_url, product_id')
     .eq('id', params.id)
     .eq('retailer_id', user.id)
     .single();
@@ -55,6 +36,21 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
 
   const form = await req.formData().catch(() => null);
   if (!form) return NextResponse.json({ error: 'ข้อมูลไม่ถูกต้อง' }, { status: 400 });
+
+  // A version of a product: the name is the product's, picks must name this
+  // product's own pickers and keep rule 4. A garment with no product (created
+  // before the backfill ran) is edited exactly as before and ignores `picks`.
+  let picksUpdate: { picks: Record<string, string> } | Record<string, never> = {};
+  if (existing.product_id) {
+    const product = await loadProductContext(supabase, user.id, existing.product_id);
+    if (!product.ok) return NextResponse.json({ error: product.error }, { status: product.status });
+    form.set('name', product.ctx.name);
+    const picksParse = parsePicksField(form.get('picks'), product.ctx.pickers.map(p => p.id));
+    if (!picksParse.ok) return NextResponse.json({ error: picksParse.error }, { status: 400 });
+    const writable = checkPicksForWrite(product.ctx, picksParse.picks, params.id);
+    if (!writable.ok) return NextResponse.json({ error: writable.error }, { status: 400 });
+    picksUpdate = { picks: picksParse.picks };
+  }
 
   const parsed = parseGarmentFields(form);
   if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
@@ -95,6 +91,7 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
     .from('garments')
     .update({
       ...parsed.data,
+      ...picksUpdate,
       ...(hero ? { photo_url: hero.url } : {}),
       ...(trueColour ? { true_colour_photo_url: trueColour.url } : {}),
     })
