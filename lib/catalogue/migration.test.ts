@@ -42,3 +42,35 @@ describe('0005_catalogue.sql stays additive (spec §4)', () => {
     expect(sql).toMatch(/update public\.garments set product_id = id where product_id is null/);
   });
 });
+
+const raw6 = readFileSync(join(process.cwd(), 'supabase/migrations/0006_product_id_not_null.sql'), 'utf8');
+const sql6 = raw6.replace(/--.*$/gm, '').toLowerCase();
+
+describe('0006_product_id_not_null.sql (spec §4.2)', () => {
+  it('is one transaction', () => {
+    expect(sql6.trim().startsWith('begin;')).toBe(true);
+    expect(sql6.trim().endsWith('commit;')).toBe(true);
+    expect(sql6.split('begin;')).toHaveLength(2);
+    expect(sql6.split('commit;')).toHaveLength(2);
+  });
+  it('repeats the 0005 backfill, name guard included', () => {
+    expect(sql6).toMatch(/insert into public\.products[\s\S]*from public\.garments g[\s\S]*where g\.product_id is null/);
+    expect(sql6).toContain("coalesce(nullif(left(btrim(g.name), 120), ''), 'untitled')");
+    expect(sql6).toContain('on conflict (id) do nothing');
+    expect(sql6).toMatch(/update public\.garments set product_id = id where product_id is null/);
+  });
+  it('backfills BEFORE it sets not null', () => {
+    const backfill = sql6.indexOf('update public.garments set product_id = id');
+    const tighten = sql6.indexOf('alter table public.garments alter column product_id set not null');
+    expect(backfill).toBeGreaterThan(-1);
+    expect(tighten).toBeGreaterThan(backfill);
+  });
+  it('only tightens product_id and drops nothing', () => {
+    expect(sql6.match(/set not null/g)).toHaveLength(1);
+    expect(sql6).not.toMatch(/\bdrop\b/);
+    expect(sql6).not.toMatch(/rename/);
+  });
+  it('says run once', () => {
+    expect(raw6.toLowerCase()).toContain('run once');
+  });
+});

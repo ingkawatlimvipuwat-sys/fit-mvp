@@ -29,8 +29,8 @@ export interface Garment {
   /** Inline rule for this garment only. Replaces the preset, never merges. */
   fit_rule_override: FitRuleset | null;
   measurements: MeasurementBag;
-  /** The product this garment is a version of. Null only for garments created before backfill. */
-  product_id: string | null;
+  /** The product this garment is a version of. Never null once 0006 has run. */
+  product_id: string;
   /** One value per picker, keyed by product_pickers.id. */
   picks: Record<string, string>;
   created_at: string;

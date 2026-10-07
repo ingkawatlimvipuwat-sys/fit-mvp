@@ -331,7 +331,6 @@ export const t = {
   },
   pickFirst: { th: 'เลือก {names} ก่อน', en: 'Pick {names} first' },
   noVersions: { th: 'ยังไม่มีแบบ เพิ่มแบบแรกได้เลย', en: 'No versions yet. Add the first one.' },
-  legacyGarments: { th: 'เสื้อผ้าที่ยังไม่อยู่ในสินค้า', en: 'Garments not in a product yet' },
   editProduct: { th: 'จัดการสินค้า', en: 'Manage product' },
 } as const;
 

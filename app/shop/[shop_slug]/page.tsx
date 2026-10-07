@@ -42,7 +42,7 @@ export default async function ShopPage(props: { params: Promise<{ shop_slug: str
   const [{ data: products }, { data: versionRows }] = await Promise.all([
     supabase.from('products').select('id, name, created_at')
       .eq('retailer_id', shop.id).order('created_at', { ascending: false }),
-    supabase.from('garments').select('id, name, product_id, photo_url, picks, created_at')
+    supabase.from('garments').select('id, product_id, photo_url, picks, created_at')
       .eq('retailer_id', shop.id).order('created_at', { ascending: true }),
   ]);
 
@@ -61,7 +61,7 @@ export default async function ShopPage(props: { params: Promise<{ shop_slug: str
   // A card shows the first-added COMPLETE version's photo; a product with none is hidden.
   const firstVersion = new Map<string, { id: string; photo_url: string }>();
   for (const v of versionRows ?? []) {
-    if (!v.product_id || firstVersion.has(v.product_id)) continue;
+    if (firstVersion.has(v.product_id)) continue;
     if (isComplete(v.picks ?? {}, pickerIdsByProduct.get(v.product_id) ?? [])) {
       firstVersion.set(v.product_id, { id: v.id, photo_url: v.photo_url });
     }
@@ -72,12 +72,7 @@ export default async function ShopPage(props: { params: Promise<{ shop_slug: str
       key: p.id, name: p.name, photo_url: firstVersion.get(p.id)!.photo_url,
       href: `/shop/${params.shop_slug}/p/${p.id}`, colourFrom: firstVersion.get(p.id)!.id,
     }));
-  // Garments created between the migration and the backfill have no product yet.
-  const loose = (versionRows ?? []).filter(v => !v.product_id).reverse().map(v => ({
-    key: v.id, name: v.name as string, photo_url: v.photo_url,
-    href: `/shop/${params.shop_slug}/${v.id}`, colourFrom: v.id,
-  }));
-  const garments = [...loose, ...cards];
+  const garments = cards;
 
   // One query for the whole grid, grouped in code. A per-card query would be an
   // N+1 on a page that exists to list a shop's entire catalogue.

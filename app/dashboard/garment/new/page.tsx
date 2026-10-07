@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import GarmentForm, { type GarmentFormInitial, type ProductCtx } from '@/app/dashboard/garment/GarmentForm';
 import { ruleSelectionForGarment } from '@/lib/fit/rule-selection';
@@ -10,7 +10,7 @@ import type { Category, MeasurementBag } from '@/lib/supabase/types';
 export const metadata = { title: 'เพิ่มแบบ — Fit MVP' };
 
 /**
- * /dashboard/garment/new                      a plain garment (a shop with no product yet)
+ * /dashboard/garment/new                      no product named: back to the dashboard
  * /dashboard/garment/new?product=ID           a new version of that product
  * /dashboard/garment/new?product=ID&copy=VID  the same, pre-filled from version VID (Duplicate)
  */
@@ -18,7 +18,7 @@ export default async function NewGarmentPage(props: {
   searchParams: Promise<{ product?: string; copy?: string }>;
 }) {
   const { product: productId, copy } = await props.searchParams;
-  if (!productId) return <GarmentForm mode="create" />;
+  if (!productId) redirect('/dashboard');
 
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
