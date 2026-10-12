@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { parseProductName, parsePickerName, parsePicksField } from './parse';
+import { parseProductName, parsePickerName, parsePicksField, parseFolderName } from './parse';
+import { t } from '@/lib/i18n/strings';
 
 describe('names', () => {
   it('trims', () => { expect(parseProductName('  Tee ')).toEqual({ ok: true, value: 'Tee' }); });
@@ -24,5 +25,14 @@ describe('parsePicksField', () => {
     for (const bad of ['not json', '[]', '{"p1":5}', JSON.stringify({ p1: 'x'.repeat(61) })]) {
       expect(parsePicksField(bad, ids).ok).toBe(false);
     }
+  });
+});
+
+describe('parseFolderName', () => {
+  it('trims', () => { expect(parseFolderName('  Shirts ')).toEqual({ ok: true, value: 'Shirts' }); });
+  it('accepts 60 characters, rejects blank and 61 with the Thai message', () => {
+    expect(parseFolderName('x'.repeat(60)).ok).toBe(true);
+    expect(parseFolderName('   ')).toEqual({ ok: false, error: t.invalidFolderName.th });
+    expect(parseFolderName('x'.repeat(61)).ok).toBe(false);
   });
 });
