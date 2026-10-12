@@ -1,28 +1,51 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { loadProductContext } from '@/lib/catalogue/ownership';
+import { loadProductContext, checkFolderOwnership } from '@/lib/catalogue/ownership';
 import { parseProductName } from '@/lib/catalogue/parse';
 import { removeStoredPhoto } from '@/lib/garment/storage-cleanup';
 import { t } from '@/lib/i18n/strings';
 
-/** Rename. Versions' own stored garments.name is deliberately not synced (spec §4.2). */
+const PatchBody = z.object({
+  name: z.string().optional(),
+  folder_id: z.uuid().nullable().optional(),
+}).strict();
+
+/**
+ * Rename and/or move to a folder (null = top level). Versions' own stored
+ * garments.name is deliberately not synced (spec §4.2).
+ */
 export async function PATCH(req: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
-  const body = await req.json().catch(() => null);
-  const name = parseProductName(body?.name);
-  if (!name.ok) return NextResponse.json({ error: name.error }, { status: 400 });
+  const body = PatchBody.safeParse(await req.json().catch(() => null));
+  if (!body.success || (body.data.name === undefined && body.data.folder_id === undefined)) {
+    return NextResponse.json({ error: 'invalid body' }, { status: 400 });
+  }
+  const update: { name?: string; folder_id?: string | null } = {};
+  if (body.data.name !== undefined) {
+    const name = parseProductName(body.data.name);
+    if (!name.ok) return NextResponse.json({ error: name.error }, { status: 400 });
+    update.name = name.value;
+  }
+  if (body.data.folder_id !== undefined) {
+    if (body.data.folder_id !== null) {
+      const owns = await checkFolderOwnership(supabase, user.id, body.data.folder_id);
+      if (!owns.ok) return NextResponse.json({ error: owns.error }, { status: owns.status });
+    }
+    update.folder_id = body.data.folder_id;
+  }
 
   const found = await loadProductContext(supabase, user.id, params.id);
   if (!found.ok) return NextResponse.json({ error: found.error }, { status: found.status });
 
   const { error } = await supabase
-    .from('products').update({ name: name.value }).eq('id', params.id).eq('retailer_id', user.id);
+    .from('products').update(update).eq('id', params.id).eq('retailer_id', user.id);
   if (error) {
-    console.error('product rename failed:', error);
+    console.error('product update failed:', error);
     return NextResponse.json({ error: t.saveFailed.th }, { status: 500 });
   }
   return NextResponse.json({ ok: true });

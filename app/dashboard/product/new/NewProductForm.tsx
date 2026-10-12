@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { t } from '@/lib/i18n/strings';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 
-export default function NewProductForm() {
+export default function NewProductForm({ folderId }: { folderId: string | null }) {
   const router = useRouter();
   const [lang] = useLanguage();
   const [name, setName] = useState('');
@@ -21,7 +21,7 @@ export default function NewProductForm() {
       const res = await fetch('/api/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, folder_id: folderId }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { setError(typeof data.error === 'string' ? data.error : t.saveFailed[lang]); return; }
@@ -52,7 +52,7 @@ export default function NewProductForm() {
         >
           {loading ? t.saving[lang] : t.save[lang]}
         </button>
-        <Link href="/dashboard" className="text-sm text-gray-600 underline">{t.cancel[lang]}</Link>
+        <Link href={folderId ? `/dashboard?folder=${folderId}` : '/dashboard'} className="text-sm text-gray-600 underline">{t.cancel[lang]}</Link>
       </div>
     </form>
   );

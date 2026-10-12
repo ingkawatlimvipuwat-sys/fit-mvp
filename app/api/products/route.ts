@@ -1,21 +1,31 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { parseProductName } from '@/lib/catalogue/parse';
+import { checkFolderOwnership } from '@/lib/catalogue/ownership';
 import { t } from '@/lib/i18n/strings';
 
-/** Create a product. New products start with the pickers Size and Colour (spec §2). */
+const CreateBody = z.object({ name: z.string(), folder_id: z.uuid().nullable().optional() }).strict();
+
+/** Create a product, optionally inside one of the caller's folders. New products start with the pickers Size and Colour (spec §2). */
 export async function POST(req: Request) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
-  const body = await req.json().catch(() => null);
-  const name = parseProductName(body?.name);
+  const body = CreateBody.safeParse(await req.json().catch(() => null));
+  if (!body.success) return NextResponse.json({ error: 'invalid body' }, { status: 400 });
+  const name = parseProductName(body.data.name);
   if (!name.ok) return NextResponse.json({ error: name.error }, { status: 400 });
+  const folderId = body.data.folder_id ?? null;
+  if (folderId !== null) {
+    const owns = await checkFolderOwnership(supabase, user.id, folderId);
+    if (!owns.ok) return NextResponse.json({ error: owns.error }, { status: owns.status });
+  }
 
   const { data: product, error } = await supabase
     .from('products')
-    .insert({ retailer_id: user.id, name: name.value })
+    .insert({ retailer_id: user.id, name: name.value, folder_id: folderId })
     .select('id')
     .single();
   if (error || !product) {
