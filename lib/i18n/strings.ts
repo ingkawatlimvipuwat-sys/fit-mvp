@@ -332,6 +332,28 @@ export const t = {
   pickFirst: { th: 'เลือก {names} ก่อน', en: 'Pick {names} first' },
   noVersions: { th: 'ยังไม่มีแบบ เพิ่มแบบแรกได้เลย', en: 'No versions yet. Add the first one.' },
   editProduct: { th: 'จัดการสินค้า', en: 'Manage product' },
+  // Catalogue Stage 2a — folders
+  allItems: { th: 'ทั้งหมด', en: 'All items' },
+  folders: { th: 'โฟลเดอร์', en: 'Folders' },
+  newMenu: { th: '+ สร้าง ▾', en: '+ New ▾' },
+  newFolder: { th: 'โฟลเดอร์ใหม่', en: 'New folder' },
+  folderNamePrompt: { th: 'ชื่อโฟลเดอร์', en: 'Folder name' },
+  renameFolder: { th: 'เปลี่ยนชื่อ', en: 'Rename' },
+  deleteFolder: { th: 'ลบโฟลเดอร์', en: 'Delete folder' },
+  confirmDeleteFolder: {
+    th: 'ลบโฟลเดอร์ “{name}”? ของข้างในจะย้ายไปอยู่ที่ {target} ไม่มีสินค้าใดถูกลบ',
+    en: 'Delete folder “{name}”? Everything inside moves to {target}. No product is deleted.',
+  },
+  topLevel: { th: 'ระดับบนสุด', en: 'Top level' },
+  moveTo: { th: 'ย้ายไปที่…', en: 'Move to…' },
+  currentPlace: { th: 'อยู่ที่นี่', en: 'here now' },
+  moreActions: { th: 'ตัวเลือกเพิ่มเติม', en: 'More actions' },
+  folderCycle: {
+    th: 'ย้ายโฟลเดอร์ไปไว้ในตัวเองหรือในโฟลเดอร์ย่อยของตัวเองไม่ได้',
+    en: "A folder can't go inside itself or one of its own folders",
+  },
+  invalidFolderName: { th: 'ชื่อโฟลเดอร์ต้องยาว 1–60 ตัวอักษร', en: 'Folder names must be 1–60 characters' },
+  emptyFolder: { th: 'ยังไม่มีสินค้าในโฟลเดอร์นี้', en: 'No products in this folder yet' },
 } as const;
 
 export type StringKey = keyof typeof t;

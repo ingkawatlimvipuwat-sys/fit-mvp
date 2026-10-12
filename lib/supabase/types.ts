@@ -51,6 +51,15 @@ export interface ProductPicker {
   position: number;
 }
 
+export interface Folder {
+  id: string;
+  retailer_id: string;
+  /** Null = top level. */
+  parent_id: string | null;
+  name: string;
+  created_at: string;
+}
+
 export interface FitSession {
   id: string;
   garment_id: string;
