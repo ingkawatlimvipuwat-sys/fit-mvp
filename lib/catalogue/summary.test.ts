@@ -34,3 +34,11 @@ describe('summariseProducts', () => {
     expect(p.needsAttention).toBe(false);
   });
 });
+
+describe('summariseProducts folder_id', () => {
+  it('passes folder_id through, null when absent', () => {
+    const out = summariseProducts(
+      [{ id: 'P1', name: 'a', created_at: '2026-01-01', folder_id: 'F1' }, prod('P2', '2026-01-01')], [], []);
+    expect(out.map(p => p.folder_id)).toEqual(['F1', null]);
+  });
+});

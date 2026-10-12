@@ -6,6 +6,7 @@ export interface ProductSummary {
   id: string;
   name: string;
   created_at: string;
+  folder_id: string | null;
   versionCount: number;
   /** Borrowed from the first-added version (spec §5.1). */
   photo_url: string | null;
@@ -17,7 +18,7 @@ export interface ProductSummary {
  * the order they came in; the caller sorts them.
  */
 export function summariseProducts(
-  products: { id: string; name: string; created_at: string }[],
+  products: { id: string; name: string; created_at: string; folder_id?: string | null }[],
   pickers: { id: string; product_id: string }[],
   garments: {
     id: string; product_id: string; created_at: string; category: Category;
@@ -33,6 +34,7 @@ export function summariseProducts(
       id: p.id,
       name: p.name,
       created_at: p.created_at,
+      folder_id: p.folder_id ?? null,
       versionCount: versions.length,
       photo_url: versions[0]?.photo_url ?? null,
       needsAttention: attentionReasons(versions, pickerIds).length > 0,
