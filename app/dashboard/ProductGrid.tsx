@@ -29,7 +29,7 @@ export default function ProductGrid({
               ) : null}
             </div>
             <div className="p-3">
-              <div className="text-sm font-medium">{p.name}</div>
+              <div className="break-words text-sm font-medium">{p.name}</div>
               <div className="text-xs text-gray-500">
                 {t.versionsCount[lang].replace('{n}', String(p.versionCount))}
               </div>

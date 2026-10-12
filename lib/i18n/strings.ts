@@ -30,6 +30,10 @@ export const t = {
   emailTaken: { th: 'อีเมลนี้ถูกใช้แล้ว กรุณาเข้าสู่ระบบแทน', en: 'This email is already registered. Try logging in instead.' },
   shopUnavailable: { th: 'ร้านค้าไม่พร้อมใช้งานชั่วคราว กรุณาลองใหม่ภายหลัง', en: 'The shop is temporarily unavailable. Please try again later.' },
   retry: { th: 'ลองใหม่', en: 'Retry' },
+  dashboardUnavailable: {
+    th: 'โหลดข้อมูลสินค้าไม่สำเร็จ กรุณาลองใหม่',
+    en: "Couldn't load your products. Please try again.",
+  },
   backToShop: { th: 'กลับไปหน้าร้าน', en: 'Back to shop' },
   otherGarments: { th: 'สินค้าอื่นของร้าน', en: 'More from this shop' },
 

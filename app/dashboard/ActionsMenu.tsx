@@ -13,11 +13,11 @@ export default function ActionsMenu({ trigger, ariaLabel, triggerClassName, item
 }) {
   const ref = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
-    function onClick(e: MouseEvent) {
+    function onClick(e: PointerEvent) {
       if (ref.current?.open && !ref.current.contains(e.target as Node)) ref.current.open = false;
     }
-    document.addEventListener('click', onClick);
-    return () => document.removeEventListener('click', onClick);
+    document.addEventListener('pointerdown', onClick);
+    return () => document.removeEventListener('pointerdown', onClick);
   }, []);
   const close = () => { if (ref.current) ref.current.open = false; };
   const itemClass = (danger?: boolean) =>
