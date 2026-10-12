@@ -27,7 +27,7 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 | Check | Result |
 |---|---|
 | Live site matches `main` | Yes, as of `30c7abd` (PR #14, catalogue Stage 1), merged 2026-10-07. `main` is now `c05d604` (PR #15, migration 0006 follow-up, merged 2026-10-07); that deploy was not re-probed when this row was written |
-| Tests (`npm test`) | 316 passing, 35 files (branch `feature/catalogue-stage-2`; `main` has 263). The two `TryOn.test.tsx` failures were fixed by PR #10 and no longer occur |
+| Tests (`npm test`) | 316 passing, 33 files (branch `feature/catalogue-stage-2`; `main` has 263). The two `TryOn.test.tsx` failures were fixed by PR #10 and no longer occur |
 | Build (`npm run build`) | Clean |
 | `npm audit --omit=dev` | 2 vulnerabilities (1 high, 1 moderate) — down from 1 critical + 2 high (~18 Next advisories) on 14.2. The remaining high is `postcss@8.4.31` bundled *inside* `next`'s own `node_modules` (build-time CSS processing only, not user input); our own `postcss` dep is 8.5.28, already patched. Clears when Next ships its own postcss bump, or on a future Next 16 upgrade. |
 | Database migrations | 0001, 0002, 0003 and 0004 (size label) applied to the live database (0004 verified with a read-only select, 2026-10-07). 0005 (catalogue) applied to the live database by the founder before PR #14 merged, 2026-10-07. 0006 (`product_id` NOT NULL) applied to the live database on 2026-10-07, **after** PR #15 was merged — in that order on purpose: code from before PR #15 could still create a garment without a product, and 0006's backfill catches any such row before setting NOT NULL. All six migrations are now applied |
