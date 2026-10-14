@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { t } from '@/lib/i18n/strings';
 import type { PickerDef, Picks } from './picks';
 import type { FolderRow } from './folders';
+import type { TagRow } from './tags';
 import type { Category, MeasurementBag } from '@/lib/supabase/types';
 
 export interface ProductContext {
@@ -78,5 +79,25 @@ export async function checkFolderOwnership(
   const { data, error } = await supabase
     .from('folders').select('id').eq('id', folderId).eq('retailer_id', userId).maybeSingle();
   if (error) { console.error('folder ownership lookup failed:', error); return fail500; }
+  return data ? { ok: true } : fail404;
+}
+
+/** The caller's tags, scoped by retailer_id. A failed read is a 500, never an empty list. */
+export async function loadShopTags(supabase: SupabaseClient, userId: string):
+  Promise<{ ok: true; tags: TagRow[] } | Failure> {
+  const { data, error } = await supabase.from('tags').select('id, name').eq('retailer_id', userId);
+  if (error) { console.error('tags lookup failed:', error); return fail500; }
+  return { ok: true, tags: (data ?? []) as TagRow[] };
+}
+
+/**
+ * Is this tag the caller's? Another shop's id looks nonexistent (404).
+ * product_tags RLS checks only the product side, so this is the only guard.
+ */
+export async function checkTagOwnership(supabase: SupabaseClient, userId: string, tagId: string):
+  Promise<{ ok: true } | Failure> {
+  const { data, error } = await supabase
+    .from('tags').select('id').eq('id', tagId).eq('retailer_id', userId).maybeSingle();
+  if (error) { console.error('tag ownership lookup failed:', error); return fail500; }
   return data ? { ok: true } : fail404;
 }
