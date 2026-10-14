@@ -60,6 +60,8 @@ export interface Folder {
   created_at: string;
 }
 
+export interface Tag { id: string; retailer_id: string; name: string; created_at: string }
+
 export interface FitSession {
   id: string;
   garment_id: string;
