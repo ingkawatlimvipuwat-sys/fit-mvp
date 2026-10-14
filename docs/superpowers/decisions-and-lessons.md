@@ -97,6 +97,17 @@ to the right section rather than to a new document.
   (what was moved is already moved; a retry finishes the job), and the database refuses the final
   delete while a subfolder still points at the folder (`folders.parent_id` has no ON DELETE
   action). Rule 5 (no folder inside itself) is `checkFolderMove`.
+- **Catalogue Stage 2b — tags, search, sort, Needs attention (built 2026-10-14, not yet
+  shipped).** Tags attach **by name only, never by id**: `product_tags` RLS checks only the
+  product side, so an attach-by-id route could link another shop's tag to my product.
+  `attachTagByName` looks the name up among the caller's own tags (case-insensitive, like the
+  unique index on `lower(name)`) and creates one if absent; `detachTag` checks the tag id
+  against the caller's tags first (404 otherwise). A tag on no product is **hidden, not
+  deleted** (open question 2's answer — no tag rename/delete in Stage 2; re-typing the word
+  reuses the old tag). Search matches product names only, not tags or version picks. Several
+  selected tags mean AND. The dashboard loads the shop's products once and filters, searches and
+  sorts **in the browser** (`productsInView`); the view lives in the address bar and changes
+  use `replaceState` (folder changes `pushState`), so Back does not replay keystrokes.
 - **Public signup at `/signup` stays open** (2026-09-28, founder). Anyone can create a shop; this is
   intended, not an oversight. Do not add an invite gate without a new decision.
 
@@ -188,6 +199,9 @@ to the right section rather than to a new document.
     because vitest runs without `globals: true`; without it you get "multiple elements found".
   - Component test files opt into the browser environment with a
     `// @vitest-environment jsdom` comment at the top.
+- **The catalogue's multi-statement lib functions** (`deleteFolderMovingUp`, `attachTagByName`,
+  …) are tested with `lib/catalogue/fake-supabase.ts`. It checks call order and `retailer_id`
+  scoping, not real SQL or RLS — a green test there is not evidence the live query works.
 - **Code review has caught what tests and checklists missed.** Garment edit (2026-08-15) and
   colour & fabric (2026-09-11) each had three silent-wrong-data bugs found only in review. A
   manual checklist that looks at *current* behaviour cannot catch a wrong value that is

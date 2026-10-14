@@ -22,12 +22,12 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 
 ---
 
-## Status snapshot (as of 2026-10-12, branch `feature/catalogue-stage-2`; `main` at `c05d604`)
+## Status snapshot (as of 2026-10-14, branch `feature/catalogue-stage-2b`; `main` at `9617592`)
 
 | Check | Result |
 |---|---|
 | Live site matches `main` | Yes, as of `30c7abd` (PR #14, catalogue Stage 1), merged 2026-10-07. `main` is now `c05d604` (PR #15, migration 0006 follow-up, merged 2026-10-07); that deploy was not re-probed when this row was written |
-| Tests (`npm test`) | 316 passing, 33 files (branch `feature/catalogue-stage-2`; `main` has 263). The two `TryOn.test.tsx` failures were fixed by PR #10 and no longer occur |
+| Tests (`npm test`) | 349 passing, 35 files (branch `feature/catalogue-stage-2b`; `main` has 316). The two `TryOn.test.tsx` failures were fixed by PR #10 and no longer occur |
 | Build (`npm run build`) | Clean |
 | `npm audit --omit=dev` | 2 vulnerabilities (1 high, 1 moderate) — down from 1 critical + 2 high (~18 Next advisories) on 14.2. The remaining high is `postcss@8.4.31` bundled *inside* `next`'s own `node_modules` (build-time CSS processing only, not user input); our own `postcss` dep is 8.5.28, already patched. Clears when Next ships its own postcss bump, or on a future Next 16 upgrade. |
 | Database migrations | 0001, 0002, 0003 and 0004 (size label) applied to the live database (0004 verified with a read-only select, 2026-10-07). 0005 (catalogue) applied to the live database by the founder before PR #14 merged, 2026-10-07. 0006 (`product_id` NOT NULL) applied to the live database on 2026-10-07, **after** PR #15 was merged — in that order on purpose: code from before PR #15 could still create a garment without a product, and 0006's backfill catches any such row before setting NOT NULL. All six migrations are now applied |
@@ -50,7 +50,8 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 | Health-check fixes | 2026-09-23 | Bad requests get 400 instead of 500; unused image optimizer switched off | — |
 | Preset ownership check | 2026-10-01 | A garment can only use a fit-rule preset that belongs to the same shop | — |
 | Catalogue Stage 1 — products, versions, shopper pickers | shipped 2026-10-07 (PR #14, 0005 applied; follow-up PR #15 merged, then 0006 applied, same day) | Owner groups garments into products (one per Shopee listing, one shopper link `/shop/<slug>/p/<id>`); each version is a full garment with a pick per picker (Size, Colour, …); shopper picks, then checks fit. Old garment links redirect to the product page. Dashboard shows product cards | `specs/2026-10-01-catalogue-organisation-design.md`, `plans/2026-10-05-catalogue-stage-1.md` |
-| Catalogue Stage 2a — folders and Move to… | **built, not shipped — PR pending** (branch `feature/catalogue-stage-2`; no migration) | Nested folders in a side list (phone: a ‹ back header), New folder / Rename / Delete (contents move up, nothing is deleted), **Move to…** for products and folders, New product inside the current folder. A folder shows everything below it. The founder's merge makes it shipped; the next agent updates the date | `specs/2026-10-01-catalogue-organisation-design.md`, `plans/2026-10-12-catalogue-stage-2.md` |
+| Catalogue Stage 2a — folders and Move to… | merged as PR #16 (`main` `9617592`); the live deploy was not re-probed when this row was written (branch `feature/catalogue-stage-2`; no migration) | Nested folders in a side list (phone: a ‹ back header), New folder / Rename / Delete (contents move up, nothing is deleted), **Move to…** for products and folders, New product inside the current folder. A folder shows everything below it. The next agent confirms the deploy and records the date | `specs/2026-10-01-catalogue-organisation-design.md`, `plans/2026-10-12-catalogue-stage-2.md` |
+| Catalogue Stage 2b — tags, search, sort, Needs attention filter | **built, not shipped — PR pending** (branch `feature/catalogue-stage-2b`; no migration) | Owners tag products on the product page (type a word + Enter; an existing tag is reused), and the dashboard gets a toolbar: search by product name, filter by one or more tags (a product must have all), sort (newest, oldest, name A–Z / Z–A) and a ⚠ Needs attention toggle. Everything filters in the browser and lives in the address bar, so Back and refresh keep the place. Tags cannot be renamed or deleted yet; a tag on no product is simply hidden. The founder's merge makes it shipped; the next agent updates the date | `specs/2026-10-01-catalogue-organisation-design.md`, `plans/2026-10-12-catalogue-stage-2.md` |
 | Try-on (stub) | 2026-10-03 | Shopper uploads or takes a photo; after a fake 0.9 s wait the page shows a fixed sample image (`public/try-on/result.png`). The photo never leaves the phone. No real try-on model yet | — |
 
 ---
@@ -68,10 +69,11 @@ One list, most important first. When you finish an item, delete it (git keeps th
 
 ### Before a second shop joins
 
-1. **Catalogue Stages 2b and 3.** Stage 1 is live; Stage 2a (folders, Move to…) is built and
-   waiting for the founder's PR merge. 2b is next: tags, search, sort, Needs attention filter.
-   Then Stage 3: drag-and-drop and reordering picker values. `specs/2026-10-01-catalogue-organisation-design.md` §8. Stage 2 plan:
-   `plans/2026-10-12-catalogue-stage-2.md` (split into 2a folders and 2b tags/search/sort).
+1. **Catalogue Stage 3.** Stages 1 and 2a are merged; Stage 2b (tags, search, sort, Needs
+   attention filter) is built and waiting for the founder's PR merge. Stage 3: drag-and-drop,
+   reordering picker values, rough edges from Stages 1–2, and tag rename/delete shop-wide if
+   owners ask (Stage 2 did not build it). `specs/2026-10-01-catalogue-organisation-design.md` §8.
+   Stage 2 plan: `plans/2026-10-12-catalogue-stage-2.md`.
 2. **Confirm the Supabase secret key was rotated.** A key was found in plain text in a deleted
    clone on 2026-08-11 (never pushed to GitHub). Rotation was advised; it was never confirmed.
    Ask the founder.
