@@ -42,3 +42,13 @@ describe('summariseProducts folder_id', () => {
     expect(out.map(p => p.folder_id)).toEqual(['F1', null]);
   });
 });
+
+describe('summariseProducts tags', () => {
+  it("attaches each product's own tags A–Z; none when tagging is omitted", () => {
+    const tags = [{ id: 'b', name: 'Summer' }, { id: 'a', name: 'Sale' }];
+    const links = [{ product_id: 'P1', tag_id: 'b' }, { product_id: 'P1', tag_id: 'a' }, { product_id: 'P1', tag_id: 'foreign' }];
+    const [p] = summariseProducts([prod('P1', '2026-01-01')], [], [], { tags, productTags: links });
+    expect(p.tags.map(x => x.name)).toEqual(['Sale', 'Summer']);
+    expect(summariseProducts([prod('P1', '2026-01-01')], [], [])[0].tags).toEqual([]);
+  });
+});

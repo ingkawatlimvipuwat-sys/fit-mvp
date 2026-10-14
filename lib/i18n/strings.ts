@@ -358,6 +358,21 @@ export const t = {
   },
   invalidFolderName: { th: 'ชื่อโฟลเดอร์ต้องยาว 1–60 ตัวอักษร', en: 'Folder names must be 1–60 characters' },
   emptyFolder: { th: 'ยังไม่มีสินค้าในโฟลเดอร์นี้', en: 'No products in this folder yet' },
+
+  // Catalogue Stage 2b — find
+  searchProducts: { th: 'ค้นหาชื่อสินค้า', en: 'Search product names' },
+  tags: { th: 'แท็ก', en: 'Tags' },
+  filterByTag: { th: '+ กรองด้วยแท็ก', en: '+ Filter by tag' },
+  addTagPlaceholder: { th: 'เพิ่มแท็ก แล้วกด Enter', en: 'Add a tag, then press Enter' },
+  removeTag: { th: 'เอาแท็ก {name} ออก', en: 'Remove tag {name}' },
+  invalidTagName: { th: 'ชื่อแท็กต้องยาว 1–30 ตัวอักษร', en: 'Tag names must be 1–30 characters' },
+  sortLabel: { th: 'เรียงตาม', en: 'Sort' },
+  sortNewest: { th: 'ใหม่สุด', en: 'Newest' },
+  sortOldest: { th: 'เก่าสุด', en: 'Oldest' },
+  sortNameAZ: { th: 'ชื่อ ก–ฮ, A–Z', en: 'Name A–Z' },
+  sortNameZA: { th: 'ชื่อ ฮ–ก, Z–A', en: 'Name Z–A' },
+  noMatches: { th: 'ไม่พบสินค้าที่ตรงกับตัวกรอง', en: 'No products match these filters' },
+  clearFilters: { th: 'ล้างตัวกรอง', en: 'Clear filters' },
 } as const;
 
 export type StringKey = keyof typeof t;

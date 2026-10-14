@@ -1,5 +1,6 @@
 import { attentionReasons } from './needs-attention';
 import type { Picks } from './picks';
+import { tagsOfProduct, type ProductTagRow, type TagRow } from './tags';
 import type { Category, MeasurementBag } from '@/lib/supabase/types';
 
 export interface ProductSummary {
@@ -11,6 +12,8 @@ export interface ProductSummary {
   /** Borrowed from the first-added version (spec §5.1). */
   photo_url: string | null;
   needsAttention: boolean;
+  /** This product's own tags, A–Z. */
+  tags: TagRow[];
 }
 
 /**
@@ -24,6 +27,7 @@ export function summariseProducts(
     id: string; product_id: string; created_at: string; category: Category;
     measurements: MeasurementBag; picks: Picks; photo_url: string;
   }[],
+  tagging: { tags: TagRow[]; productTags: ProductTagRow[] } = { tags: [], productTags: [] },
 ): ProductSummary[] {
   return products.map(p => {
     const versions = garments
@@ -38,6 +42,7 @@ export function summariseProducts(
       versionCount: versions.length,
       photo_url: versions[0]?.photo_url ?? null,
       needsAttention: attentionReasons(versions, pickerIds).length > 0,
+      tags: tagsOfProduct(p.id, tagging.tags, tagging.productTags),
     };
   });
 }

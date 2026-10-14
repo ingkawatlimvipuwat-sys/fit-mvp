@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { loadProductContext } from '@/lib/catalogue/ownership';
 import { attentionReasons, type AttentionReason } from '@/lib/catalogue/needs-attention';
 import { dimensionsForCategory } from '@/lib/config/dimensions';
+import { tagsOfProduct, tagsInUse, tagSuggestions } from '@/lib/catalogue/tags';
 import ProductEditor, { type VersionRow } from './ProductEditor';
 
 export async function generateMetadata(props: { params: Promise<{ id: string }> }) {
@@ -34,7 +35,7 @@ export default async function ProductPage(props: { params: Promise<{ id: string 
   const { ctx } = found;
   const ids = ctx.versions.map(v => v.id);
 
-  const [{ data: retailer }, { data: photos }, { data: colours }] = await Promise.all([
+  const [{ data: retailer }, { data: photos }, { data: colours }, tagsRes, linksRes] = await Promise.all([
     supabase.from('retailers').select('shop_slug').eq('id', user.id).single(),
     ids.length
       ? supabase.from('garments').select('id, photo_url').eq('product_id', params.id).eq('retailer_id', user.id)
@@ -43,7 +44,18 @@ export default async function ProductPage(props: { params: Promise<{ id: string 
       ? supabase.from('garment_colours').select('garment_id, hex, created_at').in('garment_id', ids)
           .order('created_at', { ascending: true })
       : Promise.resolve({ data: [] as { garment_id: string; hex: string }[] }),
+    supabase.from('tags').select('id, name').eq('retailer_id', user.id),
+    // RLS returns only the caller's links; tagsOfProduct/tagsInUse also ignore ids outside the caller's tags.
+    supabase.from('product_tags').select('product_id, tag_id'),
   ]);
+  if (tagsRes.error || linksRes.error) {
+    console.error('product tags load failed:', tagsRes.error ?? linksRes.error);
+    throw new Error('product data unavailable');
+  }
+  const shopTags = (tagsRes.data ?? []) as { id: string; name: string }[];
+  const links = (linksRes.data ?? []) as { product_id: string; tag_id: string }[];
+  const attached = tagsOfProduct(ctx.id, shopTags, links);
+  const suggestions = tagSuggestions(tagsInUse(shopTags, links), attached);
 
   const photoById = new Map((photos ?? []).map(p => [p.id, p.photo_url]));
   const firstColour = new Map<string, string>();
@@ -73,6 +85,8 @@ export default async function ProductPage(props: { params: Promise<{ id: string 
       shopSlug={retailer?.shop_slug ?? null}
       pickers={ctx.pickers}
       versions={rows}
+      tags={attached}
+      tagSuggestions={suggestions}
     />
   );
 }

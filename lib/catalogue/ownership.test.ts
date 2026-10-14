@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { loadProductContext, checkGarmentOwnership, loadShopFolders, checkFolderOwnership } from './ownership';
+import { loadProductContext, checkGarmentOwnership, loadShopFolders, checkFolderOwnership, loadShopTags, checkTagOwnership } from './ownership';
 
 type Row = Record<string, unknown>;
 
@@ -89,5 +89,35 @@ describe('checkFolderOwnership', () => {
   });
   it('fails closed with 500', async () => {
     expect(await checkFolderOwnership(fake(FOLDERS, 'folders'), 'A', 'F1')).toMatchObject({ ok: false, status: 500 });
+  });
+});
+
+const TAGS = {
+  tags: [
+    { id: 'T1', retailer_id: 'A', name: 'Sale' },
+    { id: 'T2', retailer_id: 'B', name: 'Theirs' },
+  ],
+};
+
+describe('loadShopTags', () => {
+  it("lists only the caller's tags", async () => {
+    const r = await loadShopTags(fake(TAGS), 'A');
+    expect(r.ok && r.tags.map(x => x.id)).toEqual(['T1']);
+  });
+  it('fails closed with 500, never an empty list', async () => {
+    expect(await loadShopTags(fake(TAGS, 'tags'), 'A')).toMatchObject({ ok: false, status: 500 });
+  });
+});
+
+describe('checkTagOwnership', () => {
+  it('accepts own tag', async () => {
+    expect(await checkTagOwnership(fake(TAGS), 'A', 'T1')).toEqual({ ok: true });
+  });
+  it("rejects another shop's tag as 404, same as nonexistent", async () => {
+    expect(await checkTagOwnership(fake(TAGS), 'A', 'T2')).toMatchObject({ ok: false, status: 404 });
+    expect(await checkTagOwnership(fake(TAGS), 'A', 'nope')).toMatchObject({ ok: false, status: 404 });
+  });
+  it('fails closed with 500', async () => {
+    expect(await checkTagOwnership(fake(TAGS, 'tags'), 'A', 'T1')).toMatchObject({ ok: false, status: 500 });
   });
 });

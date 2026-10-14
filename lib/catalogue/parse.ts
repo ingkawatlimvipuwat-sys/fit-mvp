@@ -11,6 +11,7 @@ function named(raw: unknown, max: number, error: string): Named {
 export const parseProductName = (raw: unknown) => named(raw, 120, 'invalid product name');
 export const parsePickerName = (raw: unknown) => named(raw, 30, 'invalid picker name');
 export const parseFolderName = (raw: unknown) => named(raw, 60, t.invalidFolderName.th);
+export const parseTagName = (raw: unknown) => named(raw, 30, t.invalidTagName.th);
 
 /**
  * The `picks` form field: a JSON object keyed by picker id. Every key must be

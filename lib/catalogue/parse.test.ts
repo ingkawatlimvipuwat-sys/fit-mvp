@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseProductName, parsePickerName, parsePicksField, parseFolderName } from './parse';
+import { parseProductName, parsePickerName, parsePicksField, parseFolderName, parseTagName } from './parse';
 import { t } from '@/lib/i18n/strings';
 
 describe('names', () => {
@@ -34,5 +34,14 @@ describe('parseFolderName', () => {
     expect(parseFolderName('x'.repeat(60)).ok).toBe(true);
     expect(parseFolderName('   ')).toEqual({ ok: false, error: t.invalidFolderName.th });
     expect(parseFolderName('x'.repeat(61)).ok).toBe(false);
+  });
+});
+
+describe('parseTagName', () => {
+  it('trims; 1–30 characters; Thai message', () => {
+    expect(parseTagName(' Sale ')).toEqual({ ok: true, value: 'Sale' });
+    expect(parseTagName('x'.repeat(30)).ok).toBe(true);
+    expect(parseTagName('x'.repeat(31))).toEqual({ ok: false, error: t.invalidTagName.th });
+    expect(parseTagName('').ok).toBe(false);
   });
 });
