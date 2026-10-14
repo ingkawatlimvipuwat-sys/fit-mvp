@@ -97,7 +97,13 @@ export default function CatalogueToolbar({ view, tags, onChange }: {
       {isFiltered(view) && (
         <button
           type="button"
-          onClick={() => onChange({ ...view, q: '', tagIds: [], attention: false })}
+          onClick={() => {
+            // Clearing the draft also cancels the pending debounce (its effect cleanup runs on the draft change),
+            // so text typed within the last 250 ms cannot come back as the search.
+            sent.current = '';
+            setDraft('');
+            onChange({ ...view, q: '', tagIds: [], attention: false });
+          }}
           className="text-sm text-gray-600 underline"
         >
           {t.clearFilters[lang]}

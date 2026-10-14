@@ -34,6 +34,7 @@ export default function ProductTags({ productId, tags, suggestions }: {
 
   async function add(e: React.FormEvent) {
     e.preventDefault();
+    if (busy) return;
     const name = draft.trim();
     if (!name) return;
     if (await call(`/api/products/${productId}/tags`, 'POST', { name })) setDraft('');
@@ -61,7 +62,7 @@ export default function ProductTags({ productId, tags, suggestions }: {
             list="shop-tag-suggestions"
             maxLength={30}
             value={draft}
-            disabled={busy}
+            readOnly={busy}
             onChange={e => setDraft(e.target.value)}
             placeholder={t.addTagPlaceholder[lang]}
             aria-label={t.tags[lang]}
