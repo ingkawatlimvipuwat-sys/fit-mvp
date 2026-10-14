@@ -21,7 +21,7 @@ export default function CatalogueBrowser({ products, folders, shopSlug }: {
   const router = useRouter();
   const params = useSearchParams();
   const [lang] = useLanguage();
-  const view = parseView(params, folders);
+  const view = parseView(params, folders, []);
   const [moving, setMoving] = useState<Moving | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
