@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { t } from '@/lib/i18n/strings';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { versionLabel, type PickerDef } from '@/lib/catalogue/picks';
+import type { TagRow } from '@/lib/catalogue/tags';
+import ProductTags from './ProductTags';
 
 export interface VersionRow {
   id: string;
@@ -21,6 +23,8 @@ type Props = {
   shopSlug: string | null;
   pickers: PickerDef[];
   versions: VersionRow[];
+  tags: TagRow[];
+  tagSuggestions: TagRow[];
 };
 
 async function send(url: string, method: string, body?: unknown): Promise<{ ok: boolean; error?: string }> {
@@ -38,7 +42,7 @@ async function send(url: string, method: string, body?: unknown): Promise<{ ok: 
   }
 }
 
-export default function ProductEditor({ productId, name: initialName, shopSlug, pickers, versions }: Props) {
+export default function ProductEditor({ productId, name: initialName, shopSlug, pickers, versions, tags, tagSuggestions }: Props) {
   const router = useRouter();
   const [lang] = useLanguage();
   const [name, setName] = useState(initialName);
@@ -122,6 +126,7 @@ export default function ProductEditor({ productId, name: initialName, shopSlug, 
           onChange={e => setName(e.target.value)} onBlur={saveName}
           className="block w-full rounded border border-transparent px-2 py-1 text-xl font-semibold hover:border-gray-300"
         />
+        <ProductTags productId={productId} tags={tags} suggestions={tagSuggestions} />
         <div className="flex flex-wrap items-center gap-3 text-sm">
           {shopSlug && (
             <button
