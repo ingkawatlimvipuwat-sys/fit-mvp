@@ -4,10 +4,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { t } from '@/lib/i18n/strings';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { moveTargets, type FolderRow } from '@/lib/catalogue/folders';
-import { parseView, viewToQuery, productsInView, type DashboardView } from '@/lib/catalogue/browse';
+import { parseView, viewToQuery, productsInView, isFiltered, type DashboardView } from '@/lib/catalogue/browse';
+import type { TagRow } from '@/lib/catalogue/tags';
 import { sendJson } from '@/lib/catalogue/send-json';
 import type { ProductSummary } from '@/lib/catalogue/summary';
 import ActionsMenu from './ActionsMenu';
+import CatalogueToolbar from './CatalogueToolbar';
 import FolderSidebar from './FolderSidebar';
 import FolderMobileNav from './FolderMobileNav';
 import MoveToDialog from './MoveToDialog';
@@ -15,13 +17,13 @@ import ProductGrid from './ProductGrid';
 
 type Moving = { kind: 'folder'; folder: FolderRow } | { kind: 'product'; product: ProductSummary };
 
-export default function CatalogueBrowser({ products, folders, shopSlug }: {
-  products: ProductSummary[]; folders: FolderRow[]; shopSlug: string | null;
+export default function CatalogueBrowser({ products, folders, tags, shopSlug }: {
+  products: ProductSummary[]; folders: FolderRow[]; tags: TagRow[]; shopSlug: string | null;
 }) {
   const router = useRouter();
   const params = useSearchParams();
   const [lang] = useLanguage();
-  const view = parseView(params, folders, []);
+  const view = parseView(params, folders, tags.map(x => x.id));
   const [moving, setMoving] = useState<Moving | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -90,7 +92,11 @@ export default function CatalogueBrowser({ products, folders, shopSlug }: {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex items-start gap-2">
+        <div className="grow">
+          {/* Filter changes replace the history entry, so Back does not step through every keystroke. */}
+          <CatalogueToolbar view={view} tags={tags} onChange={v => go(v, 'replace')} />
+        </div>
         <ActionsMenu
           trigger={t.newMenu[lang]}
           ariaLabel={t.newMenu[lang]}
@@ -110,7 +116,7 @@ export default function CatalogueBrowser({ products, folders, shopSlug }: {
           <ProductGrid
             products={shown}
             shopSlug={shopSlug}
-            emptyText={products.length === 0 ? t.noGarments[lang] : t.emptyFolder[lang]}
+            emptyText={products.length === 0 ? t.noGarments[lang] : isFiltered(view) ? t.noMatches[lang] : t.emptyFolder[lang]}
             onMove={p => setMoving({ kind: 'product', product: p })}
           />
         </div>

@@ -33,6 +33,16 @@ export default function ProductGrid({
               <div className="text-xs text-gray-500">
                 {t.versionsCount[lang].replace('{n}', String(p.versionCount))}
               </div>
+              {p.tags.length > 0 && (
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {p.tags.slice(0, 3).map(tag => (
+                    <span key={tag.id} className="break-all rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                      {tag.name}
+                    </span>
+                  ))}
+                  {p.tags.length > 3 && <span className="text-xs text-gray-500">+{p.tags.length - 3}</span>}
+                </div>
+              )}
               {p.needsAttention && (
                 <div className="mt-1 text-xs text-amber-700">⚠ {t.needsAttention[lang]}</div>
               )}
