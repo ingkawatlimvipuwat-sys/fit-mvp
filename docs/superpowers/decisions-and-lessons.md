@@ -82,10 +82,21 @@ to the right section rather than to a new document.
   picker id, not name. `garments.name` for a version is copied from the product on save and not
   kept in sync. Duplicate sends `copy_from`; the server copies each Storage object so no two
   versions share a file. Rule 4 (no identical picks) is enforced in the garment routes through
-  `lib/catalogue/version-write.ts`. A garment created between running 0005 and merging has no
-  product: it stays visible under "Garments not in a product yet" and its old link still works.
-  The shopper `GarmentTabs` takes `stable` on product pages so `FitChecker` is never remounted
-  (typed measurements survive switching versions).
+  `lib/catalogue/version-write.ts`. Since PR #15 / migration 0006 (`garments.product_id` NOT
+  NULL) every garment belongs to a product: the "Garments not in a product yet" section and the
+  no-product code paths are gone. The shopper `GarmentTabs` takes `stable` on product pages so
+  `FitChecker` is never remounted (typed measurements survive switching versions).
+- **Catalogue Stage 2a — folders and Move to… (built 2026-10-12, not yet shipped).** A folder
+  shows everything inside it, *including its subfolders*; All items shows the whole shop (open
+  question 1, plan's recommended answer, built as written — the founder has not chosen
+  otherwise; if they do, change `productsInView()` in `lib/catalogue/browse.ts`). Folders are
+  listed A–Z, names may repeat, no manual ordering. New folder and Rename use `window.prompt`
+  (same accepted MVP style as the delete confirmation). Deleting a folder moves its subfolders
+  and products up one level, then deletes the folder: three ordered statements, not a
+  transaction (`deleteFolderMovingUp`). That is safe because a failure part-way loses nothing
+  (what was moved is already moved; a retry finishes the job), and the database refuses the final
+  delete while a subfolder still points at the folder (`folders.parent_id` has no ON DELETE
+  action). Rule 5 (no folder inside itself) is `checkFolderMove`.
 - **Public signup at `/signup` stays open** (2026-09-28, founder). Anyone can create a shop; this is
   intended, not an oversight. Do not add an invite gate without a new decision.
 
@@ -126,9 +137,20 @@ to the right section rather than to a new document.
   caller was already inside an `async` function, so this is a pure mechanical `await` insert).
   `middleware.ts` is unaffected — it reads `request.cookies` directly, not `next/headers`.
   `useSearchParams()` in client components is also unaffected (`app/login/page.tsx`).
+- **The dashboard's view lives in the address bar** (folder now; search, tags, sort and filter in
+  2b), written with `window.history.pushState/replaceState`. Next 15 keeps `useSearchParams` in
+  step with `window.history`, so Back works and nothing reloads. Don't switch to `router.push`
+  for it: that re-runs every dashboard query.
 
 ## 4. Data and Supabase
 
+- **Foreign keys ignore RLS, and our RLS `with check` only looks at the row being written.** A
+  folder's `parent_id`, a product's `folder_id` and a `product_tags.tag_id` can all name another
+  shop's row unless app code checks it (`checkFolderOwnership`, `checkFolderMove`, and in 2b the
+  tag checks). Every route that accepts such an id verifies it against the caller's own rows
+  (scoped by `retailer_id`) and answers 404, like a nonexistent id.
+- **`.eq(col, null)` never matches NULL** (it sends `col=eq.null`); use `.is(col, null)`.
+  Writing NULL as a value (`update({ parent_id: null })`) is fine.
 - **There is no staging database.** One Supabase project serves local dev and production.
   Anything you write locally is written to the live site.
 - **Apply an additive migration before merging the code that uses it.** Old code ignores new

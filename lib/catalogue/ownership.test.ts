@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { loadProductContext, checkGarmentOwnership } from './ownership';
+import { loadProductContext, checkGarmentOwnership, loadShopFolders, checkFolderOwnership } from './ownership';
 
 type Row = Record<string, unknown>;
 
@@ -59,5 +59,35 @@ describe('checkGarmentOwnership', () => {
   });
   it('fails closed with 500 when the lookup errors', async () => {
     expect(await checkGarmentOwnership(fake(DB, 'garments'), 'A', 'G1')).toMatchObject({ ok: false, status: 500 });
+  });
+});
+
+const FOLDERS = {
+  folders: [
+    { id: 'F1', retailer_id: 'A', name: 'Shirts', parent_id: null },
+    { id: 'F2', retailer_id: 'B', name: 'Theirs', parent_id: null },
+  ],
+};
+
+describe('loadShopFolders', () => {
+  it("lists only the caller's folders", async () => {
+    const r = await loadShopFolders(fake(FOLDERS), 'A');
+    expect(r.ok && r.folders.map(f => f.id)).toEqual(['F1']);
+  });
+  it('fails closed with 500, never an empty list', async () => {
+    expect(await loadShopFolders(fake(FOLDERS, 'folders'), 'A')).toMatchObject({ ok: false, status: 500 });
+  });
+});
+
+describe('checkFolderOwnership', () => {
+  it('accepts own folder', async () => {
+    expect(await checkFolderOwnership(fake(FOLDERS), 'A', 'F1')).toEqual({ ok: true });
+  });
+  it("rejects another shop's folder as 404, same as nonexistent", async () => {
+    expect(await checkFolderOwnership(fake(FOLDERS), 'A', 'F2')).toMatchObject({ ok: false, status: 404 });
+    expect(await checkFolderOwnership(fake(FOLDERS), 'A', 'nope')).toMatchObject({ ok: false, status: 404 });
+  });
+  it('fails closed with 500', async () => {
+    expect(await checkFolderOwnership(fake(FOLDERS, 'folders'), 'A', 'F1')).toMatchObject({ ok: false, status: 500 });
   });
 });

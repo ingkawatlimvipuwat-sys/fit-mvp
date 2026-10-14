@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { t } from '@/lib/i18n/strings';
 import type { PickerDef, Picks } from './picks';
+import type { FolderRow } from './folders';
 import type { Category, MeasurementBag } from '@/lib/supabase/types';
 
 export interface ProductContext {
@@ -53,5 +54,29 @@ export async function checkGarmentOwnership(
   const { data, error } = await supabase
     .from('garments').select('id').eq('id', garmentId).eq('retailer_id', userId).maybeSingle();
   if (error) { console.error('garment ownership lookup failed:', error); return fail500; }
+  return data ? { ok: true } : fail404;
+}
+
+/** The caller's folders, scoped by retailer_id. A failed read is a 500, never an empty list. */
+export async function loadShopFolders(
+  supabase: SupabaseClient, userId: string,
+): Promise<{ ok: true; folders: FolderRow[] } | Failure> {
+  const { data, error } = await supabase
+    .from('folders').select('id, name, parent_id').eq('retailer_id', userId).order('name', { ascending: true });
+  if (error) { console.error('folders lookup failed:', error); return fail500; }
+  return { ok: true, folders: (data ?? []) as FolderRow[] };
+}
+
+/**
+ * Is this folder the caller's? Used wherever a request names a folder to put
+ * something in. Another shop's id looks nonexistent (404). The database would
+ * accept it otherwise: foreign keys ignore RLS.
+ */
+export async function checkFolderOwnership(
+  supabase: SupabaseClient, userId: string, folderId: string,
+): Promise<{ ok: true } | Failure> {
+  const { data, error } = await supabase
+    .from('folders').select('id').eq('id', folderId).eq('retailer_id', userId).maybeSingle();
+  if (error) { console.error('folder ownership lookup failed:', error); return fail500; }
   return data ? { ok: true } : fail404;
 }
