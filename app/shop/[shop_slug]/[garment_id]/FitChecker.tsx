@@ -157,10 +157,12 @@ export default function FitChecker({
           customer_measurements: measurements,
         }),
       });
-      const j = await res.json();
-      if (res.ok) setResult(j.result);
-      else if (res.status === 429) setError(t.fitTooManyChecks[lang]);
-      else setError(t.fitError[lang]);
+      if (res.status === 429) setError(t.fitTooManyChecks[lang]);
+      else if (!res.ok) setError(t.fitError[lang]);
+      else {
+        const j = await res.json();
+        setResult(j.result);
+      }
     } catch {
       setError(t.networkError[lang]);
     } finally {
