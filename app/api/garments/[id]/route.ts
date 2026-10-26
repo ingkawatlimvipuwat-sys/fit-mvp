@@ -110,6 +110,8 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
   // Set when any colour/fabric write fails: the garment row is already saved,
   // so the response stays 200 but carries a warning the form shows.
   let sideWriteFailed = false;
+  // Set only when the fabric update/insert (the write that points at a new photo) fails.
+  let fabricWriteFailed = false;
 
   // Replace-all: the submitted list IS the truth. Only when the field was
   // actually present — an absent field must not delete anything (Rule 2).
@@ -148,14 +150,14 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
           updated_at: new Date().toISOString(),
         })
         .eq('garment_id', params.id);
-      if (error) { console.error('garment_fabric update failed (reported to the user):', error); sideWriteFailed = true; }
+      if (error) { console.error('garment_fabric update failed (reported to the user):', error); sideWriteFailed = true; fabricWriteFailed = true; }
     } else {
       const { error } = await supabase.from('garment_fabric').insert({
         garment_id: params.id,
         ...fabric,
         ...(fabricPic ? { fabric_photo_url: fabricPic.url } : {}),
       });
-      if (error) { console.error('garment_fabric insert failed (reported to the user):', error); sideWriteFailed = true; }
+      if (error) { console.error('garment_fabric insert failed (reported to the user):', error); sideWriteFailed = true; fabricWriteFailed = true; }
     }
   }
 
@@ -168,6 +170,10 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
   // the old photo alone. Deleting the old one here would leave the surviving row
   // pointing at a destroyed object — a permanently broken image.
   if (fabricPic && !fabricParse.present) {
+    await removeStoredObject(fabricPic.path, user.id);
+  } else if (fabricPic && fabricWriteFailed) {
+    // The row was not pointed at the new photo, so it still references the old
+    // one: delete the new upload and leave the old photo alone.
     await removeStoredObject(fabricPic.path, user.id);
   } else if (fabricPic && existingFabric?.fabric_photo_url) {
     await removeStoredPhoto(existingFabric.fabric_photo_url, user.id);
