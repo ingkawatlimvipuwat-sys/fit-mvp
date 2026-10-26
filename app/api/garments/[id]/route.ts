@@ -14,7 +14,7 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
   const params = await props.params;
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!user) return NextResponse.json({ error: t.loginRequired.th }, { status: 401 });
 
   // Ownership check and the current photo in one read. Scoping by retailer_id
   // means another shop's id is indistinguishable from a nonexistent one.
@@ -24,7 +24,7 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
     .eq('id', params.id)
     .eq('retailer_id', user.id)
     .single();
-  if (!existing) return NextResponse.json({ error: 'not found' }, { status: 404 });
+  if (!existing) return NextResponse.json({ error: t.itemNotFound.th }, { status: 404 });
 
   // Needed to decide delete-vs-update below, and to know whether a fabric photo
   // already exists when every text field has been cleared.
@@ -35,7 +35,7 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
     .maybeSingle();
 
   const form = await req.formData().catch(() => null);
-  if (!form) return NextResponse.json({ error: 'ข้อมูลไม่ถูกต้อง' }, { status: 400 });
+  if (!form) return NextResponse.json({ error: t.requestInvalid.th }, { status: 400 });
 
   // A version of a product: the name is the product's, picks must name this
   // product's own pickers and keep rule 4. A garment with no product (created
@@ -43,7 +43,7 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
   let picksUpdate: { picks: Record<string, string> } | Record<string, never> = {};
   if (existing.product_id) {
     const product = await loadProductContext(supabase, user.id, existing.product_id);
-    if (!product.ok) return NextResponse.json({ error: product.error }, { status: product.status });
+    if (!product.ok) return NextResponse.json({ error: product.status === 404 ? t.itemNotFound.th : product.error }, { status: product.status });
     form.set('name', product.ctx.name);
     const picksParse = parsePicksField(form.get('picks'), product.ctx.pickers.map(p => p.id));
     if (!picksParse.ok) return NextResponse.json({ error: picksParse.error }, { status: 400 });
@@ -175,7 +175,7 @@ export async function DELETE(_req: Request, props: { params: Promise<{ id: strin
   const params = await props.params;
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!user) return NextResponse.json({ error: t.loginRequired.th }, { status: 401 });
 
   const { data: garment } = await supabase
     .from('garments')
@@ -183,7 +183,7 @@ export async function DELETE(_req: Request, props: { params: Promise<{ id: strin
     .eq('id', params.id)
     .eq('retailer_id', user.id)
     .single();
-  if (!garment) return NextResponse.json({ error: 'not found' }, { status: 404 });
+  if (!garment) return NextResponse.json({ error: t.itemNotFound.th }, { status: 404 });
 
   // Read this BEFORE the delete: the cascade destroys the row that names it.
   const { data: fabricRow } = await supabase
@@ -197,7 +197,10 @@ export async function DELETE(_req: Request, props: { params: Promise<{ id: strin
     .delete()
     .eq('id', params.id)
     .eq('retailer_id', user.id);
-  if (delErr) return NextResponse.json({ error: delErr.message }, { status: 500 });
+  if (delErr) {
+    console.error('garment delete failed:', delErr);
+    return NextResponse.json({ error: t.deleteFailed.th }, { status: 500 });
+  }
 
   await removeStoredPhoto(garment.photo_url, user.id);
   await removeStoredPhoto(garment.true_colour_photo_url, user.id);

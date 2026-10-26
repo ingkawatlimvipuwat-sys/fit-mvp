@@ -14,19 +14,19 @@ import { z } from 'zod';
 export async function POST(req: Request) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!user) return NextResponse.json({ error: t.loginRequired.th }, { status: 401 });
 
   const form = await req.formData().catch(() => null);
-  if (!form) return NextResponse.json({ error: 'ข้อมูลไม่ถูกต้อง' }, { status: 400 });
+  if (!form) return NextResponse.json({ error: t.requestInvalid.th }, { status: 400 });
 
   // Every garment is a version of a product (garments.product_id is NOT NULL).
   // The product, its pickers and any copy_from garment are all read scoped to
   // the caller, so another shop's ids look nonexistent.
   const productIdRaw = String(form.get('product_id') ?? '').trim();
-  if (!productIdRaw) return NextResponse.json({ error: 'product_id is required' }, { status: 400 });
-  if (!z.uuid().safeParse(productIdRaw).success) return NextResponse.json({ error: 'invalid product_id' }, { status: 400 });
+  if (!productIdRaw) return NextResponse.json({ error: t.requestInvalid.th }, { status: 400 });
+  if (!z.uuid().safeParse(productIdRaw).success) return NextResponse.json({ error: t.requestInvalid.th }, { status: 400 });
   const product = await loadProductContext(supabase, user.id, productIdRaw);
-  if (!product.ok) return NextResponse.json({ error: product.error }, { status: product.status });
+  if (!product.ok) return NextResponse.json({ error: product.status === 404 ? t.itemNotFound.th : product.error }, { status: product.status });
   form.set('name', product.ctx.name);
   const picksParse = parsePicksField(form.get('picks'), product.ctx.pickers.map(p => p.id));
   if (!picksParse.ok) return NextResponse.json({ error: picksParse.error }, { status: 400 });
@@ -38,9 +38,9 @@ export async function POST(req: Request) {
   let copySource: { photo_url: string | null; true_colour_photo_url: string | null; fabric_photo_url: string | null } | null = null;
   const copyFromRaw = String(form.get('copy_from') ?? '').trim();
   if (copyFromRaw) {
-    if (!z.uuid().safeParse(copyFromRaw).success) return NextResponse.json({ error: 'invalid copy_from' }, { status: 400 });
+    if (!z.uuid().safeParse(copyFromRaw).success) return NextResponse.json({ error: t.requestInvalid.th }, { status: 400 });
     const own = await checkGarmentOwnership(supabase, user.id, copyFromRaw);
-    if (!own.ok) return NextResponse.json({ error: own.error }, { status: own.status });
+    if (!own.ok) return NextResponse.json({ error: own.status === 404 ? t.itemNotFound.th : own.error }, { status: own.status });
     const [{ data: g }, { data: f }] = await Promise.all([
       supabase.from('garments').select('photo_url, true_colour_photo_url').eq('id', copyFromRaw).eq('retailer_id', user.id).maybeSingle(),
       supabase.from('garment_fabric').select('fabric_photo_url').eq('garment_id', copyFromRaw).maybeSingle(),

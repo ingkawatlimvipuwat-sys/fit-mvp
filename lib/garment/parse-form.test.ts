@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseGarmentFields } from './parse-form';
+import { t } from '@/lib/i18n/strings';
 
 const UUID = '11111111-2222-4333-8444-555555555555';
 const STRETCHY = { tightBelow: -6, goodFrom: -4, goodTo: 3 };
@@ -31,7 +32,7 @@ describe('parseGarmentFields', () => {
   it('trims the name and rejects a blank one', () => {
     expect(parseGarmentFields(form({ name: '  padded  ' })).ok).toBe(true);
     const r = parseGarmentFields(form({ name: '   ' }));
-    expect(r).toEqual({ ok: false, error: 'name required' });
+    expect(r).toEqual({ ok: false, error: t.garmentNameRequired.th });
   });
 
   it('rejects an unknown category', () => {
@@ -102,5 +103,33 @@ describe('parseGarmentFields', () => {
   it('rejects an override whose bounds are inverted', () => {
     const bad = JSON.stringify({ base: { tightBelow: 5, goodFrom: 1, goodTo: 3 }, perDimension: {} });
     expect(parseGarmentFields(form({ fit_rule_override: bad })).ok).toBe(false);
+  });
+});
+
+describe('parseGarmentFields error messages are Thai', () => {
+  const badOrder = JSON.stringify({ base: { tightBelow: 0, goodFrom: -1, goodTo: 5 }, perDimension: {} });
+  const cases: [string, Record<string, string | null>, string][] = [
+    ['unknown category', { category: 'hat' }, t.categoryInvalid.th],
+    ['unknown fit profile', { fit_profile: 'nonsense' }, t.fitProfileInvalid.th],
+    ['non-uuid preset id', { fit_ruleset_id: 'not-a-uuid' }, t.rulesetNotOwned.th],
+    ['bad size label', { size_label: 'XXXL-weird' }, t.sizeLabelInvalid.th],
+    ['out-of-range measurement', { chest_cm: '0' }, 'ค่าไม่ถูกต้อง: รอบอก'],
+    ['override not JSON', { fit_rule_override: '{not json' }, t.fitRuleInvalid.th],
+    ['override out of order', { fit_rule_override: badOrder }, t.fitRuleOrderGoodFrom.th],
+    ['override with unknown key', { fit_rule_override: '{"nonsense":true}' }, t.fitRuleInvalid.th],
+  ];
+
+  it.each(cases)('%s', (_label, over, expected) => {
+    const r = parseGarmentFields(form(over));
+    expect(r).toEqual({ ok: false, error: expected });
+  });
+
+  it('never lets a Latin letter reach the user, on any failing case', () => {
+    const all = [...cases.map(c => c[1]), { name: '   ' }, { chest_cm: null }];
+    for (const over of all) {
+      const r = parseGarmentFields(form(over));
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(r.error).not.toMatch(/[A-Za-z]/);
+    }
   });
 });

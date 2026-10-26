@@ -23,13 +23,13 @@ export function parsePicksField(raw: unknown, pickerIds: string[]):
   const text = String(raw ?? '').trim();
   if (!text) return { ok: true, picks: {} };
   let json: unknown;
-  try { json = JSON.parse(text); } catch { return { ok: false, error: 'invalid picks' }; }
-  if (typeof json !== 'object' || json === null || Array.isArray(json)) return { ok: false, error: 'invalid picks' };
+  try { json = JSON.parse(text); } catch { return { ok: false, error: t.picksInvalid.th }; }
+  if (typeof json !== 'object' || json === null || Array.isArray(json)) return { ok: false, error: t.picksInvalid.th };
   const allowed = new Set(pickerIds);
   const picks: Picks = {};
   for (const [k, v] of Object.entries(json)) {
-    if (!allowed.has(k)) return { ok: false, error: 'invalid picks' };
-    if (typeof v !== 'string' || v.trim().length > 60) return { ok: false, error: 'invalid picks' };
+    if (!allowed.has(k)) return { ok: false, error: t.picksInvalid.th };
+    if (typeof v !== 'string' || v.trim().length > 60) return { ok: false, error: t.picksInvalid.th };
     picks[k] = v.trim();
   }
   return { ok: true, picks };

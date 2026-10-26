@@ -1,7 +1,7 @@
 'use client';
 import { useMemo } from 'react';
 import { DIMENSIONS } from '@/lib/config/dimensions';
-import { EaseRuleSchema } from '@/lib/fit/rule-schema';
+import { EaseRuleSchema, ruleIssueMessage } from '@/lib/fit/rule-schema';
 import { DEFAULT_RULE } from '@/lib/fit/rules';
 import type { EaseRule, FitRuleset } from '@/lib/fit/rules';
 import { t } from '@/lib/i18n/strings';
@@ -75,7 +75,7 @@ export default function FitRuleEditor({ value, onChange }: {
   const [lang] = useLanguage();
   const base = value.base ?? DEFAULT_RULE;
   const parsed = useMemo(() => EaseRuleSchema.safeParse(base), [base]);
-  const error = parsed.success ? null : parsed.error.issues[0]?.message ?? null;
+  const error = parsed.success ? null : ruleIssueMessage(parsed.error, lang);
 
   const setBase = (patch: Partial<EaseRule>) =>
     onChange({ ...value, base: { ...base, ...patch } });
