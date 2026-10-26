@@ -15,10 +15,10 @@ import type { MeasurementBaseline } from '@/lib/garment/form-fields';
 import ColoursSection from '@/app/dashboard/garment/ColoursSection';
 import FabricSection from '@/app/dashboard/garment/FabricSection';
 import { SIZE_LABELS, sizeLabelText } from '@/lib/garment/size-label';
+import { presetOptionsFor } from '@/lib/fit/preset-options';
+import type { PresetOption, PresetsStatus } from '@/lib/fit/preset-options';
 import type { PickerDef } from '@/lib/catalogue/picks';
 import { emptyFabricForm, type FabricFormState, type Colour } from '@/lib/garment/colour-fabric';
-
-type PresetOption = { id: string; name: string; rule: FitRuleset };
 
 /** Numeric measurements come in as numbers; form inputs need strings. Shared
  * by the `measurements` state initializer and the dirty-check baseline below
@@ -148,6 +148,7 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
   }));
 
   const [presets, setPresets] = useState<PresetOption[]>([]);
+  const [presetsStatus, setPresetsStatus] = useState<PresetsStatus>('loading');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -164,9 +165,9 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
 
   useEffect(() => {
     fetch('/api/fit-rulesets')
-      .then(r => r.ok ? r.json() : { rulesets: [] })
-      .then(d => setPresets(d.rulesets ?? []))
-      .catch(() => setPresets([]));  // a failed load just means no presets offered
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(d => { setPresets(Array.isArray(d?.rulesets) ? d.rulesets : []); setPresetsStatus('ready'); })
+      .catch(() => setPresetsStatus('failed'));
   }, []);
 
   // Presets load after first paint. Without a stand-in option, a garment whose
@@ -174,17 +175,10 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
   // the fetch lands — the retailer would be looking at a rule that is not
   // their garment's. The saved value is unaffected — React state still holds
   // the real id — but showing someone else's rule invites them to "correct" it.
-  const presetOptions = useMemo(() => {
-    const list = [...presets];
-    const initialId = initial?.ruleChoice.startsWith('preset:')
-      ? initial.ruleChoice.slice('preset:'.length)
-      : null;
-    if (initialId && !list.some(p => p.id === initialId)) {
-      // Placeholder for display only — never used as a seed source.
-      list.unshift({ id: initialId, name: '…', rule: { base: DEFAULT_RULE, perDimension: {} } });
-    }
-    return list;
-  }, [presets, initial?.ruleChoice]);
+  const presetOptions = useMemo(
+    () => presetOptionsFor(presets, initial?.ruleChoice, presetsStatus),
+    [presets, initial?.ruleChoice, presetsStatus],
+  );
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -361,10 +355,19 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
           </optgroup>
           {presetOptions.length > 0 && (
             <optgroup label={t.fitRuleShopRules[lang]}>
-              {presetOptions.map(p => <option key={p.id} value={`preset:${p.id}`}>{p.name}</option>)}
+              {presetOptions.map(p => (
+                <option key={p.id} value={`preset:${p.id}`}>
+                  {p.placeholder === 'loading' ? t.presetLoading[lang]
+                    : p.placeholder === 'unavailable' ? t.presetUnavailable[lang]
+                    : p.name}
+                </option>
+              ))}
             </optgroup>
           )}
         </select>
+        {presetsStatus === 'failed' && (
+          <span className="mt-1 block text-sm text-red-600">{t.fitRulesLoadFailed[lang]}</span>
+        )}
       </label>
 
       <div className="space-y-3 rounded border p-4">
