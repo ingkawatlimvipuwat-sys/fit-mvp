@@ -16,6 +16,7 @@ import ColoursSection from '@/app/dashboard/garment/ColoursSection';
 import FabricSection from '@/app/dashboard/garment/FabricSection';
 import { SIZE_LABELS, sizeLabelText } from '@/lib/garment/size-label';
 import { seedOverrideFrom, shouldSeedOverride } from '@/lib/fit/override-seed';
+import { saveOutcome } from '@/lib/garment/save-outcome';
 import { presetOptionsFor } from '@/lib/fit/preset-options';
 import type { PresetOption, PresetsStatus } from '@/lib/fit/preset-options';
 import type { PickerDef } from '@/lib/catalogue/picks';
@@ -247,6 +248,10 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
         setError(typeof data.error === 'string' ? data.error : t.authError[lang]);
         return;
       }
+      const body = await res.json().catch(() => ({}));
+      const outcome = saveOutcome(isEdit, body);
+      if (outcome === 'warn_and_stay') { setError(t.colourFabricNotSavedEdit[lang]); return; }
+      if (outcome === 'warn_and_leave') window.alert(t.colourFabricNotSavedCreate[lang]);
       router.push(productCtx ? `/dashboard/product/${productCtx.id}` : '/dashboard');
       router.refresh();
     } catch {

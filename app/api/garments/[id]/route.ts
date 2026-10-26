@@ -9,6 +9,7 @@ import { removeStoredObject, removeStoredPhoto } from '@/lib/garment/storage-cle
 import { loadProductContext } from '@/lib/catalogue/ownership';
 import { parsePicksField } from '@/lib/catalogue/parse';
 import { checkPicksForWrite } from '@/lib/catalogue/version-write';
+import { COLOUR_FABRIC_NOT_SAVED } from '@/lib/garment/save-outcome';
 
 export async function PATCH(req: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -106,17 +107,21 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
     return NextResponse.json({ error: t.saveFailed.th }, { status: 500 });
   }
 
+  // Set when any colour/fabric write fails: the garment row is already saved,
+  // so the response stays 200 but carries a warning the form shows.
+  let sideWriteFailed = false;
+
   // Replace-all: the submitted list IS the truth. Only when the field was
   // actually present — an absent field must not delete anything (Rule 2).
   if (coloursParse.present) {
     const { error: delErr } = await supabase
       .from('garment_colours').delete().eq('garment_id', params.id);
-    if (delErr) console.error('garment_colours delete failed (non-fatal):', delErr);
+    if (delErr) { console.error('garment_colours delete failed (reported to the user):', delErr); sideWriteFailed = true; }
     else if (coloursParse.colours.length > 0) {
       const { error } = await supabase.from('garment_colours').insert(
         coloursParse.colours.map(c => ({ garment_id: params.id, hex: c.hex, name: c.name })),
       );
-      if (error) console.error('garment_colours insert failed (non-fatal):', error);
+      if (error) { console.error('garment_colours insert failed (reported to the user):', error); sideWriteFailed = true; }
     }
   }
 
@@ -128,7 +133,7 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
     if (isFabricEmpty(fabric) && !photoUrl) {
       const { error } = await supabase
         .from('garment_fabric').delete().eq('garment_id', params.id);
-      if (error) console.error('garment_fabric delete failed (non-fatal):', error);
+      if (error) { console.error('garment_fabric delete failed (reported to the user):', error); sideWriteFailed = true; }
     } else if (existingFabric) {
       // Deliberately an explicit update, NOT .upsert(). PostgREST's ON CONFLICT
       // column set is not obvious, and guessing it wrong would silently drop the
@@ -143,14 +148,14 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
           updated_at: new Date().toISOString(),
         })
         .eq('garment_id', params.id);
-      if (error) console.error('garment_fabric update failed (non-fatal):', error);
+      if (error) { console.error('garment_fabric update failed (reported to the user):', error); sideWriteFailed = true; }
     } else {
       const { error } = await supabase.from('garment_fabric').insert({
         garment_id: params.id,
         ...fabric,
         ...(fabricPic ? { fabric_photo_url: fabricPic.url } : {}),
       });
-      if (error) console.error('garment_fabric insert failed (non-fatal):', error);
+      if (error) { console.error('garment_fabric insert failed (reported to the user):', error); sideWriteFailed = true; }
     }
   }
 
@@ -168,7 +173,7 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
     await removeStoredPhoto(existingFabric.fabric_photo_url, user.id);
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json(sideWriteFailed ? { ok: true, warning: COLOUR_FABRIC_NOT_SAVED } : { ok: true });
 }
 
 export async function DELETE(_req: Request, props: { params: Promise<{ id: string }> }) {

@@ -9,6 +9,7 @@ import { copyStoredObject } from '@/lib/garment/storage-copy';
 import { loadProductContext, checkGarmentOwnership } from '@/lib/catalogue/ownership';
 import { parsePicksField } from '@/lib/catalogue/parse';
 import { checkPicksForWrite } from '@/lib/catalogue/version-write';
+import { COLOUR_FABRIC_NOT_SAVED } from '@/lib/garment/save-outcome';
 import { z } from 'zod';
 
 export async function POST(req: Request) {
@@ -127,14 +128,16 @@ export async function POST(req: Request) {
   }
 
   // A failure here leaves a saved garment with incomplete colour or fabric data
-  // rather than losing the garment: the retailer can simply re-save. Deleting
-  // the garment to "roll back" would be the worse trade — they just uploaded a
-  // photo and filled in a form.
+  // rather than losing the garment. Deleting the garment to "roll back" would
+  // be the worse trade — they just uploaded a photo and filled in a form. The
+  // response is still 200 but carries a warning the form shows (a plain error
+  // would invite a second Save, which would create a duplicate garment).
+  let sideWriteFailed = false;
   if (coloursParse.present && coloursParse.colours.length > 0) {
     const { error } = await supabase.from('garment_colours').insert(
       coloursParse.colours.map(c => ({ garment_id: row.id, hex: c.hex, name: c.name })),
     );
-    if (error) console.error('garment_colours insert failed (non-fatal):', error);
+    if (error) { console.error('garment_colours insert failed (reported to the user):', error); sideWriteFailed = true; }
   }
 
   const fabric = fabricParse.present ? fabricParse.fabric : null;
@@ -144,8 +147,8 @@ export async function POST(req: Request) {
       ...fabric,
       ...(fabricPhoto ? { fabric_photo_url: fabricPhoto.url } : {}),
     });
-    if (error) console.error('garment_fabric insert failed (non-fatal):', error);
+    if (error) { console.error('garment_fabric insert failed (reported to the user):', error); sideWriteFailed = true; }
   }
 
-  return NextResponse.json({ ok: true, id: row.id });
+  return NextResponse.json(sideWriteFailed ? { ok: true, id: row.id, warning: COLOUR_FABRIC_NOT_SAVED } : { ok: true, id: row.id });
 }
