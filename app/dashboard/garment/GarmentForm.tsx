@@ -11,6 +11,7 @@ import FitRuleEditor, { isRulesetValid } from '@/app/dashboard/fit-rules/FitRule
 import { DEFAULT_RULE } from '@/lib/fit/rules';
 import type { FitRuleset } from '@/lib/fit/rules';
 import { activeMeasurements, strandedDimensions, buildGarmentFields } from '@/lib/garment/form-fields';
+import type { MeasurementBaseline } from '@/lib/garment/form-fields';
 import ColoursSection from '@/app/dashboard/garment/ColoursSection';
 import FabricSection from '@/app/dashboard/garment/FabricSection';
 import { SIZE_LABELS, sizeLabelText } from '@/lib/garment/size-label';
@@ -123,6 +124,13 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
   const [colours, setColours] = useState<Colour[]>(initial?.colours ?? []);
   const [fabric, setFabric] = useState<FabricFormState>(initial?.fabric ?? emptyFabricForm());
 
+  // The garment as the form opened, so strandedDimensions() only warns about
+  // measurements lost by the retailer's own changes (2026-10-26, #8).
+  const [baseline] = useState<MeasurementBaseline>(() => ({
+    category: initial?.category ?? 'top',
+    measurements: seedMeasurements(initial?.measurements),
+  }));
+
   // Unsaved-work guard baseline (UX audit 2026-08-18, D2): the form's state on
   // first render, in create mode the empty defaults, in edit mode `initial`.
   // Captured once via lazy useState init so later edits never move the goalposts.
@@ -224,7 +232,7 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
 
     // Saving writes only the current category's dimensions, so warn before
     // a category change quietly discards numbers already entered.
-    const stranded = strandedDimensions(measurements, category);
+    const stranded = strandedDimensions(measurements, category, baseline);
     if (stranded.length > 0) {
       const labels = stranded
         .map(k => {

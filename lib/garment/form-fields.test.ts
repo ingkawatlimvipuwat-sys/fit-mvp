@@ -50,6 +50,38 @@ describe('strandedDimensions', () => {
     expect(strandedDimensions({ chest_cm: '' }, 'bottom')).toEqual([]);
     expect(strandedDimensions({ chest_cm: '   ' }, 'bottom')).toEqual([]);
   });
+
+  describe('with a baseline (the garment as the form opened)', () => {
+    it('does not blame a value the original category already did not hold and the retailer left alone', () => {
+      expect(strandedDimensions({ chest_cm: '97' }, 'bottom', {
+        category: 'bottom', measurements: { chest_cm: '97' },
+      })).toEqual([]);
+    });
+
+    it('still flags it once the retailer edits the value', () => {
+      expect(strandedDimensions({ chest_cm: '98' }, 'bottom', {
+        category: 'bottom', measurements: { chest_cm: '97' },
+      })).toEqual(['chest_cm']);
+    });
+
+    it('still flags a real category change', () => {
+      expect(strandedDimensions({ chest_cm: '97' }, 'bottom', {
+        category: 'top', measurements: { chest_cm: '97' },
+      })).toEqual(['chest_cm']);
+    });
+
+    it('flags values typed this session in another category when the original had nothing', () => {
+      expect(strandedDimensions({ chest_cm: '97', hip_cm: '95' }, 'bottom', {
+        category: 'top', measurements: {},
+      })).toEqual(['chest_cm']);
+    });
+
+    it('treats whitespace-only differences as unchanged', () => {
+      expect(strandedDimensions({ chest_cm: ' 97 ' }, 'bottom', {
+        category: 'bottom', measurements: { chest_cm: '97' },
+      })).toEqual([]);
+    });
+  });
 });
 
 describe('buildGarmentFields', () => {
