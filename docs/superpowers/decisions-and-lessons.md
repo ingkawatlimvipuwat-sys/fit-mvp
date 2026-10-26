@@ -177,8 +177,22 @@ to the right section rather than to a new document.
   (2026-08-15, 2026-09-11) left a garment pointing at a deleted image.
 - **Deleting a garment removes all three of its photos from Storage.** The database cascade
   removes child rows, but Storage files are outside the database and would be orphaned.
-- **Colour and fabric writes log and continue on failure** rather than failing the save. A
-  retailer whose colours failed to save sees success. Accepted for a one-retailer prototype.
+- **Colour and fabric writes do not fail the garment save, but a failure is reported** (2026-10-26).
+  The garment row is already written, so the route still answers 200 but adds
+  `warning: 'colour_fabric_not_saved'` (`lib/garment/save-outcome.ts`). Create shows an alert and
+  leaves the form (a second Save would make a duplicate garment); edit stays on the form so Save
+  retries (a full, idempotent PATCH).
+- **`/api/fit/evaluate` is rate-limited in three layers (2026-10-26).** Per-IP 30 per minute, in
+  memory (per instance, a speed bump only); a duplicate skip (same token + garment + measurements
+  within 10 minutes); and an app-wide write cap (120 `fit_sessions` rows per 10 minutes, counted in
+  the database). The verdict is always returned except on 429, and every gate fails open. What it
+  does not stop: a many-IP flood still costs function invocations and database reads, and can crowd
+  out real shoppers' session saves (not their verdicts) while it lasts. Under a real attack, turn on
+  Vercel's Attack Challenge Mode (Vercel dashboard, project, Firewall). Optional migration 0007 adds
+  an index on `fit_sessions.created_at` for the count.
+- **Refine messages in `lib/fit/rule-schema.ts` are string keys** (2026-10-26), mapped to Thai or
+  English by `ruleIssueMessage()`; every other zod issue becomes the generic `fitRuleInvalid`. Never
+  put display text in a zod message again, or zod's English will reach a user.
 - **A garment may only reference a fit preset its own shop owns** (2026-09-29). Enforced in app code by
   `checkRulesetOwnership()` (`lib/garment/ruleset-ownership.ts`), called by create and edit after the
   pure `parseGarmentFields()`. The lookup is scoped by `retailer_id`, so another shop's preset looks
