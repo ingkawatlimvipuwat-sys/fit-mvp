@@ -184,6 +184,16 @@ to the right section rather than to a new document.
   pure `parseGarmentFields()`. The lookup is scoped by `retailer_id`, so another shop's preset looks
   nonexistent (400), and a failed lookup is a 500, never a pass. No RLS or SQL change. Presets stay
   publicly readable by design (§2). Covered by unit tests only; the routes have no automated coverage.
+- **Free plan, restored by hand when it pauses (founder decision, 2026-10-26).** Supabase's
+  free plan pauses a project after roughly 7 days with no activity (the 2026-10-26 pause came
+  after about 12 quiet days). While paused, **every page that reads data is down** — the shop
+  pages, the dashboard and login — until someone presses **Restore project** in the Supabase
+  dashboard; no data is lost. The founder chose this over Supabase Pro (about US$25 a month,
+  never pauses) and over a daily keep-alive ping (free, but a workaround that depends on Supabase
+  counting the ping as activity). Accepted trade-off: after a quiet week the shop can be down
+  until the founder notices. **When the live site errors, check for a paused project first**
+  (steps in `resume.md`, under the status snapshot) before debugging code. Do not add a
+  keep-alive ping or suggest an upgrade again without new evidence, such as a second shop.
 - **`garments_public_read` looks vestigial** — no code reads garments with the anonymous client.
   Unverified whether removing it breaks anything.
 

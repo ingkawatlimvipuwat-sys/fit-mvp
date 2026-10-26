@@ -22,16 +22,21 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 
 ---
 
-## Status snapshot (as of 2026-10-14, branch `feature/catalogue-stage-2b`; `main` at `9617592`)
+## Status snapshot (as of 2026-10-26, `main` at `d1817f9`)
 
 | Check | Result |
 |---|---|
-| Live site matches `main` | Yes, as of `30c7abd` (PR #14, catalogue Stage 1), merged 2026-10-07. `main` is now `c05d604` (PR #15, migration 0006 follow-up, merged 2026-10-07); that deploy was not re-probed when this row was written |
-| Tests (`npm test`) | 349 passing, 35 files (branch `feature/catalogue-stage-2b`; `main` has 316). The two `TryOn.test.tsx` failures were fixed by PR #10 and no longer occur |
+| Live site matches `main` | Yes. `main` is `d1817f9` (PR #17, catalogue Stage 2b), merged 2026-10-14 straight after PR #16 (Stage 2a, `9617592`); both verified live 2026-10-14 |
+| Tests (`npm test`) | 349 passing, 35 files on `main` |
 | Build (`npm run build`) | Clean |
 | `npm audit --omit=dev` | 2 vulnerabilities (1 high, 1 moderate) — down from 1 critical + 2 high (~18 Next advisories) on 14.2. The remaining high is `postcss@8.4.31` bundled *inside* `next`'s own `node_modules` (build-time CSS processing only, not user input); our own `postcss` dep is 8.5.28, already patched. Clears when Next ships its own postcss bump, or on a future Next 16 upgrade. |
 | Database migrations | 0001, 0002, 0003 and 0004 (size label) applied to the live database (0004 verified with a read-only select, 2026-10-07). 0005 (catalogue) applied to the live database by the founder before PR #14 merged, 2026-10-07. 0006 (`product_id` NOT NULL) applied to the live database on 2026-10-07, **after** PR #15 was merged — in that order on purpose: code from before PR #15 could still create a garment without a product, and 0006's backfill catches any such row before setting NOT NULL. All six migrations are now applied |
+| Supabase keys | Rotated 2026-10-12 to Supabase's new key format (see Environment). The legacy JWT `anon` / `service_role` keys are disabled |
 | Last health check | 2026-09-23 |
+
+**Outage, 2026-10-26:** the Supabase free plan **paused the project** after about 12 days with no activity. Every live page that reads data (the shop pages, the dashboard, login) failed until the founder restored the project in the Supabase dashboard. Nothing was lost. **Decision (founder, 2026-10-26): stay on the free plan and restore by hand when it pauses** — no Pro upgrade, no keep-alive ping. See decisions-and-lessons.md §4.
+
+**If the live shop shows errors:** first open the Supabase dashboard (https://supabase.com/dashboard) and look at the `fit-mvp` project. If it says **Paused**, press **Restore project** and wait a few minutes until it shows as healthy. Then open the shop link and the dashboard on the live site and check that products load. Only if the project is not paused, start debugging (and check `git log --oneline origin/main -1` against what is live).
 
 **Incident, 2026-10-05:** PR #13 (`feature/size-labels`, a branch meant to stay parked) was merged by mistake on 2026-10-05 before migration 0004 had been run. The code selects `size_label`, so the live dashboard, the garment edit page and the shop garment pages errored with Postgres error 42703 (column does not exist) until the founder ran `0004_size_label.sql`. Lesson: a pushed branch that is ahead of `main` makes GitHub show a "Compare & pull request" banner, which invites a merge. Warn the founder before pushing any parked branch, and never push one at all unless asked.
 
@@ -50,8 +55,8 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 | Health-check fixes | 2026-09-23 | Bad requests get 400 instead of 500; unused image optimizer switched off | — |
 | Preset ownership check | 2026-10-01 | A garment can only use a fit-rule preset that belongs to the same shop | — |
 | Catalogue Stage 1 — products, versions, shopper pickers | shipped 2026-10-07 (PR #14, 0005 applied; follow-up PR #15 merged, then 0006 applied, same day) | Owner groups garments into products (one per Shopee listing, one shopper link `/shop/<slug>/p/<id>`); each version is a full garment with a pick per picker (Size, Colour, …); shopper picks, then checks fit. Old garment links redirect to the product page. Dashboard shows product cards | `specs/2026-10-01-catalogue-organisation-design.md`, `plans/2026-10-05-catalogue-stage-1.md` |
-| Catalogue Stage 2a — folders and Move to… | merged as PR #16 (`main` `9617592`); the live deploy was not re-probed when this row was written (branch `feature/catalogue-stage-2`; no migration) | Nested folders in a side list (phone: a ‹ back header), New folder / Rename / Delete (contents move up, nothing is deleted), **Move to…** for products and folders, New product inside the current folder. A folder shows everything below it. The next agent confirms the deploy and records the date | `specs/2026-10-01-catalogue-organisation-design.md`, `plans/2026-10-12-catalogue-stage-2.md` |
-| Catalogue Stage 2b — tags, search, sort, Needs attention filter | **built, not shipped — PR pending** (branch `feature/catalogue-stage-2b`; no migration) | Owners tag products on the product page (type a word + Enter; an existing tag is reused), and the dashboard gets a toolbar: search by product name, filter by one or more tags (a product must have all), sort (newest, oldest, name A–Z / Z–A) and a ⚠ Needs attention toggle. Everything filters in the browser and lives in the address bar, so Back and refresh keep the place. Tags cannot be renamed or deleted yet; a tag on no product is simply hidden. The founder's merge makes it shipped; the next agent updates the date | `specs/2026-10-01-catalogue-organisation-design.md`, `plans/2026-10-12-catalogue-stage-2.md` |
+| Catalogue Stage 2a — folders and Move to… | 2026-10-14 (PR #16; no migration) | Nested folders in a side list (phone: a ‹ back header), New folder / Rename / Delete (contents move up, nothing is deleted), **Move to…** for products and folders, New product inside the current folder. A folder shows everything below it | `specs/2026-10-01-catalogue-organisation-design.md`, `plans/2026-10-12-catalogue-stage-2.md` |
+| Catalogue Stage 2b — tags, search, sort, Needs attention filter | 2026-10-14 (PR #17; no migration) | Owners tag products on the product page (type a word + Enter; an existing tag is reused), and the dashboard gets a toolbar: search by product name, filter by one or more tags (a product must have all), sort (newest, oldest, name A–Z / Z–A) and a ⚠ Needs attention toggle. Everything filters in the browser and lives in the address bar, so Back and refresh keep the place. Tags cannot be renamed or deleted yet; a tag on no product is simply hidden | `specs/2026-10-01-catalogue-organisation-design.md`, `plans/2026-10-12-catalogue-stage-2.md` |
 | Try-on (stub) | 2026-10-03 | Shopper uploads or takes a photo; after a fake 0.9 s wait the page shows a fixed sample image (`public/try-on/result.png`). The photo never leaves the phone. No real try-on model yet | — |
 
 ---
@@ -69,15 +74,11 @@ One list, most important first. When you finish an item, delete it (git keeps th
 
 ### Before a second shop joins
 
-1. **Catalogue Stage 3.** Stages 1 and 2a are merged; Stage 2b (tags, search, sort, Needs
-   attention filter) is built and waiting for the founder's PR merge. Stage 3: drag-and-drop,
+1. **Catalogue Stage 3.** Stages 1, 2a and 2b are live. Stage 3: drag-and-drop,
    reordering picker values, rough edges from Stages 1–2, and tag rename/delete shop-wide if
    owners ask (Stage 2 did not build it). `specs/2026-10-01-catalogue-organisation-design.md` §8.
    Stage 2 plan: `plans/2026-10-12-catalogue-stage-2.md`.
-2. **Confirm the Supabase secret key was rotated.** A key was found in plain text in a deleted
-   clone on 2026-08-11 (never pushed to GitHub). Rotation was advised; it was never confirmed.
-   Ask the founder.
-3. **Proofread the copy.** The English was written as a fallback nobody expected to see and has
+2. **Proofread the copy.** The English was written as a fallback nobody expected to see and has
    never been proofread; the Thai has not had a native-speaker pass.
 
 ### Worth doing soon
@@ -183,7 +184,7 @@ This is a working prototype. It is used in production but has rough edges that n
   every file in `supabase/migrations/`, seeds `demo@example.com` / `password123` (shop slug
   `demo`), and writes `.env.local` to `http://127.0.0.1:54321`. Studio: http://127.0.0.1:54323.
   This is now the default way to run the app; local data never touches production.
-- **Hosted Supabase project:** `fit-mvp` (Singapore region, free tier) — **production only**,
+- **Hosted Supabase project:** `fit-mvp` (Singapore region, free tier — it pauses after about a week with no activity and must be restored by hand; see the status snapshot) — **production only**,
   via Vercel env vars. Do not point `.env.local` at it.
 - **Migrations:** `supabase/migrations/` (`0001_initial.sql`, `0002_fit_rulesets.sql`,
   `0003_colour_fabric.sql`). Applied automatically to the local stack. The hosted project is
@@ -199,6 +200,11 @@ This is a working prototype. It is used in production but has rough edges that n
   - `NEXT_PUBLIC_SUPABASE_URL`
   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
   - `SUPABASE_SERVICE_ROLE_KEY`
+  - **Key rotation, 2026-10-12:** the app moved to Supabase's new API keys. The
+    `sb_publishable_…` key is in `NEXT_PUBLIC_SUPABASE_ANON_KEY` and the `sb_secret_…` key is in
+    `SUPABASE_SERVICE_ROLE_KEY`; the variable names did not change. Both Vercel and `.env.local`
+    were updated, and the legacy JWT `anon` / `service_role` keys were disabled in Supabase. This
+    closes the 2026-08-11 finding of a key in plain text in a deleted clone.
 
 ---
 
