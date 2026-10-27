@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { t } from '@/lib/i18n/strings';
 import {
-  availableValues, normPick, resolveVersion, valueOrder,
+  availableValues, normPick, orderedValues, resolveVersion,
   type PickerDef, type Picks,
 } from '@/lib/catalogue/picks';
 import FitChecker from '../../[garment_id]/FitChecker';
@@ -61,7 +61,7 @@ export default function ProductView({
           <div key={p.id} className="mt-4">
             <div className="text-sm font-medium text-gray-700">{p.name}</div>
             <div className="mt-2 flex flex-wrap gap-2">
-              {valueOrder(versions, p.id).map(value => {
+              {orderedValues(versions, p.id, p.value_order).map(value => {
                 const chosen = normPick(selection[p.id]) === normPick(value);
                 const enabled = ok.has(normPick(value));
                 return (

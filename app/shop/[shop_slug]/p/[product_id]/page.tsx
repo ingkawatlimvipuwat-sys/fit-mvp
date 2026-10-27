@@ -50,7 +50,7 @@ export default async function ProductPage(props: { params: Promise<Params> }) {
   ] = await Promise.all([
     supabase.from('products').select('id, name')
       .eq('id', params.product_id).eq('retailer_id', shop.id).single(),
-    supabase.from('product_pickers').select('id, name, position')
+    supabase.from('product_pickers').select('id, name, position, value_order')
       .eq('product_id', params.product_id).order('position', { ascending: true }),
     supabase.from('garments')
       .select('id, category, size_label, photo_url, true_colour_photo_url, picks, created_at')
