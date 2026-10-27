@@ -421,6 +421,28 @@ export const t = {
     th: 'บันทึกเสื้อผ้าแล้ว แต่บันทึกสีหรือข้อมูลเนื้อผ้าไม่สำเร็จ กรุณากดบันทึกอีกครั้ง',
     en: 'The garment was saved, but its colours or fabric details were not. Press Save again.',
   },
+  // Catalogue Stage 3 — finishing
+  create: { th: 'สร้าง', en: 'Create' },
+  close: { th: 'ปิด', en: 'Close' },
+  renameFolderTitle: { th: 'เปลี่ยนชื่อโฟลเดอร์', en: 'Rename folder' },
+  dragHint: { th: 'ลากไปวางบนโฟลเดอร์ทางซ้ายเพื่อย้าย', en: 'Drop on a folder on the left to move it' },
+  dropAlreadyHere: { th: 'อยู่ที่นี่อยู่แล้ว', en: 'Already here' },
+  movedTo: { th: 'ย้าย “{name}” ไปที่ {target} แล้ว', en: 'Moved “{name}” to {target}' },
+  valueOrderLabel: { th: 'ลำดับที่ลูกค้าเห็น', en: 'Order shoppers see' },
+  reorderValues: { th: 'จัดลำดับ', en: 'Reorder' },
+  doneReorder: { th: 'เสร็จแล้ว', en: 'Done' },
+  moveValueUp: { th: 'เลื่อน {value} ขึ้น', en: 'Move {value} up' },
+  moveValueDown: { th: 'เลื่อน {value} ลง', en: 'Move {value} down' },
+  manageTags: { th: 'จัดการแท็ก', en: 'Manage tags' },
+  tagNameLabel: { th: 'ชื่อแท็ก', en: 'Tag name' },
+  renameTag: { th: 'เปลี่ยนชื่อ', en: 'Rename' },
+  renameTagNamed: { th: 'เปลี่ยนชื่อแท็ก {name}', en: 'Rename tag {name}' },
+  deleteTagNamed: { th: 'ลบแท็ก {name}', en: 'Delete tag {name}' },
+  tagUsedOn: { th: 'ใช้กับสินค้า {n} รายการ', en: 'On {n} products' },
+  tagUnused: { th: 'ยังไม่ได้ใช้กับสินค้าใด', en: 'Not on any product' },
+  confirmDeleteTag: { th: 'ลบแท็ก “{name}”? แท็กนี้จะถูกเอาออกจากสินค้า {n} รายการ ตัวสินค้าไม่ถูกลบ', en: 'Delete tag “{name}”? It comes off {n} products. No product is deleted.' },
+  tagNameTaken: { th: 'มีแท็กชื่อ “{name}” อยู่แล้ว กรุณาใช้ชื่ออื่น', en: 'A tag called “{name}” already exists. Please choose another name.' },
+  noTagsYet: { th: 'ยังไม่มีแท็ก', en: 'No tags yet' },
 } as const;
 
 export type StringKey = keyof typeof t;
