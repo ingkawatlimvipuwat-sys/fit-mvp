@@ -13,6 +13,7 @@ import CatalogueToolbar from './CatalogueToolbar';
 import FolderSidebar from './FolderSidebar';
 import FolderMobileNav from './FolderMobileNav';
 import MoveToDialog from './MoveToDialog';
+import NameDialog from './NameDialog';
 import ProductGrid from './ProductGrid';
 
 type Moving = { kind: 'folder'; folder: FolderRow } | { kind: 'product'; product: ProductSummary };
@@ -27,6 +28,7 @@ export default function CatalogueBrowser({ products, folders, tags, shopSlug }: 
   const [moving, setMoving] = useState<Moving | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [naming, setNaming] = useState<{ kind: 'new' } | { kind: 'rename'; folder: FolderRow } | null>(null);
 
   /**
    * The address bar holds the view, so Back and refresh keep the owner's place.
@@ -40,30 +42,23 @@ export default function CatalogueBrowser({ products, folders, tags, shopSlug }: 
     else window.history.replaceState(null, '', url);
   }
 
-  async function run(url: string, method: 'POST' | 'PATCH' | 'DELETE', body?: unknown): Promise<boolean> {
+  /** One write; resolves null on success or the error text. Always refreshes (a 404 usually means the list is stale). */
+  async function request(url: string, method: 'POST' | 'PATCH' | 'DELETE', body?: unknown): Promise<string | null> {
     setBusy(true);
-    setMessage(null);
     const r = await sendJson(url, method, body);
     setBusy(false);
-    if (!r.ok) {
-      setMessage(r.error ?? t.saveFailed[lang]);
-      router.refresh(); // a 'not found' usually means the list is stale (item deleted elsewhere)
-      return false;
-    }
     router.refresh();
-    return true;
+    return r.ok ? null : r.error ?? t.saveFailed[lang];
+  }
+  async function run(url: string, method: 'POST' | 'PATCH' | 'DELETE', body?: unknown): Promise<boolean> {
+    setMessage(null);
+    const err = await request(url, method, body);
+    setMessage(err);
+    return err === null;
   }
 
-  async function newFolder() {
-    const name = window.prompt(t.folderNamePrompt[lang]);
-    if (name === null || !name.trim()) return;
-    await run('/api/folders', 'POST', { name: name.trim(), parent_id: view.folderId });
-  }
-  async function renameFolder(f: FolderRow) {
-    const name = window.prompt(t.folderNamePrompt[lang], f.name);
-    if (name === null || !name.trim() || name.trim() === f.name) return;
-    await run(`/api/folders/${f.id}`, 'PATCH', { name: name.trim() });
-  }
+  function newFolder() { setNaming({ kind: 'new' }); }
+  function renameFolder(f: FolderRow) { setNaming({ kind: 'rename', folder: f }); }
   async function deleteFolder(f: FolderRow) {
     const target = folders.find(x => x.id === f.parent_id)?.name ?? t.topLevel[lang];
     const text = t.confirmDeleteFolder[lang].replace('{name}', f.name).replace('{target}', target);
@@ -129,6 +124,23 @@ export default function CatalogueBrowser({ products, folders, tags, shopSlug }: 
           busy={busy}
           onChoose={moveTo}
           onClose={() => setMoving(null)}
+        />
+      )}
+      {naming && (
+        <NameDialog
+          title={naming.kind === 'new' ? t.newFolder[lang] : t.renameFolderTitle[lang]}
+          label={t.folderNamePrompt[lang]}
+          initial={naming.kind === 'rename' ? naming.folder.name : ''}
+          maxLength={60}
+          submitText={naming.kind === 'new' ? t.create[lang] : t.save[lang]}
+          onCancel={() => setNaming(null)}
+          onSubmit={async name => {
+            const err = naming.kind === 'new'
+              ? await request('/api/folders', 'POST', { name, parent_id: view.folderId })
+              : await request(`/api/folders/${naming.folder.id}`, 'PATCH', { name });
+            if (err === null) setNaming(null);
+            return err;
+          }}
         />
       )}
     </div>
