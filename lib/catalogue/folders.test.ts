@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  folderLines, childFolders, subtreeIds, wouldCreateCycle, ancestors, moveTargets, type FolderRow,
+  folderLines, childFolders, subtreeIds, wouldCreateCycle, ancestors, moveTargets, dropVerdict, type DragItem, type FolderRow,
 } from './folders';
 
 const F = (id: string, parent_id: string | null, name = id): FolderRow => ({ id, name, parent_id });
@@ -89,5 +89,39 @@ describe('moveTargets', () => {
   });
   it('folders are indented one level deeper than Top level', () => {
     expect(moveTargets(TREE, { kind: 'product', folderId: 'short' }).map(r => r.depth)).toEqual([0, 1, 1, 2, 3, 1]);
+  });
+});
+
+describe('dropVerdict (drag-and-drop, rule 5)', () => {
+  const product = (folderId: string | null): DragItem => ({ kind: 'product', id: 'p', name: 'P', folderId });
+  const folder = (id: string): DragItem => ({ kind: 'folder', id, name: id });
+
+  it('a product can go to any other folder or the top level', () => {
+    expect(dropVerdict(TREE, product('linen'), 'trousers')).toBe('ok');
+    expect(dropVerdict(TREE, product('linen'), null)).toBe('ok');
+    expect(dropVerdict(TREE, product(null), 'short')).toBe('ok');
+  });
+  it('a product dropped where it already is does nothing', () => {
+    expect(dropVerdict(TREE, product('linen'), 'linen')).toBe('here');
+    expect(dropVerdict(TREE, product(null), null)).toBe('here');
+  });
+  it('a folder dropped on its own row is a cancel, not an error', () => {
+    expect(dropVerdict(TREE, folder('shirts'), 'shirts')).toBe('self');
+  });
+  it('a folder cannot go into its own subfolder, however deep', () => {
+    expect(dropVerdict(TREE, folder('shirts'), 'linen')).toBe('cycle');
+    expect(dropVerdict(TREE, folder('shirts'), 'short')).toBe('cycle');
+  });
+  it('a folder dropped on its current parent does nothing', () => {
+    expect(dropVerdict(TREE, folder('linen'), 'shirts')).toBe('here');
+    expect(dropVerdict(TREE, folder('trousers'), null)).toBe('here');
+  });
+  it("a folder can go to a sibling, an ancestor's level or the top level", () => {
+    expect(dropVerdict(TREE, folder('short'), 'trousers')).toBe('ok');
+    expect(dropVerdict(TREE, folder('short'), 'shirts')).toBe('ok');
+    expect(dropVerdict(TREE, folder('linen'), null)).toBe('ok');
+  });
+  it('a folder that no longer exists cannot be dropped anywhere', () => {
+    expect(dropVerdict(TREE, folder('gone'), 'trousers')).toBe('here');
   });
 });

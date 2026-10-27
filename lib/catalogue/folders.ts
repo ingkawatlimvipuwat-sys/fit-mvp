@@ -110,3 +110,29 @@ export function moveTargets(
   }
   return rows;
 }
+
+/** The dataTransfer type our drags carry (Firefox will not start a drag without some data). */
+export const DRAG_TYPE = 'application/x-fit-catalogue-item';
+
+/** What the owner is dragging on the dashboard. `name` is only for the "Moved …" notice. */
+export type DragItem =
+  | { kind: 'folder'; id: string; name: string }
+  | { kind: 'product'; id: string; name: string; folderId: string | null };
+
+/**
+ * ok    = dropping here moves it.
+ * here  = it is already here; dropping does nothing.
+ * self  = a folder over its own row; dropping does nothing (a cancel, no message).
+ * cycle = a folder over one of its own subfolders: refused, and the owner is told why (rule 5).
+ */
+export type DropVerdict = 'ok' | 'here' | 'self' | 'cycle';
+
+/** What a drop of `item` on `targetId` (null = All items / top level) would do. The server re-checks (checkFolderMove). */
+export function dropVerdict(folders: FolderRow[], item: DragItem, targetId: string | null): DropVerdict {
+  if (item.kind === 'product') return item.folderId === targetId ? 'here' : 'ok';
+  const self = folders.find(f => f.id === item.id);
+  if (!self) return 'here';
+  if (targetId === item.id) return 'self';
+  if (wouldCreateCycle(folders, item.id, targetId)) return 'cycle';
+  return self.parent_id === targetId ? 'here' : 'ok';
+}
