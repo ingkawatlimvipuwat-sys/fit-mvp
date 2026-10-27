@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { summariseProducts } from '@/lib/catalogue/summary';
 import type { FolderRow } from '@/lib/catalogue/folders';
-import { tagsInUse, type ProductTagRow, type TagRow } from '@/lib/catalogue/tags';
+import { tagsInUse, tagUsage, type ProductTagRow, type TagRow } from '@/lib/catalogue/tags';
 import type { Category, MeasurementBag } from '@/lib/supabase/types';
 import CopyPublicLink from './CopyPublicLink';
 import CatalogueBrowser from './CatalogueBrowser';
@@ -63,6 +63,7 @@ export default async function DashboardPage() {
           products={cards}
           folders={(foldersRes.data ?? []) as FolderRow[]}
           tags={tagsInUse(tags, links)}
+          allTags={tagUsage(tags, links)}
           shopSlug={retailer?.shop_slug ?? null}
         />
       </Suspense>

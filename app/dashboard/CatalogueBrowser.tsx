@@ -5,21 +5,27 @@ import { t } from '@/lib/i18n/strings';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { moveTargets, type FolderRow } from '@/lib/catalogue/folders';
 import { parseView, viewToQuery, productsInView, isFiltered, type DashboardView } from '@/lib/catalogue/browse';
-import type { TagRow } from '@/lib/catalogue/tags';
+import type { TagRow, TagUsage } from '@/lib/catalogue/tags';
 import { sendJson } from '@/lib/catalogue/send-json';
 import type { ProductSummary } from '@/lib/catalogue/summary';
 import ActionsMenu from './ActionsMenu';
 import CatalogueToolbar from './CatalogueToolbar';
 import FolderSidebar from './FolderSidebar';
 import FolderMobileNav from './FolderMobileNav';
+import ManageTagsDialog from './ManageTagsDialog';
 import MoveToDialog from './MoveToDialog';
 import NameDialog from './NameDialog';
 import ProductGrid from './ProductGrid';
 
 type Moving = { kind: 'folder'; folder: FolderRow } | { kind: 'product'; product: ProductSummary };
 
-export default function CatalogueBrowser({ products, folders, tags, shopSlug }: {
-  products: ProductSummary[]; folders: FolderRow[]; tags: TagRow[]; shopSlug: string | null;
+export default function CatalogueBrowser({ products, folders, tags, allTags, shopSlug }: {
+  products: ProductSummary[]; folders: FolderRow[];
+  /** Tags on at least one product (the filter). */
+  tags: TagRow[];
+  /** Every tag of the shop with its product count (Manage tags). */
+  allTags: TagUsage[];
+  shopSlug: string | null;
 }) {
   const router = useRouter();
   const params = useSearchParams();
@@ -28,6 +34,7 @@ export default function CatalogueBrowser({ products, folders, tags, shopSlug }: 
   const [moving, setMoving] = useState<Moving | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [managingTags, setManagingTags] = useState(false);
   const [naming, setNaming] = useState<{ kind: 'new' } | { kind: 'rename'; folder: FolderRow } | null>(null);
 
   /**
@@ -89,7 +96,12 @@ export default function CatalogueBrowser({ products, folders, tags, shopSlug }: 
       <div className="flex items-start gap-2">
         <div className="grow">
           {/* Filter changes replace the history entry, so Back does not step through every keystroke. */}
-          <CatalogueToolbar view={view} tags={tags} onChange={v => go(v, 'replace')} />
+          <CatalogueToolbar
+            view={view}
+            tags={tags}
+            onChange={v => go(v, 'replace')}
+            onManageTags={allTags.length > 0 ? () => setManagingTags(true) : undefined}
+          />
         </div>
         <ActionsMenu
           trigger={t.newMenu[lang]}
@@ -124,6 +136,20 @@ export default function CatalogueBrowser({ products, folders, tags, shopSlug }: 
           busy={busy}
           onChoose={moveTo}
           onClose={() => setMoving(null)}
+        />
+      )}
+      {managingTags && (
+        <ManageTagsDialog
+          tags={allTags}
+          onClose={() => setManagingTags(false)}
+          onRename={(tag, name) => request(`/api/tags/${tag.id}`, 'PATCH', { name })}
+          onDelete={async tag => {
+            const err = await request(`/api/tags/${tag.id}`, 'DELETE');
+            if (err === null && view.tagIds.includes(tag.id)) {
+              go({ ...view, tagIds: view.tagIds.filter(id => id !== tag.id) }, 'replace');
+            }
+            return err;
+          }}
         />
       )}
       {naming && (
