@@ -90,8 +90,8 @@ to the right section rather than to a new document.
   shows everything inside it, *including its subfolders*; All items shows the whole shop (open
   question 1, plan's recommended answer, built as written — the founder has not chosen
   otherwise; if they do, change `productsInView()` in `lib/catalogue/browse.ts`). Folders are
-  listed A–Z, names may repeat, no manual ordering. New folder and Rename use `window.prompt`
-  (same accepted MVP style as the delete confirmation). Deleting a folder moves its subfolders
+  listed A–Z, names may repeat, no manual ordering. New folder and Rename used `window.prompt`
+  (replaced by an in-page name box in Stage 3; deletes still use `window.confirm`). Deleting a folder moves its subfolders
   and products up one level, then deletes the folder: three ordered statements, not a
   transaction (`deleteFolderMovingUp`). That is safe because a failure part-way loses nothing
   (what was moved is already moved; a retry finishes the job), and the database refuses the final
@@ -108,6 +108,23 @@ to the right section rather than to a new document.
   selected tags mean AND. The dashboard loads the shop's products once and filters, searches and
   sorts **in the browser** (`productsInView`); the view lives in the address bar and changes
   use `replaceState` (folder changes `pushState`), so Back does not replay keystrokes.
+- **Catalogue Stage 3 (built 2026-10-27, not yet shipped).** Renaming a tag to a name another
+  of the shop's tags already has is **refused** (409, Thai message naming the tag), never
+  merged (open question 1 — the plan's recommended answer, built as written; the founder has not
+  said otherwise; to change it, edit `renameTag` in `lib/catalogue/tag-ops.ts` and add a confirm
+  message). A deleted tag leaves every product by `ON DELETE CASCADE` on `product_tags.tag_id`
+  (migration 0005): one `delete` statement, scoped by `retailer_id`, after an ownership lookup.
+  Manage tags also lists tags on no product (so old typos can be deleted). Picker values:
+  `orderedValues` (`lib/catalogue/picks.ts`) is the ONE ordering rule, used by the owner's product
+  page, the version form's suggestions and the shopper page — values the owner ordered come
+  first, new or unplaced values follow in first-used order; the picker PATCH route stores that
+  function's output, never the raw request, so stale entries are pruned on save and a stale page
+  can never lose a value. The order lives in `product_pickers.value_order text[]` (0008).
+  Drag-and-drop is computer-only (`(pointer: fine)`), native HTML5, no library; it reuses the
+  Move to… routes, so rule 5 is still enforced by `checkFolderMove`. A folder dropped on its own
+  row is a cancel (no message); on its own subfolder it is a visible refusal (red row, red bar,
+  red message). New folder, Rename folder and tag rename use `NameForm` (no more
+  `window.prompt`; deletes still use `window.confirm`).
 - **Public signup at `/signup` stays open** (2026-09-28, founder). Anyone can create a shop; this is
   intended, not an oversight. Do not add an invite gate without a new decision.
 
@@ -152,6 +169,13 @@ to the right section rather than to a new document.
   2b), written with `window.history.pushState/replaceState`. Next 15 keeps `useSearchParams` in
   step with `window.history`, so Back works and nothing reloads. Don't switch to `router.push`
   for it: that re-runs every dashboard query.
+- **Native drag-and-drop traps** (Stage 3): `dragover` cannot read `dataTransfer` data, so keep
+  the dragged item in React state; Firefox needs `setData` in `dragstart`; changing the DOM
+  synchronously in `dragstart` cancels the drag in Chrome (defer with `setTimeout(…, 0)`);
+  browsers fire `dragleave` just before `dragend` on a refused drop, so never use `dragleave`
+  to clear state you still need; never put `text/plain` in the drag data (inputs accept it as a
+  text drop).
+- **Inputs need `text-base` (16px) or iPhones zoom the page in** when they get focus (`NameForm`).
 
 ## 4. Data and Supabase
 

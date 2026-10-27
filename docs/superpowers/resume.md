@@ -27,10 +27,10 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 | Check | Result |
 |---|---|
 | Live site matches `main` | Yes. `main` is `b22c36a` (PR #18, reliability fixes), merged and verified live 2026-10-27. Before it: PR #17 (Stage 2b, `d1817f9`) and PR #16 (Stage 2a), both live 2026-10-14 |
-| Tests (`npm test`) | 420 passing, 42 files on `main`; 428 passing, 44 files on branch `feature/thai-errors-fabric-remove`, waiting for the founder's merge. `npx tsc --noEmit` reports one pre-existing error in a test file (`lib/garment/colour-fabric-regression.test.ts:49`, `present` on the failure branch of `FabricParse`); vitest and `next build` do not type-check that file, so it blocks nothing — see Housekeeping |
+| Tests (`npm test`) | 428 passing, 44 files on `main` (`ba4f7ca`, which includes PR #20); 494 passing, 48 files on branch `feature/catalogue-stage-3`, waiting for the founder's merge. `npx tsc --noEmit` reports one pre-existing error in a test file (`lib/garment/colour-fabric-regression.test.ts:49`, `present` on the failure branch of `FabricParse`); vitest and `next build` do not type-check that file, so it blocks nothing — see Housekeeping |
 | Build (`npm run build`) | Clean |
 | `npm audit --omit=dev` | 2 vulnerabilities (1 high, 1 moderate) — down from 1 critical + 2 high (~18 Next advisories) on 14.2. The remaining high is `postcss@8.4.31` bundled *inside* `next`'s own `node_modules` (build-time CSS processing only, not user input); our own `postcss` dep is 8.5.28, already patched. Clears when Next ships its own postcss bump, or on a future Next 16 upgrade. |
-| Database migrations | 0001, 0002, 0003 and 0004 (size label) applied to the live database (0004 verified with a read-only select, 2026-10-07). 0005 (catalogue) applied to the live database by the founder before PR #14 merged, 2026-10-07. 0006 (`product_id` NOT NULL) applied to the live database on 2026-10-07, **after** PR #15 was merged — in that order on purpose: code from before PR #15 could still create a garment without a product, and 0006's backfill catches any such row before setting NOT NULL. **0007** (`fit_sessions_created_at_idx`, an index that keeps the fit-session write cap fast) run by the founder in the SQL editor on 2026-10-27, after PR #18 merged. All seven migrations are now applied |
+| Database migrations | 0001, 0002, 0003 and 0004 (size label) applied to the live database (0004 verified with a read-only select, 2026-10-07). 0005 (catalogue) applied to the live database by the founder before PR #14 merged, 2026-10-07. 0006 (`product_id` NOT NULL) applied to the live database on 2026-10-07, **after** PR #15 was merged — in that order on purpose: code from before PR #15 could still create a garment without a product, and 0006's backfill catches any such row before setting NOT NULL. **0007** (`fit_sessions_created_at_idx`, an index that keeps the fit-session write cap fast) run by the founder in the SQL editor on 2026-10-27, after PR #18 merged. **0008** (`product_pickers.value_order`, the owner's order of picker values) must be run by the founder in the SQL editor **before** the Catalogue Stage 3 pull request is merged — the Stage 3 code reads the column, so every product page (owner's and shopper's) errors until it exists. Steps: `plans/2026-10-27-catalogue-stage-3.md`, "Migration 0008 — founder SQL steps". 0001–0007 are applied |
 | Supabase keys | Rotated 2026-10-12 to Supabase's new key format (see Environment). The legacy JWT `anon` / `service_role` keys are disabled |
 | Last health check | 2026-09-23 |
 
@@ -59,6 +59,7 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 | Catalogue Stage 2b — tags, search, sort, Needs attention filter | 2026-10-14 (PR #17; no migration) | Owners tag products on the product page (type a word + Enter; an existing tag is reused), and the dashboard gets a toolbar: search by product name, filter by one or more tags (a product must have all), sort (newest, oldest, name A–Z / Z–A) and a ⚠ Needs attention toggle. Everything filters in the browser and lives in the address bar, so Back and refresh keep the place. Tags cannot be renamed or deleted yet; a tag on no product is simply hidden | `specs/2026-10-01-catalogue-organisation-design.md`, `plans/2026-10-12-catalogue-stage-2.md` |
 | Reliability fixes | 2026-10-27 (PR #18; migration 0007, an index) | Six fixes: the public fit check is rate-limited and its fit-session saves are capped (#5); a failed shop-rule load shows an error instead of `…` (#6); a per-garment override starts from the rule in force, also on edit and duplicate (#7); the "Changing category will discard…" warning only blames the retailer's own changes (#8); garment validation errors are Thai, with no zod English or raw keys (#9); a colour or fabric save failure now reaches the retailer (#11) | `plans/2026-10-26-reliability-fixes.md` |
 | Thai errors everywhere + remove a fabric photo — **built, not shipped — PR pending** | branch `feature/thai-errors-fabric-remove`; no migration | Products, folders, tags, options and fit rules now answer in Thai (`loginRequired`, `requestInvalid`, `itemNotFound`, `invalidProductName`, `invalidPickerName`, `invalidPickerValues`, `loadFailed`); fit-rule database errors are logged, never shown. The garment form has a **ลบรูปผ้านี้** tick under the fabric close-up: the row stops pointing at the photo, then the stored file is deleted (only after the write succeeded). Ticking it on a duplicate saves the copy without the photo. Decision logic: `lib/garment/fabric-photo.ts` | `plans/2026-10-27-thai-errors-and-fabric-photo-remove.md` |
+| Catalogue Stage 3 — drag-and-drop, value order, tag rename/delete, name boxes — **built, not shipped — PR pending; needs migration 0008 first** | branch `feature/catalogue-stage-3`; migration `0008_picker_value_order.sql` | On a computer, drag a product card or a folder onto a folder in the left list (or onto ทั้งหมด) to move it; phones keep ⋯ → Move to…. Picker values (Size S/M/L) can be reordered with ↑ ↓ on the product page and shoppers see them in that order (`orderedValues` in `lib/catalogue/picks.ts`). A **🏷 จัดการแท็ก / Manage tags** panel on the dashboard renames and deletes tags shop-wide (a taken name is refused, never merged; deleting removes the tag from every product but never deletes a product). New folder, Rename folder and tag rename use an in-page name box instead of `window.prompt` | `plans/2026-10-27-catalogue-stage-3.md`, `specs/2026-10-01-catalogue-organisation-design.md` §8 |
 | Try-on (stub) | 2026-10-03 | Shopper uploads or takes a photo; after a fake 0.9 s wait the page shows a fixed sample image (`public/try-on/result.png`). The photo never leaves the phone. No real try-on model yet | — |
 
 ---
@@ -76,10 +77,9 @@ One list, most important first. When you finish an item, delete it (git keeps th
 
 ### Before a second shop joins
 
-2. **Catalogue Stage 3.** Stages 1, 2a and 2b are live. Stage 3: drag-and-drop,
-   reordering picker values, rough edges from Stages 1–2, and tag rename/delete shop-wide if
-   owners ask (Stage 2 did not build it). `specs/2026-10-01-catalogue-organisation-design.md` §8.
-   Stage 2 plan: `plans/2026-10-12-catalogue-stage-2.md`.
+2. **Ship Catalogue Stage 3.** Built on `feature/catalogue-stage-3`: run migration 0008 first,
+   then the founder checks the preview and merges (see What's live). Not yet built: reordering
+   picker rows, folders or products by hand, bulk move, touch drag-and-drop, tag merge.
 3. **Proofread the copy.** The English was written as a fallback nobody expected to see and has
    never been proofread; the Thai has not had a native-speaker pass.
 4. **The fit-session write cap is app-wide.** `/api/fit/evaluate` stops saving `fit_sessions`
@@ -220,7 +220,7 @@ scripts/
 supabase/
   config.toml            — local stack (Auth, Storage bucket garment-photos, site_url localhost)
   seed.sql               — local-only: storage policies + demo@example.com / password123
-  migrations/            — 0001–0007 (0004 size label, 0005 catalogue, 0006 product_id NOT NULL, 0007 optional fit_sessions index; hosted status: see snapshot)
+  migrations/            — 0001–0008 (0004 size label, 0005 catalogue, 0006 product_id NOT NULL, 0007 optional fit_sessions index, 0008 picker value order; hosted status: see snapshot)
 
 app/
   shop/[shop_slug]/          public shop page; [garment_id]/ is the garment page + FitChecker
@@ -229,6 +229,7 @@ app/
   api/fit/                   evaluate (run a fit check), last (shopper's last measurements)
   api/garments/              create, edit, delete garments
   api/folders/               create a folder; rename, move, delete (contents move up)
+  api/tags/                  rename a tag shop-wide, delete a tag (comes off every product)
   api/fit-rulesets/          create, edit, delete shop presets
   api/signup/                create a retailer account and shop
 
