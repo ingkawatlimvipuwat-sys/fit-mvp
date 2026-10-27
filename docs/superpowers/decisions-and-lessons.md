@@ -177,13 +177,37 @@ to the right section rather than to a new document.
   (2026-08-15, 2026-09-11) left a garment pointing at a deleted image.
 - **Deleting a garment removes all three of its photos from Storage.** The database cascade
   removes child rows, but Storage files are outside the database and would be orphaned.
-- **Colour and fabric writes log and continue on failure** rather than failing the save. A
-  retailer whose colours failed to save sees success. Accepted for a one-retailer prototype.
+- **Colour and fabric writes do not fail the garment save, but a failure is reported** (2026-10-26).
+  The garment row is already written, so the route still answers 200 but adds
+  `warning: 'colour_fabric_not_saved'` (`lib/garment/save-outcome.ts`). Create shows an alert and
+  leaves the form (a second Save would make a duplicate garment); edit stays on the form so Save
+  retries (a full, idempotent PATCH).
+- **`/api/fit/evaluate` is rate-limited in three layers (2026-10-26).** Per-IP 30 per minute, in
+  memory (per instance, a speed bump only); a duplicate skip (same token + garment + measurements
+  within 10 minutes); and an app-wide write cap (120 `fit_sessions` rows per 10 minutes, counted in
+  the database). The verdict is always returned except on 429, and every gate fails open. What it
+  does not stop: a many-IP flood still costs function invocations and database reads, and can crowd
+  out real shoppers' session saves (not their verdicts) while it lasts. Under a real attack, turn on
+  Vercel's Attack Challenge Mode (Vercel dashboard, project, Firewall). Optional migration 0007 adds
+  an index on `fit_sessions.created_at` for the count.
+- **Refine messages in `lib/fit/rule-schema.ts` are string keys** (2026-10-26), mapped to Thai or
+  English by `ruleIssueMessage()`; every other zod issue becomes the generic `fitRuleInvalid`. Never
+  put display text in a zod message again, or zod's English will reach a user.
 - **A garment may only reference a fit preset its own shop owns** (2026-09-29). Enforced in app code by
   `checkRulesetOwnership()` (`lib/garment/ruleset-ownership.ts`), called by create and edit after the
   pure `parseGarmentFields()`. The lookup is scoped by `retailer_id`, so another shop's preset looks
   nonexistent (400), and a failed lookup is a 500, never a pass. No RLS or SQL change. Presets stay
   publicly readable by design (§2). Covered by unit tests only; the routes have no automated coverage.
+- **Free plan, restored by hand when it pauses (founder decision, 2026-10-26).** Supabase's
+  free plan pauses a project after roughly 7 days with no activity (the 2026-10-26 pause came
+  after about 12 quiet days). While paused, **every page that reads data is down** — the shop
+  pages, the dashboard and login — until someone presses **Restore project** in the Supabase
+  dashboard; no data is lost. The founder chose this over Supabase Pro (about US$25 a month,
+  never pauses) and over a daily keep-alive ping (free, but a workaround that depends on Supabase
+  counting the ping as activity). Accepted trade-off: after a quiet week the shop can be down
+  until the founder notices. **When the live site errors, check for a paused project first**
+  (steps in `resume.md`, under the status snapshot) before debugging code. Do not add a
+  keep-alive ping or suggest an upgrade again without new evidence, such as a second shop.
 - **`garments_public_read` looks vestigial** — no code reads garments with the anonymous client.
   Unverified whether removing it breaks anything.
 

@@ -33,17 +33,41 @@ export function activeMeasurements(
     .filter(([, v]) => v !== '');
 }
 
+export interface MeasurementBaseline {
+  /** The category the form opened with. */
+  category: Category;
+  /** The measurements the form opened with (seeded strings). */
+  measurements: Record<string, string>;
+}
+
 /**
  * Measurements the retailer has entered that `category` has no input for, so
  * saving would discard them. Drives the confirmation in the form.
+ *
+ * With a `baseline` (the garment as the form opened), a value is NOT counted
+ * when the original category already had no input for it and the retailer has
+ * not touched it this session: that value was not lost by this save's
+ * category choice (e.g. a dimension later moved out of a category), so
+ * warning about it would blame the retailer for something they did not do.
  */
 export function strandedDimensions(
   measurements: Record<string, string>,
   category: Category,
+  baseline?: MeasurementBaseline,
 ): string[] {
   const active = new Set<string>(dimensionsForCategory(category).map(d => d.key));
-  return Object.keys(measurements)
-    .filter(k => !active.has(k) && (measurements[k] ?? '').trim() !== '');
+  const originallyActive = baseline
+    ? new Set<string>(dimensionsForCategory(baseline.category).map(d => d.key))
+    : null;
+  return Object.keys(measurements).filter(k => {
+    if (active.has(k) || (measurements[k] ?? '').trim() === '') return false;
+    const untouchedAndAlreadyOutside =
+      baseline !== undefined
+      && originallyActive !== null
+      && !originallyActive.has(k)
+      && (baseline.measurements[k] ?? '').trim() === (measurements[k] ?? '').trim();
+    return !untouchedAndAlreadyOutside;
+  });
 }
 
 /**

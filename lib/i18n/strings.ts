@@ -373,6 +373,49 @@ export const t = {
   sortNameZA: { th: 'ชื่อ ฮ–ก, Z–A', en: 'Name Z–A' },
   noMatches: { th: 'ไม่พบสินค้าที่ตรงกับตัวกรอง', en: 'No products match these filters' },
   clearFilters: { th: 'ล้างตัวกรอง', en: 'Clear filters' },
+  // --- Reliability fixes (2026-10-26) ---
+  // Fit check rate limit (#5)
+  fitTooManyChecks: {
+    th: 'ตรวจบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่',
+    en: 'Too many checks in a short time. Please wait a minute and try again.',
+  },
+  // Shop-rule loading in the garment form (#6, #7)
+  presetLoading: { th: 'กำลังโหลด…', en: 'Loading…' },
+  presetUnavailable: { th: 'กฎของร้าน (โหลดไม่สำเร็จ)', en: 'Shop rule (could not load)' },
+  presetRuleStillLoading: {
+    th: 'กำลังโหลดกฎของร้าน รอสักครู่แล้วติ๊กอีกครั้ง',
+    en: 'Your shop rules are still loading. Wait a moment, then tick this again.',
+  },
+  presetRuleUnavailable: {
+    th: 'โหลดกฎของร้านไม่สำเร็จ จึงเริ่มจากกฎนี้ไม่ได้ รีเฟรชหน้านี้ หรือเลือกทรงมาตรฐานก่อนแล้วติ๊กอีกครั้ง',
+    en: 'Could not load your shop rules, so this cannot start from them. Refresh the page, or pick a built-in profile first and tick this again.',
+  },
+  // Garment validation (#9)
+  categoryInvalid: { th: 'ประเภทเสื้อผ้าไม่ถูกต้อง', en: 'Invalid category' },
+  fitProfileInvalid: { th: 'ทรงการตัดไม่ถูกต้อง', en: 'Invalid fit profile' },
+  sizeLabelInvalid: { th: 'ไซส์ไม่ถูกต้อง', en: 'Invalid size' },
+  measurementInvalid: { th: 'ค่าไม่ถูกต้อง: {dim}', en: 'Invalid value: {dim}' },
+  requestInvalid: { th: 'ข้อมูลไม่ถูกต้อง', en: 'Invalid request' },
+  itemNotFound: { th: 'ไม่พบรายการนี้ อาจถูกลบไปแล้ว', en: 'Not found. It may have been deleted.' },
+  picksInvalid: { th: 'ตัวเลือกของสินค้าไม่ถูกต้อง', en: 'Invalid version choices' },
+  deleteFailed: { th: 'ลบไม่สำเร็จ กรุณาลองใหม่', en: 'Delete failed. Please try again.' },
+  fitRuleOrderGoodFrom: {
+    th: 'ค่า "พอดีตั้งแต่" ต้องไม่น้อยกว่าค่า "แน่นเกินไป"',
+    en: '"Good fit from" must not be lower than "Too tight".',
+  },
+  fitRuleOrderGoodTo: {
+    th: 'ค่า "ถึง" ต้องมากกว่าค่า "พอดีตั้งแต่"',
+    en: '"To" must be greater than "Good fit from".',
+  },
+  // Colour / fabric save failure (#11)
+  colourFabricNotSavedCreate: {
+    th: 'บันทึกเสื้อผ้าแล้ว แต่บันทึกสีหรือข้อมูลเนื้อผ้าไม่สำเร็จ กรุณาเปิดแก้ไขแล้วใส่สีและเนื้อผ้าอีกครั้ง',
+    en: 'The garment was saved, but its colours or fabric details were not. Open it with Edit and add them again.',
+  },
+  colourFabricNotSavedEdit: {
+    th: 'บันทึกเสื้อผ้าแล้ว แต่บันทึกสีหรือข้อมูลเนื้อผ้าไม่สำเร็จ กรุณากดบันทึกอีกครั้ง',
+    en: 'The garment was saved, but its colours or fabric details were not. Press Save again.',
+  },
 } as const;
 
 export type StringKey = keyof typeof t;

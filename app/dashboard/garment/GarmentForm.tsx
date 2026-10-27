@@ -3,7 +3,7 @@ import { useMemo, useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { dimensionsForCategory, dimensionByKey } from '@/lib/config/dimensions';
-import { FIT_PROFILES, fitProfileByKey } from '@/lib/config/fit-profiles';
+import { FIT_PROFILES } from '@/lib/config/fit-profiles';
 import { t } from '@/lib/i18n/strings';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import type { Category, MeasurementBag } from '@/lib/supabase/types';
@@ -11,13 +11,16 @@ import FitRuleEditor, { isRulesetValid } from '@/app/dashboard/fit-rules/FitRule
 import { DEFAULT_RULE } from '@/lib/fit/rules';
 import type { FitRuleset } from '@/lib/fit/rules';
 import { activeMeasurements, strandedDimensions, buildGarmentFields } from '@/lib/garment/form-fields';
+import type { MeasurementBaseline } from '@/lib/garment/form-fields';
 import ColoursSection from '@/app/dashboard/garment/ColoursSection';
 import FabricSection from '@/app/dashboard/garment/FabricSection';
 import { SIZE_LABELS, sizeLabelText } from '@/lib/garment/size-label';
+import { seedOverrideFrom, shouldSeedOverride } from '@/lib/fit/override-seed';
+import { saveOutcome } from '@/lib/garment/save-outcome';
+import { presetOptionsFor } from '@/lib/fit/preset-options';
+import type { PresetOption, PresetsStatus } from '@/lib/fit/preset-options';
 import type { PickerDef } from '@/lib/catalogue/picks';
 import { emptyFabricForm, type FabricFormState, type Colour } from '@/lib/garment/colour-fabric';
-
-type PresetOption = { id: string; name: string; rule: FitRuleset };
 
 /** Numeric measurements come in as numbers; form inputs need strings. Shared
  * by the `measurements` state initializer and the dirty-check baseline below
@@ -28,35 +31,6 @@ function seedMeasurements(bag?: MeasurementBag): Record<string, string> {
     if (typeof v === 'number') seed[k] = String(v);
   }
   return seed;
-}
-
-/**
- * The rule actually governing a garment right now, translated into an
- * editable FitRuleset to seed the override editor. Ticking the override
- * checkbox used to always open on DEFAULT_RULE regardless of what profile or
- * preset the garment was really using, so any dimension the retailer left
- * untouched would silently revert to the global default on save.
- *
- * `choice` must be the ruleChoice value from BEFORE any preset->profile
- * fallback reassignment happens in the checkbox handler, or a preset-backed
- * garment would never seed from its preset — only from the fallback profile.
- */
-function seedOverrideFrom(choice: string, presets: PresetOption[]): FitRuleset {
-  let source: FitRuleset;
-  if (choice.startsWith('preset:')) {
-    const id = choice.slice('preset:'.length);
-    const preset = presets.find(p => p.id === id);
-    // Presets load after first paint, and the fetch can fail outright.
-    // Either way, never block the checkbox or seed from a half-loaded list.
-    source = preset ? preset.rule : { base: DEFAULT_RULE, perDimension: {} };
-  } else {
-    const key = choice.startsWith('profile:') ? choice.slice('profile:'.length) : choice;
-    source = fitProfileByKey(key).ruleset;
-  }
-  // `regular`'s ruleset has no `base` by design (see the comment on
-  // FitRuleset.base) — the editor still needs one to render, so fill it in
-  // without mutating the source ruleset.
-  return { base: source.base ?? DEFAULT_RULE, perDimension: source.perDimension };
 }
 
 /** Everything edit mode needs to reproduce a garment's current state. */
@@ -123,6 +97,13 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
   const [colours, setColours] = useState<Colour[]>(initial?.colours ?? []);
   const [fabric, setFabric] = useState<FabricFormState>(initial?.fabric ?? emptyFabricForm());
 
+  // The garment as the form opened, so strandedDimensions() only warns about
+  // measurements lost by the retailer's own changes (2026-10-26, #8).
+  const [baseline] = useState<MeasurementBaseline>(() => ({
+    category: initial?.category ?? 'top',
+    measurements: seedMeasurements(initial?.measurements),
+  }));
+
   // Unsaved-work guard baseline (UX audit 2026-08-18, D2): the form's state on
   // first render, in create mode the empty defaults, in edit mode `initial`.
   // Captured once via lazy useState init so later edits never move the goalposts.
@@ -140,6 +121,8 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
   }));
 
   const [presets, setPresets] = useState<PresetOption[]>([]);
+  const [overrideNotice, setOverrideNotice] = useState<string | null>(null);
+  const [presetsStatus, setPresetsStatus] = useState<PresetsStatus>('loading');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -156,9 +139,9 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
 
   useEffect(() => {
     fetch('/api/fit-rulesets')
-      .then(r => r.ok ? r.json() : { rulesets: [] })
-      .then(d => setPresets(d.rulesets ?? []))
-      .catch(() => setPresets([]));  // a failed load just means no presets offered
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(d => { setPresets(Array.isArray(d?.rulesets) ? d.rulesets : []); setPresetsStatus('ready'); })
+      .catch(() => setPresetsStatus('failed'));
   }, []);
 
   // Presets load after first paint. Without a stand-in option, a garment whose
@@ -166,17 +149,10 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
   // the fetch lands — the retailer would be looking at a rule that is not
   // their garment's. The saved value is unaffected — React state still holds
   // the real id — but showing someone else's rule invites them to "correct" it.
-  const presetOptions = useMemo(() => {
-    const list = [...presets];
-    const initialId = initial?.ruleChoice.startsWith('preset:')
-      ? initial.ruleChoice.slice('preset:'.length)
-      : null;
-    if (initialId && !list.some(p => p.id === initialId)) {
-      // Placeholder for display only — never used as a seed source.
-      list.unshift({ id: initialId, name: '…', rule: { base: DEFAULT_RULE, perDimension: {} } });
-    }
-    return list;
-  }, [presets, initial?.ruleChoice]);
+  const presetOptions = useMemo(
+    () => presetOptionsFor(presets, initial?.ruleChoice, presetsStatus),
+    [presets, initial?.ruleChoice, presetsStatus],
+  );
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -224,7 +200,7 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
 
     // Saving writes only the current category's dimensions, so warn before
     // a category change quietly discards numbers already entered.
-    const stranded = strandedDimensions(measurements, category);
+    const stranded = strandedDimensions(measurements, category, baseline);
     if (stranded.length > 0) {
       const labels = stranded
         .map(k => {
@@ -272,6 +248,10 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
         setError(typeof data.error === 'string' ? data.error : t.authError[lang]);
         return;
       }
+      const body = await res.json().catch(() => ({}));
+      const outcome = saveOutcome(isEdit, body);
+      if (outcome === 'warn_and_stay') { setError(t.colourFabricNotSavedEdit[lang]); return; }
+      if (outcome === 'warn_and_leave') window.alert(t.colourFabricNotSavedCreate[lang]);
       router.push(productCtx ? `/dashboard/product/${productCtx.id}` : '/dashboard');
       router.refresh();
     } catch {
@@ -342,7 +322,7 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
       <label className="block">
         <span className="text-sm text-gray-700">{t.fitProfile[lang]}</span>
         <select
-          value={ruleChoice} onChange={e => setRuleChoice(e.target.value)}
+          value={ruleChoice} onChange={e => { setRuleChoice(e.target.value); setOverrideNotice(null); }}
           disabled={useOverride}
           className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 disabled:opacity-60"
         >
@@ -353,10 +333,19 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
           </optgroup>
           {presetOptions.length > 0 && (
             <optgroup label={t.fitRuleShopRules[lang]}>
-              {presetOptions.map(p => <option key={p.id} value={`preset:${p.id}`}>{p.name}</option>)}
+              {presetOptions.map(p => (
+                <option key={p.id} value={`preset:${p.id}`}>
+                  {p.placeholder === 'loading' ? t.presetLoading[lang]
+                    : p.placeholder === 'unavailable' ? t.presetUnavailable[lang]
+                    : p.name}
+                </option>
+              ))}
             </optgroup>
           )}
         </select>
+        {presetsStatus === 'failed' && (
+          <span className="mt-1 block text-sm text-red-600">{t.fitRulesLoadFailed[lang]}</span>
+        )}
       </label>
 
       <div className="space-y-3 rounded border p-4">
@@ -371,6 +360,25 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
               // fallback profile below, never from the preset it was actually
               // using.
               const priorChoice = ruleChoice;
+              setOverrideNotice(null);
+              // D3: the editor used to always open on DEFAULT_RULE regardless
+              // of the rule actually governing this garment, so any dimension
+              // left untouched would silently revert to the global default.
+              // Seed unless there was an override in force when the form
+              // opened (it is already in state) or the retailer has edited the
+              // override this session — toggling off and back on must not
+              // clobber real edits. NB: `initial.override` is never null for an
+              // existing garment (it holds a blank), so test `useOverride`.
+              if (shouldSeedOverride(on, initial?.useOverride ?? false, editedOverrideRef.current)) {
+                const seed = seedOverrideFrom(priorChoice, presets);
+                if (seed === null) {
+                  // The preset's numbers are not available: refuse rather than
+                  // start from the default rule.
+                  setOverrideNotice(presetsStatus === 'loading' ? t.presetRuleStillLoading[lang] : t.presetRuleUnavailable[lang]);
+                  return; // checkbox stays unticked (controlled)
+                }
+                setOverride(seed);
+              }
               setUseOverride(on);
               // A garment cannot hold both an override and a preset (spec
               // §6.1), so ticking this drops the preset link on save. Move the
@@ -378,22 +386,14 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
               // fall back to, rather than leaving it displaying a preset that
               // is about to be discarded. Mirrors what ruleSelectionForGarment
               // does when reading a stored override back.
-              if (on && ruleChoice.startsWith('preset:')) {
+              if (on && priorChoice.startsWith('preset:')) {
                 setRuleChoice(`profile:${initial?.profileKey ?? 'regular'}`);
-              }
-              // D3: the editor used to always open on DEFAULT_RULE regardless
-              // of the rule actually governing this garment, so any dimension
-              // left untouched would silently revert to the global default.
-              // Seed only when there's no stored override to preserve and the
-              // retailer hasn't already edited the override this session —
-              // toggling off and back on must not clobber real edits.
-              if (on && !initial?.override && !editedOverrideRef.current) {
-                setOverride(seedOverrideFrom(priorChoice, presets));
               }
             }}
           />
           <span>{t.fitRuleOverride[lang]}</span>
         </label>
+        {overrideNotice && <p className="text-sm text-red-600">{overrideNotice}</p>}
         {useOverride && (
           <FitRuleEditor
             value={override}

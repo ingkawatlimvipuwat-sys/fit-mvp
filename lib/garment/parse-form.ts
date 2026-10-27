@@ -36,15 +36,15 @@ export type ParseResult =
  */
 export function parseGarmentFields(form: FormData): ParseResult {
   const name = String(form.get('name') ?? '').trim();
-  if (!name) return { ok: false, error: 'name required' };
+  if (!name) return { ok: false, error: t.garmentNameRequired.th };
 
   const catParse = CATEGORY.safeParse(String(form.get('category') ?? ''));
-  if (!catParse.success) return { ok: false, error: 'invalid category' };
+  if (!catParse.success) return { ok: false, error: t.categoryInvalid.th };
   const category: Category = catParse.data;
 
   const fit_profile = String(form.get('fit_profile') ?? 'regular');
   if (!z.enum(PROFILE_KEYS).safeParse(fit_profile).success) {
-    return { ok: false, error: 'invalid fit_profile' };
+    return { ok: false, error: t.fitProfileInvalid.th };
   }
 
   // These two are mutually exclusive by construction, not just by convention:
@@ -59,19 +59,19 @@ export function parseGarmentFields(form: FormData): ParseResult {
   if (overrideRaw) {
     let overrideJson: unknown;
     try { overrideJson = JSON.parse(overrideRaw); }
-    catch { return { ok: false, error: 'ข้อมูลกฎไม่ถูกต้อง' }; }
+    catch { return { ok: false, error: t.fitRuleInvalid.th }; }
     const parsed = FitRulesetSchema.safeParse(overrideJson);
     if (!parsed.success) return { ok: false, error: firstIssueMessage(parsed.error) };
     fit_rule_override = parsed.data;
   } else if (rulesetIdRaw) {
     if (!z.uuid().safeParse(rulesetIdRaw).success) {
-      return { ok: false, error: 'invalid fit_ruleset_id' };
+      return { ok: false, error: t.rulesetNotOwned.th };
     }
     fit_ruleset_id = rulesetIdRaw;
   }
 
   const sizeRaw = String(form.get('size_label') ?? '').trim();
-  if (sizeRaw !== '' && !isSizeLabel(sizeRaw)) return { ok: false, error: 'invalid size_label' };
+  if (sizeRaw !== '' && !isSizeLabel(sizeRaw)) return { ok: false, error: t.sizeLabelInvalid.th };
   const size_label: SizeLabel | null = sizeRaw === '' ? null : sizeRaw;
 
   // Collect measurements only for dimensions this category uses.
@@ -81,7 +81,7 @@ export function parseGarmentFields(form: FormData): ParseResult {
     if (raw === null || raw === '') continue;
     const num = Number(raw);
     if (!Number.isFinite(num) || num <= 0 || num > 300) {
-      return { ok: false, error: `ค่าไม่ถูกต้อง: ${d.labelTh}` };
+      return { ok: false, error: t.measurementInvalid.th.replace('{dim}', d.labelTh) };
     }
     measurements[d.key] = num;
   }

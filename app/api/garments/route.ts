@@ -9,24 +9,25 @@ import { copyStoredObject } from '@/lib/garment/storage-copy';
 import { loadProductContext, checkGarmentOwnership } from '@/lib/catalogue/ownership';
 import { parsePicksField } from '@/lib/catalogue/parse';
 import { checkPicksForWrite } from '@/lib/catalogue/version-write';
+import { COLOUR_FABRIC_NOT_SAVED } from '@/lib/garment/save-outcome';
 import { z } from 'zod';
 
 export async function POST(req: Request) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!user) return NextResponse.json({ error: t.loginRequired.th }, { status: 401 });
 
   const form = await req.formData().catch(() => null);
-  if (!form) return NextResponse.json({ error: 'ข้อมูลไม่ถูกต้อง' }, { status: 400 });
+  if (!form) return NextResponse.json({ error: t.requestInvalid.th }, { status: 400 });
 
   // Every garment is a version of a product (garments.product_id is NOT NULL).
   // The product, its pickers and any copy_from garment are all read scoped to
   // the caller, so another shop's ids look nonexistent.
   const productIdRaw = String(form.get('product_id') ?? '').trim();
-  if (!productIdRaw) return NextResponse.json({ error: 'product_id is required' }, { status: 400 });
-  if (!z.uuid().safeParse(productIdRaw).success) return NextResponse.json({ error: 'invalid product_id' }, { status: 400 });
+  if (!productIdRaw) return NextResponse.json({ error: t.requestInvalid.th }, { status: 400 });
+  if (!z.uuid().safeParse(productIdRaw).success) return NextResponse.json({ error: t.requestInvalid.th }, { status: 400 });
   const product = await loadProductContext(supabase, user.id, productIdRaw);
-  if (!product.ok) return NextResponse.json({ error: product.error }, { status: product.status });
+  if (!product.ok) return NextResponse.json({ error: product.status === 404 ? t.itemNotFound.th : product.error }, { status: product.status });
   form.set('name', product.ctx.name);
   const picksParse = parsePicksField(form.get('picks'), product.ctx.pickers.map(p => p.id));
   if (!picksParse.ok) return NextResponse.json({ error: picksParse.error }, { status: 400 });
@@ -38,9 +39,9 @@ export async function POST(req: Request) {
   let copySource: { photo_url: string | null; true_colour_photo_url: string | null; fabric_photo_url: string | null } | null = null;
   const copyFromRaw = String(form.get('copy_from') ?? '').trim();
   if (copyFromRaw) {
-    if (!z.uuid().safeParse(copyFromRaw).success) return NextResponse.json({ error: 'invalid copy_from' }, { status: 400 });
+    if (!z.uuid().safeParse(copyFromRaw).success) return NextResponse.json({ error: t.requestInvalid.th }, { status: 400 });
     const own = await checkGarmentOwnership(supabase, user.id, copyFromRaw);
-    if (!own.ok) return NextResponse.json({ error: own.error }, { status: own.status });
+    if (!own.ok) return NextResponse.json({ error: own.status === 404 ? t.itemNotFound.th : own.error }, { status: own.status });
     const [{ data: g }, { data: f }] = await Promise.all([
       supabase.from('garments').select('photo_url, true_colour_photo_url').eq('id', copyFromRaw).eq('retailer_id', user.id).maybeSingle(),
       supabase.from('garment_fabric').select('fabric_photo_url').eq('garment_id', copyFromRaw).maybeSingle(),
@@ -127,14 +128,16 @@ export async function POST(req: Request) {
   }
 
   // A failure here leaves a saved garment with incomplete colour or fabric data
-  // rather than losing the garment: the retailer can simply re-save. Deleting
-  // the garment to "roll back" would be the worse trade — they just uploaded a
-  // photo and filled in a form.
+  // rather than losing the garment. Deleting the garment to "roll back" would
+  // be the worse trade — they just uploaded a photo and filled in a form. The
+  // response is still 200 but carries a warning the form shows (a plain error
+  // would invite a second Save, which would create a duplicate garment).
+  let sideWriteFailed = false;
   if (coloursParse.present && coloursParse.colours.length > 0) {
     const { error } = await supabase.from('garment_colours').insert(
       coloursParse.colours.map(c => ({ garment_id: row.id, hex: c.hex, name: c.name })),
     );
-    if (error) console.error('garment_colours insert failed (non-fatal):', error);
+    if (error) { console.error('garment_colours insert failed (reported to the user):', error); sideWriteFailed = true; }
   }
 
   const fabric = fabricParse.present ? fabricParse.fabric : null;
@@ -144,8 +147,8 @@ export async function POST(req: Request) {
       ...fabric,
       ...(fabricPhoto ? { fabric_photo_url: fabricPhoto.url } : {}),
     });
-    if (error) console.error('garment_fabric insert failed (non-fatal):', error);
+    if (error) { console.error('garment_fabric insert failed (reported to the user):', error); sideWriteFailed = true; }
   }
 
-  return NextResponse.json({ ok: true, id: row.id });
+  return NextResponse.json(sideWriteFailed ? { ok: true, id: row.id, warning: COLOUR_FABRIC_NOT_SAVED } : { ok: true, id: row.id });
 }
