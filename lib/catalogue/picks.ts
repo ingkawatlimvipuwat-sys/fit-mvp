@@ -1,6 +1,10 @@
 /** A version's picks, keyed by product_pickers.id. */
 export type Picks = Record<string, string>;
-export interface PickerDef { id: string; name: string; position: number }
+export interface PickerDef {
+  id: string; name: string; position: number;
+  /** product_pickers.value_order (migration 0008). Absent or empty = first-used order. */
+  value_order?: string[] | null;
+}
 export interface VersionPicks { id: string; picks: Picks; created_at: string }
 
 export const normPick = (v: string | undefined | null): string => (v ?? '').trim().toLowerCase();
@@ -68,6 +72,40 @@ export function valueOrder(versions: VersionPicks[], pickerId: string): string[]
   return out;
 }
 
+/**
+ * Display values for one picker in the owner's order (Stage 3). Values named in
+ * `stored` come first, in its order; the rest follow in first-used order
+ * (valueOrder). Stale entries (no version uses them) and repeats are skipped.
+ * Matching is trimmed and case-insensitive; the spelling shown is the versions'.
+ * The ONE ordering rule: used by the owner page, the version form and the shopper page.
+ */
+export function orderedValues(
+  versions: VersionPicks[], pickerId: string, stored?: readonly string[] | null,
+): string[] {
+  const used = valueOrder(versions, pickerId);
+  const byNorm = new Map(used.map(x => [normPick(x), x]));
+  const placed = new Set<string>();
+  const out: string[] = [];
+  for (const s of stored ?? []) {
+    const n = normPick(s);
+    const shown = byNorm.get(n);
+    if (shown === undefined || placed.has(n)) continue;
+    placed.add(n);
+    out.push(shown);
+  }
+  for (const x of used) if (!placed.has(normPick(x))) out.push(x);
+  return out;
+}
+
+/** A copy of `list` with item `index` swapped one step up (-1) or down (+1). Unchanged at the edges. */
+export function moveItem<T>(list: readonly T[], index: number, delta: -1 | 1): T[] {
+  const out = [...list];
+  const to = index + delta;
+  if (index < 0 || index >= out.length || to < 0 || to >= out.length) return out;
+  [out[index], out[to]] = [out[to], out[index]];
+  return out;
+}
+
 /** Pairs of versions that would become identical if the `removeId` picker were deleted. */
 export function clashesAfterRemoval<T extends VersionPicks>(
   versions: T[], pickerIds: string[], removeId: string,
@@ -82,7 +120,7 @@ export function clashesAfterRemoval<T extends VersionPicks>(
   return pairs;
 }
 
-/** Per picker id, the values the product already uses, for the form's suggestions. */
+/** Per picker id, the values the product already uses, in the owner's order (orderedValues), for the form's suggestions. */
 export function usedValuesByPicker(versions: VersionPicks[], pickers: PickerDef[]): Record<string, string[]> {
-  return Object.fromEntries(pickers.map(p => [p.id, valueOrder(versions, p.id)]));
+  return Object.fromEntries(pickers.map(p => [p.id, orderedValues(versions, p.id, p.value_order)]));
 }

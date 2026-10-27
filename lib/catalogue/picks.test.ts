@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   normPick, isComplete, findDuplicate, versionLabel, resolveVersion,
   availableValues, valueOrder, clashesAfterRemoval,
+  orderedValues, moveItem, usedValuesByPicker,
 } from './picks';
 
 const IDS = ['size', 'colour'];
@@ -94,5 +95,74 @@ describe('clashesAfterRemoval', () => {
   it('reports nothing when versions stay distinct', () => {
     const distinct = [v('a', { size: 'L', colour: 'x' }), v('b', { size: 'M', colour: 'x' })];
     expect(clashesAfterRemoval(distinct, IDS, 'colour')).toEqual([]);
+  });
+});
+
+describe('orderedValues (Stage 3 value order)', () => {
+  // first-used order of 'size' across these: S, M, L
+  const SIZES = [
+    v('1', { size: 'S' }, '2026-01-01T00:00:01Z'),
+    v('2', { size: 'M' }, '2026-01-01T00:00:02Z'),
+    v('3', { size: 'L' }, '2026-01-01T00:00:03Z'),
+    v('4', { size: 'm ' }, '2026-01-01T00:00:04Z'),
+  ];
+  it('no stored order (empty, null or undefined) is exactly first-used order', () => {
+    expect(orderedValues(SIZES, 'size', [])).toEqual(['S', 'M', 'L']);
+    expect(orderedValues(SIZES, 'size', null)).toEqual(['S', 'M', 'L']);
+    expect(orderedValues(SIZES, 'size')).toEqual(['S', 'M', 'L']);
+  });
+  it('follows the stored order', () => {
+    expect(orderedValues(SIZES, 'size', ['L', 'M', 'S'])).toEqual(['L', 'M', 'S']);
+  });
+  it('puts values missing from the list after the listed ones, in first-used order', () => {
+    expect(orderedValues(SIZES, 'size', ['L'])).toEqual(['L', 'S', 'M']);
+  });
+  it('ignores stale entries (no version uses them any more)', () => {
+    expect(orderedValues(SIZES, 'size', ['XL', 'L', 'XS'])).toEqual(['L', 'S', 'M']);
+  });
+  it("matches trimmed and case-insensitively, showing the versions' own spelling", () => {
+    expect(orderedValues(SIZES, 'size', [' l ', 'm'])).toEqual(['L', 'M', 'S']);
+  });
+  it('counts a repeated entry once', () => {
+    expect(orderedValues(SIZES, 'size', ['M', 'm', 'S'])).toEqual(['M', 'S', 'L']);
+  });
+  it('ignores blank stored entries and blank picks', () => {
+    const vs = [...SIZES, v('5', { size: '  ' }, '2026-01-01T00:00:05Z')];
+    expect(orderedValues(vs, 'size', ['', 'L'])).toEqual(['L', 'S', 'M']);
+  });
+  it('only shows values of the versions it is given (the shopper page passes complete versions only)', () => {
+    expect(orderedValues(SIZES.slice(0, 2), 'size', ['L', 'M', 'S'])).toEqual(['M', 'S']);
+  });
+  it('a picker no version uses has no values', () => {
+    expect(orderedValues(SIZES, 'colour', ['Black'])).toEqual([]);
+    expect(orderedValues([], 'size', ['S'])).toEqual([]);
+  });
+  it('a retyped pick ("M" → "XL") drops M and adds XL after the ordered values', () => {
+    const retyped = SIZES.filter(x => x.id !== '2' && x.id !== '4').concat(v('2', { size: 'XL' }, '2026-01-01T00:00:02Z'));
+    expect(orderedValues(retyped, 'size', ['L', 'M', 'S'])).toEqual(['L', 'S', 'XL']);
+  });
+});
+
+describe('moveItem', () => {
+  it('moves one step up or down', () => {
+    expect(moveItem(['a', 'b', 'c'], 2, -1)).toEqual(['a', 'c', 'b']);
+    expect(moveItem(['a', 'b', 'c'], 0, 1)).toEqual(['b', 'a', 'c']);
+  });
+  it('leaves the list unchanged at the edges and out of range', () => {
+    expect(moveItem(['a', 'b'], 0, -1)).toEqual(['a', 'b']);
+    expect(moveItem(['a', 'b'], 1, 1)).toEqual(['a', 'b']);
+    expect(moveItem(['a', 'b'], 5, -1)).toEqual(['a', 'b']);
+  });
+  it('never mutates its input', () => {
+    const list = ['a', 'b'];
+    moveItem(list, 0, 1);
+    expect(list).toEqual(['a', 'b']);
+  });
+});
+
+describe('usedValuesByPicker', () => {
+  it("uses each picker's stored order", () => {
+    const pickers = [{ id: 'size', name: 'Size', position: 0, value_order: ['M', 'L'] }, { id: 'colour', name: 'Colour', position: 1 }];
+    expect(usedValuesByPicker(VERSIONS, pickers)).toEqual({ size: ['M', 'L'], colour: ['Black', 'Green'] });
   });
 });
