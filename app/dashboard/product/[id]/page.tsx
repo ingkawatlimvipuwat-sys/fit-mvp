@@ -4,6 +4,7 @@ import { loadProductContext } from '@/lib/catalogue/ownership';
 import { attentionReasons, type AttentionReason } from '@/lib/catalogue/needs-attention';
 import { dimensionsForCategory } from '@/lib/config/dimensions';
 import { tagsOfProduct, tagsInUse, tagSuggestions } from '@/lib/catalogue/tags';
+import { usedValuesByPicker } from '@/lib/catalogue/picks';
 import ProductEditor, { type VersionRow } from './ProductEditor';
 
 export async function generateMetadata(props: { params: Promise<{ id: string }> }) {
@@ -84,6 +85,7 @@ export default async function ProductPage(props: { params: Promise<{ id: string 
       name={ctx.name}
       shopSlug={retailer?.shop_slug ?? null}
       pickers={ctx.pickers}
+      valuesByPicker={usedValuesByPicker(ctx.versions, ctx.pickers)}
       versions={rows}
       tags={attached}
       tagSuggestions={suggestions}

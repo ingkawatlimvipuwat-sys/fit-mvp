@@ -7,6 +7,7 @@ import { useLanguage } from '@/lib/hooks/useLanguage';
 import { versionLabel, type PickerDef } from '@/lib/catalogue/picks';
 import type { TagRow } from '@/lib/catalogue/tags';
 import ProductTags from './ProductTags';
+import PickerValueOrder from './PickerValueOrder';
 
 export interface VersionRow {
   id: string;
@@ -22,6 +23,8 @@ type Props = {
   name: string;
   shopSlug: string | null;
   pickers: PickerDef[];
+  /** Each picker's values in the owner's order (usedValuesByPicker). */
+  valuesByPicker: Record<string, string[]>;
   versions: VersionRow[];
   tags: TagRow[];
   tagSuggestions: TagRow[];
@@ -42,7 +45,7 @@ async function send(url: string, method: string, body?: unknown): Promise<{ ok: 
   }
 }
 
-export default function ProductEditor({ productId, name: initialName, shopSlug, pickers, versions, tags, tagSuggestions }: Props) {
+export default function ProductEditor({ productId, name: initialName, shopSlug, pickers, valuesByPicker, versions, tags, tagSuggestions }: Props) {
   const router = useRouter();
   const [lang] = useLanguage();
   const [name, setName] = useState(initialName);
@@ -86,6 +89,13 @@ export default function ProductEditor({ productId, name: initialName, shopSlug, 
     const r = await send(`/api/products/${productId}/pickers/${p.id}`, 'PATCH', { name: trimmed });
     if (!r.ok) return fail(r.error);
     router.refresh();
+  }
+
+  async function saveValueOrder(p: PickerDef, order: string[]): Promise<string | null> {
+    const r = await send(`/api/products/${productId}/pickers/${p.id}`, 'PATCH', { value_order: order });
+    if (!r.ok) return r.error ?? t.saveFailed[lang];
+    router.refresh();
+    return null;
   }
 
   async function removePicker(p: PickerDef) {
@@ -152,16 +162,19 @@ export default function ProductEditor({ productId, name: initialName, shopSlug, 
       <section className="space-y-2 rounded border bg-white p-4">
         <ul className="space-y-2">
           {pickers.map(p => (
-            <li key={p.id} className="flex items-center gap-3">
-              <input
-                aria-label={t.pickerName[lang]}
-                defaultValue={p.name} maxLength={30}
-                onBlur={e => renamePicker(p, e.target.value)}
-                className={inputClass}
-              />
-              <button type="button" onClick={() => removePicker(p)} className="text-xs text-red-600">
-                {t.removePicker[lang]}
-              </button>
+            <li key={p.id} className="space-y-1">
+              <div className="flex items-center gap-3">
+                <input
+                  aria-label={t.pickerName[lang]}
+                  defaultValue={p.name} maxLength={30}
+                  onBlur={e => renamePicker(p, e.target.value)}
+                  className={inputClass}
+                />
+                <button type="button" onClick={() => removePicker(p)} className="text-xs text-red-600">
+                  {t.removePicker[lang]}
+                </button>
+              </div>
+              <PickerValueOrder values={valuesByPicker[p.id] ?? []} onSave={order => saveValueOrder(p, order)} />
             </li>
           ))}
         </ul>
