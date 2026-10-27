@@ -29,3 +29,22 @@ export function tagSuggestions(inUse: TagRow[], attached: TagRow[]): TagRow[] {
   const on = new Set(attached.map(tag => tag.id));
   return inUse.filter(tag => !on.has(tag.id));
 }
+
+export interface TagUsage extends TagRow { count: number }
+
+/** Every one of the shop's tags, used or not, A–Z, with how many products carry it (Manage tags). Links to ids outside `tags` are ignored. */
+export function tagUsage(tags: TagRow[], links: ProductTagRow[]): TagUsage[] {
+  const products = new Map<string, Set<string>>();
+  for (const l of links) {
+    const set = products.get(l.tag_id) ?? new Set<string>();
+    set.add(l.product_id);
+    products.set(l.tag_id, set);
+  }
+  return [...tags].sort(byName).map(tag => ({ ...tag, count: products.get(tag.id)?.size ?? 0 }));
+}
+
+/** Another of the shop's tags already called `name` (compared like the unique index), or null. */
+export function tagNameClash(tags: TagRow[], tagId: string, name: string): TagRow | null {
+  const n = normTag(name);
+  return tags.find(tag => tag.id !== tagId && normTag(tag.name) === n) ?? null;
+}
