@@ -206,6 +206,7 @@ export const t = {
   fabricSection:          { th: 'เนื้อผ้า', en: 'Fabric' },
   fabricTechnicalDetails: { th: 'รายละเอียดทางเทคนิค', en: 'Technical details' },
   fabricPhoto:            { th: 'รูปใกล้เนื้อผ้า', en: 'Fabric close-up photo' },
+  removeFabricPhoto:      { th: 'ลบรูปผ้านี้', en: 'Remove this photo' },
   notSet:                 { th: 'ไม่ระบุ', en: 'Not set' },
 
   // --- Fabric chips: group labels and values ---

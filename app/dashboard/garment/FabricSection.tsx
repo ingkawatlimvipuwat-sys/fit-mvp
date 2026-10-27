@@ -24,11 +24,14 @@ const NUMERIC: Record<string, { step: string; max: number }> = {
 };
 
 export default function FabricSection({
-  fabric, onChange, currentPhotoUrl,
+  fabric, onChange, currentPhotoUrl, removePhoto, onRemovePhotoChange,
 }: {
   fabric: FabricFormState;
   onChange: (next: FabricFormState) => void;
   currentPhotoUrl?: string | null;
+  /** Ticked = the retailer wants the current photo taken off (a new file still wins). */
+  removePhoto: boolean;
+  onRemovePhotoChange: (v: boolean) => void;
 }) {
   const [lang] = useLanguage();
   const set = (k: string, v: string) => onChange({ ...fabric, [k]: v });
@@ -101,14 +104,26 @@ export default function FabricSection({
         </div>
       </details>
 
-      <label className="mt-4 block text-sm">
-        {t.fabricPhoto[lang]}
+      <div className="mt-4 text-sm">
+        <label htmlFor="fabric_photo" className="block">{t.fabricPhoto[lang]}</label>
         {currentPhotoUrl && (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img src={currentPhotoUrl} alt="" className="mt-1 h-20 w-20 rounded object-cover" />
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={currentPhotoUrl} alt=""
+              className={`mt-1 block h-20 w-20 rounded object-cover ${removePhoto ? 'opacity-40' : ''}`}
+            />
+            <label className="mt-1 flex items-center gap-1">
+              <input
+                type="checkbox" checked={removePhoto}
+                onChange={e => onRemovePhotoChange(e.target.checked)}
+              />
+              {t.removeFabricPhoto[lang]}
+            </label>
+          </>
         )}
-        <input type="file" name="fabric_photo" accept="image/*" className="mt-1 block" />
-      </label>
+        <input id="fabric_photo" type="file" name="fabric_photo" accept="image/*" className="mt-1 block" />
+      </div>
     </details>
   );
 }
