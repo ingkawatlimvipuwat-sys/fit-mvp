@@ -6,9 +6,6 @@ import { useLanguage } from '@/lib/hooks/useLanguage';
 import { sendJson } from '@/lib/catalogue/send-json';
 import type { TagRow } from '@/lib/catalogue/tags';
 
-// Raw English codes from the API are not for the owner's eyes (same rule as CatalogueBrowser.run()).
-const RAW_CODES = new Set(['not found', 'invalid body', 'unauthorized']);
-
 export default function ProductTags({ productId, tags, suggestions }: {
   productId: string; tags: TagRow[]; suggestions: TagRow[];
 }) {
@@ -24,7 +21,7 @@ export default function ProductTags({ productId, tags, suggestions }: {
     const r = await sendJson(url, method, body);
     setBusy(false);
     if (!r.ok) {
-      setMessage(r.error && !RAW_CODES.has(r.error) ? r.error : t.saveFailed[lang]);
+      setMessage(r.error ?? t.saveFailed[lang]);
       router.refresh(); // a 'not found' usually means the page is stale
       return false;
     }

@@ -50,7 +50,7 @@ export async function POST(req: Request) {
     .select('measurements, fit_profile, fit_ruleset_id, fit_rule_override')
     .eq('id', garment_id)
     .single();
-  if (gErr || !garment) return NextResponse.json({ error: 'garment not found' }, { status: 404 });
+  if (gErr || !garment) return NextResponse.json({ error: t.itemNotFound.th }, { status: 404 });
 
   // One extra query at most, skipped entirely when the garment has an inline
   // override or uses a built-in profile.

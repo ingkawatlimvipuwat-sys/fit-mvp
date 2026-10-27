@@ -7,7 +7,7 @@ import { parseFolderName } from '@/lib/catalogue/parse';
 import { t } from '@/lib/i18n/strings';
 
 type Params = { params: Promise<{ id: string }> };
-const notFound = () => NextResponse.json({ error: 'not found' }, { status: 404 });
+const notFound = () => NextResponse.json({ error: t.itemNotFound.th }, { status: 404 });
 
 const PatchBody = z.object({
   name: z.string().optional(),
@@ -19,12 +19,12 @@ export async function PATCH(req: Request, props: Params) {
   const params = await props.params;
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!user) return NextResponse.json({ error: t.loginRequired.th }, { status: 401 });
   if (!z.uuid().safeParse(params.id).success) return notFound();
 
   const body = PatchBody.safeParse(await req.json().catch(() => null));
   if (!body.success || (body.data.name === undefined && body.data.parent_id === undefined)) {
-    return NextResponse.json({ error: 'invalid body' }, { status: 400 });
+    return NextResponse.json({ error: t.requestInvalid.th }, { status: 400 });
   }
   const update: { name?: string; parent_id?: string | null } = {};
   if (body.data.name !== undefined) {
@@ -56,7 +56,7 @@ export async function DELETE(_req: Request, props: Params) {
   const params = await props.params;
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!user) return NextResponse.json({ error: t.loginRequired.th }, { status: 401 });
   if (!z.uuid().safeParse(params.id).success) return notFound();
 
   const loaded = await loadShopFolders(supabase, user.id);

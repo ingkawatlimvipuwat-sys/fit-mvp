@@ -14,7 +14,7 @@ export async function POST(req: Request, props: { params: Promise<{ id: string }
   const params = await props.params;
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!user) return NextResponse.json({ error: t.loginRequired.th }, { status: 401 });
 
   const body = await req.json().catch(() => null);
   const name = parsePickerName(body?.name);
