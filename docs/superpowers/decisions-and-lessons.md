@@ -199,6 +199,11 @@ to the right section rather than to a new document.
   PostgREST's conflict columns wrong would silently drop an existing fabric photo.
 - **Never delete an old Storage photo until the new reference is saved.** Two separate bugs
   (2026-08-15, 2026-09-11) left a garment pointing at a deleted image.
+- **Storage has no read policy for shop owners, so copy and delete run with the admin client** (2026-10-27).
+  The bucket is public and reads go through public URLs, so a Storage `copy` made as the owner
+  answers "Object not found". Every Duplicate failed with "photo upload failed" from Stage 1
+  until PR #21. `copyStoredObject` and `removeStoredObject` refuse any path outside the caller's
+  own folder; that check is what makes the admin client safe there. Uploads work as the owner.
 - **Deleting a garment removes all three of its photos from Storage.** The database cascade
   removes child rows, but Storage files are outside the database and would be orphaned.
 - **Colour and fabric writes do not fail the garment save, but a failure is reported** (2026-10-26).
