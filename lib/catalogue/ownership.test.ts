@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { t } from '@/lib/i18n/strings';
 import { loadProductContext, checkGarmentOwnership, loadShopFolders, checkFolderOwnership, loadShopTags, checkTagOwnership } from './ownership';
 
 type Row = Record<string, unknown>;
@@ -42,8 +43,8 @@ describe('loadProductContext', () => {
     expect(r.ok && r.ctx.versions.map(v => v.id)).toEqual(['G1']);
   });
   it("another shop's product is a 404, same as nonexistent", async () => {
-    expect(await loadProductContext(fake(DB), 'A', 'P2')).toMatchObject({ ok: false, status: 404 });
-    expect(await loadProductContext(fake(DB), 'A', 'nope')).toMatchObject({ ok: false, status: 404 });
+    expect(await loadProductContext(fake(DB), 'A', 'P2')).toMatchObject({ ok: false, status: 404, error: t.itemNotFound.th });
+    expect(await loadProductContext(fake(DB), 'A', 'nope')).toMatchObject({ ok: false, status: 404, error: t.itemNotFound.th });
   });
   it('fails closed with 500 when the lookup errors', async () => {
     expect(await loadProductContext(fake(DB, 'products'), 'A', 'P1')).toMatchObject({ ok: false, status: 500 });
@@ -55,7 +56,7 @@ describe('checkGarmentOwnership', () => {
     expect(await checkGarmentOwnership(fake(DB), 'A', 'G1')).toMatchObject({ ok: true });
   });
   it("rejects another shop's garment as 404", async () => {
-    expect(await checkGarmentOwnership(fake(DB), 'A', 'G2')).toMatchObject({ ok: false, status: 404 });
+    expect(await checkGarmentOwnership(fake(DB), 'A', 'G2')).toMatchObject({ ok: false, status: 404, error: t.itemNotFound.th });
   });
   it('fails closed with 500 when the lookup errors', async () => {
     expect(await checkGarmentOwnership(fake(DB, 'garments'), 'A', 'G1')).toMatchObject({ ok: false, status: 500 });
@@ -84,8 +85,8 @@ describe('checkFolderOwnership', () => {
     expect(await checkFolderOwnership(fake(FOLDERS), 'A', 'F1')).toEqual({ ok: true });
   });
   it("rejects another shop's folder as 404, same as nonexistent", async () => {
-    expect(await checkFolderOwnership(fake(FOLDERS), 'A', 'F2')).toMatchObject({ ok: false, status: 404 });
-    expect(await checkFolderOwnership(fake(FOLDERS), 'A', 'nope')).toMatchObject({ ok: false, status: 404 });
+    expect(await checkFolderOwnership(fake(FOLDERS), 'A', 'F2')).toMatchObject({ ok: false, status: 404, error: t.itemNotFound.th });
+    expect(await checkFolderOwnership(fake(FOLDERS), 'A', 'nope')).toMatchObject({ ok: false, status: 404, error: t.itemNotFound.th });
   });
   it('fails closed with 500', async () => {
     expect(await checkFolderOwnership(fake(FOLDERS, 'folders'), 'A', 'F1')).toMatchObject({ ok: false, status: 500 });
@@ -114,8 +115,8 @@ describe('checkTagOwnership', () => {
     expect(await checkTagOwnership(fake(TAGS), 'A', 'T1')).toEqual({ ok: true });
   });
   it("rejects another shop's tag as 404, same as nonexistent", async () => {
-    expect(await checkTagOwnership(fake(TAGS), 'A', 'T2')).toMatchObject({ ok: false, status: 404 });
-    expect(await checkTagOwnership(fake(TAGS), 'A', 'nope')).toMatchObject({ ok: false, status: 404 });
+    expect(await checkTagOwnership(fake(TAGS), 'A', 'T2')).toMatchObject({ ok: false, status: 404, error: t.itemNotFound.th });
+    expect(await checkTagOwnership(fake(TAGS), 'A', 'nope')).toMatchObject({ ok: false, status: 404, error: t.itemNotFound.th });
   });
   it('fails closed with 500', async () => {
     expect(await checkTagOwnership(fake(TAGS, 'tags'), 'A', 'T1')).toMatchObject({ ok: false, status: 500 });

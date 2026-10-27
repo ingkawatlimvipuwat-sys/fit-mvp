@@ -14,7 +14,7 @@ export interface ProductContext {
 export type Failure = { ok: false; status: 404 | 500; error: string };
 
 const fail500: Failure = { ok: false, status: 500, error: t.saveFailed.th };
-const fail404: Failure = { ok: false, status: 404, error: 'not found' };
+const fail404: Failure = { ok: false, status: 404, error: t.itemNotFound.th };
 
 /**
  * One product, its pickers and its versions, for a caller. The product read is

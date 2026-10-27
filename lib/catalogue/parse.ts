@@ -8,8 +8,8 @@ function named(raw: unknown, max: number, error: string): Named {
   return value.length >= 1 && value.length <= max ? { ok: true, value } : { ok: false, error };
 }
 
-export const parseProductName = (raw: unknown) => named(raw, 120, 'invalid product name');
-export const parsePickerName = (raw: unknown) => named(raw, 30, 'invalid picker name');
+export const parseProductName = (raw: unknown) => named(raw, 120, t.invalidProductName.th);
+export const parsePickerName = (raw: unknown) => named(raw, 30, t.invalidPickerName.th);
 export const parseFolderName = (raw: unknown) => named(raw, 60, t.invalidFolderName.th);
 export const parseTagName = (raw: unknown) => named(raw, 30, t.invalidTagName.th);
 

@@ -365,6 +365,9 @@ export const t = {
   filterByTag: { th: '+ กรองด้วยแท็ก', en: '+ Filter by tag' },
   addTagPlaceholder: { th: 'เพิ่มแท็ก แล้วกด Enter', en: 'Add a tag, then press Enter' },
   removeTag: { th: 'เอาแท็ก {name} ออก', en: 'Remove tag {name}' },
+  invalidProductName: { th: 'ชื่อสินค้าต้องยาว 1–120 ตัวอักษร', en: 'Product names must be 1–120 characters' },
+  invalidPickerName: { th: 'ชื่อตัวเลือกต้องยาว 1–30 ตัวอักษร', en: 'Option names must be 1–30 characters' },
+  invalidPickerValues: { th: 'ค่าตัวเลือกไม่ถูกต้อง (ยาวได้ไม่เกิน 60 ตัวอักษร)', en: 'Invalid option values (up to 60 characters each)' },
   invalidTagName: { th: 'ชื่อแท็กต้องยาว 1–30 ตัวอักษร', en: 'Tag names must be 1–30 characters' },
   sortLabel: { th: 'เรียงตาม', en: 'Sort' },
   sortNewest: { th: 'ใหม่สุด', en: 'Newest' },
@@ -398,6 +401,7 @@ export const t = {
   requestInvalid: { th: 'ข้อมูลไม่ถูกต้อง', en: 'Invalid request' },
   itemNotFound: { th: 'ไม่พบรายการนี้ อาจถูกลบไปแล้ว', en: 'Not found. It may have been deleted.' },
   picksInvalid: { th: 'ตัวเลือกของสินค้าไม่ถูกต้อง', en: 'Invalid version choices' },
+  loadFailed: { th: 'โหลดข้อมูลไม่สำเร็จ กรุณาลองใหม่', en: 'Could not load. Please try again.' },
   deleteFailed: { th: 'ลบไม่สำเร็จ กรุณาลองใหม่', en: 'Delete failed. Please try again.' },
   fitRuleOrderGoodFrom: {
     th: 'ค่า "พอดีตั้งแต่" ต้องไม่น้อยกว่าค่า "แน่นเกินไป"',

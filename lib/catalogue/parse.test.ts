@@ -5,6 +5,8 @@ import { t } from '@/lib/i18n/strings';
 describe('names', () => {
   it('trims', () => { expect(parseProductName('  Tee ')).toEqual({ ok: true, value: 'Tee' }); });
   it('rejects blank and too long', () => {
+    expect(parseProductName('')).toEqual({ ok: false, error: t.invalidProductName.th });
+    expect(parsePickerName('')).toEqual({ ok: false, error: t.invalidPickerName.th });
     expect(parseProductName('  ').ok).toBe(false);
     expect(parseProductName('x'.repeat(121)).ok).toBe(false);
     expect(parsePickerName('x'.repeat(31)).ok).toBe(false);
