@@ -11,10 +11,10 @@ const CreateBody = z.object({ name: z.string(), parent_id: z.uuid().nullable() }
 export async function POST(req: Request) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!user) return NextResponse.json({ error: t.loginRequired.th }, { status: 401 });
 
   const body = CreateBody.safeParse(await req.json().catch(() => null));
-  if (!body.success) return NextResponse.json({ error: 'invalid body' }, { status: 400 });
+  if (!body.success) return NextResponse.json({ error: t.requestInvalid.th }, { status: 400 });
   const name = parseFolderName(body.data.name);
   if (!name.ok) return NextResponse.json({ error: name.error }, { status: 400 });
 

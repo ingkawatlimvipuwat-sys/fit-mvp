@@ -12,7 +12,7 @@ export async function PATCH(req: Request, props: Params) {
   const params = await props.params;
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!user) return NextResponse.json({ error: t.loginRequired.th }, { status: 401 });
 
   const body = await req.json().catch(() => null);
   const name = parsePickerName(body?.name);
@@ -21,7 +21,7 @@ export async function PATCH(req: Request, props: Params) {
   const found = await loadProductContext(supabase, user.id, params.id);
   if (!found.ok) return NextResponse.json({ error: found.error }, { status: found.status });
   if (!found.ctx.pickers.some(p => p.id === params.pickerId)) {
-    return NextResponse.json({ error: 'not found' }, { status: 404 });
+    return NextResponse.json({ error: t.itemNotFound.th }, { status: 404 });
   }
 
   const { error } = await supabase
@@ -42,13 +42,13 @@ export async function DELETE(_req: Request, props: Params) {
   const params = await props.params;
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!user) return NextResponse.json({ error: t.loginRequired.th }, { status: 401 });
 
   const found = await loadProductContext(supabase, user.id, params.id);
   if (!found.ok) return NextResponse.json({ error: found.error }, { status: found.status });
   const { ctx } = found;
   if (!ctx.pickers.some(p => p.id === params.pickerId)) {
-    return NextResponse.json({ error: 'not found' }, { status: 404 });
+    return NextResponse.json({ error: t.itemNotFound.th }, { status: 404 });
   }
 
   const clashes = clashesAfterRemoval(ctx.versions, ctx.pickers.map(p => p.id), params.pickerId);

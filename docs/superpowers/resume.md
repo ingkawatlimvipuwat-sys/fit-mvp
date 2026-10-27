@@ -27,7 +27,7 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 | Check | Result |
 |---|---|
 | Live site matches `main` | Yes. `main` is `b22c36a` (PR #18, reliability fixes), merged and verified live 2026-10-27. Before it: PR #17 (Stage 2b, `d1817f9`) and PR #16 (Stage 2a), both live 2026-10-14 |
-| Tests (`npm test`) | 420 passing, 42 files on `main` |
+| Tests (`npm test`) | 420 passing, 42 files on `main`; 428 passing, 44 files on branch `feature/thai-errors-fabric-remove`, waiting for the founder's merge. `npx tsc --noEmit` reports one pre-existing error in a test file (`lib/garment/colour-fabric-regression.test.ts:49`, `present` on the failure branch of `FabricParse`); vitest and `next build` do not type-check that file, so it blocks nothing — see Housekeeping |
 | Build (`npm run build`) | Clean |
 | `npm audit --omit=dev` | 2 vulnerabilities (1 high, 1 moderate) — down from 1 critical + 2 high (~18 Next advisories) on 14.2. The remaining high is `postcss@8.4.31` bundled *inside* `next`'s own `node_modules` (build-time CSS processing only, not user input); our own `postcss` dep is 8.5.28, already patched. Clears when Next ships its own postcss bump, or on a future Next 16 upgrade. |
 | Database migrations | 0001, 0002, 0003 and 0004 (size label) applied to the live database (0004 verified with a read-only select, 2026-10-07). 0005 (catalogue) applied to the live database by the founder before PR #14 merged, 2026-10-07. 0006 (`product_id` NOT NULL) applied to the live database on 2026-10-07, **after** PR #15 was merged — in that order on purpose: code from before PR #15 could still create a garment without a product, and 0006's backfill catches any such row before setting NOT NULL. **0007** (`fit_sessions_created_at_idx`, an index that keeps the fit-session write cap fast) run by the founder in the SQL editor on 2026-10-27, after PR #18 merged. All seven migrations are now applied |
@@ -58,6 +58,7 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 | Catalogue Stage 2a — folders and Move to… | 2026-10-14 (PR #16; no migration) | Nested folders in a side list (phone: a ‹ back header), New folder / Rename / Delete (contents move up, nothing is deleted), **Move to…** for products and folders, New product inside the current folder. A folder shows everything below it | `specs/2026-10-01-catalogue-organisation-design.md`, `plans/2026-10-12-catalogue-stage-2.md` |
 | Catalogue Stage 2b — tags, search, sort, Needs attention filter | 2026-10-14 (PR #17; no migration) | Owners tag products on the product page (type a word + Enter; an existing tag is reused), and the dashboard gets a toolbar: search by product name, filter by one or more tags (a product must have all), sort (newest, oldest, name A–Z / Z–A) and a ⚠ Needs attention toggle. Everything filters in the browser and lives in the address bar, so Back and refresh keep the place. Tags cannot be renamed or deleted yet; a tag on no product is simply hidden | `specs/2026-10-01-catalogue-organisation-design.md`, `plans/2026-10-12-catalogue-stage-2.md` |
 | Reliability fixes | 2026-10-27 (PR #18; migration 0007, an index) | Six fixes: the public fit check is rate-limited and its fit-session saves are capped (#5); a failed shop-rule load shows an error instead of `…` (#6); a per-garment override starts from the rule in force, also on edit and duplicate (#7); the "Changing category will discard…" warning only blames the retailer's own changes (#8); garment validation errors are Thai, with no zod English or raw keys (#9); a colour or fabric save failure now reaches the retailer (#11) | `plans/2026-10-26-reliability-fixes.md` |
+| Thai errors everywhere + remove a fabric photo — **built, not shipped — PR pending** | branch `feature/thai-errors-fabric-remove`; no migration | Products, folders, tags, options and fit rules now answer in Thai (`loginRequired`, `requestInvalid`, `itemNotFound`, `invalidProductName`, `invalidPickerName`, `invalidPickerValues`, `loadFailed`); fit-rule database errors are logged, never shown. The garment form has a **ลบรูปผ้านี้** tick under the fabric close-up: the row stops pointing at the photo, then the stored file is deleted (only after the write succeeded). Ticking it on a duplicate saves the copy without the photo. Decision logic: `lib/garment/fabric-photo.ts` | `plans/2026-10-27-thai-errors-and-fabric-photo-remove.md` |
 | Try-on (stub) | 2026-10-03 | Shopper uploads or takes a photo; after a fake 0.9 s wait the page shows a fixed sample image (`public/try-on/result.png`). The photo never leaves the phone. No real try-on model yet | — |
 
 ---
@@ -90,24 +91,20 @@ One list, most important first. When you finish an item, delete it (git keeps th
 5. **Walk the dashboard in a browser with a real login.** Not done since the 2026-08-18
    redesign — the header, tabs, fit-rules load-failure notice and discard guards are backed only
    by a clean build.
-6. **A fabric photo cannot be removed, only replaced**, so a retailer cannot fully withdraw
-   fabric information.
-7. **Check colour fidelity on a real phone** — a real garment under daylight next to its
+6. **Check colour fidelity on a real phone** — a real garment under daylight next to its
    swatch on the live site. Planned after the 2026-09-11 deploy; not recorded as done.
-8. **English error texts remain in other API routes** — `products`, `folders`, `fit-rulesets`
-   (`'not found'`, `'invalid body'`, `'invalid product name'`, `'invalid picker name'`,
-   `error.message` in the fit-rulesets GET). The garment path was fixed 2026-10-26.
 
 ### Housekeeping
 
-9. Delete old branches: `feature/phase-1` (last commit 2026-06-09; its work was rebuilt in
+7. Delete old branches: `feature/phase-1` (last commit 2026-06-09; its work was rebuilt in
     `main`) and the already-merged `origin/feature/custom-fit-rules`.
-10. Delete the typo Storage bucket `garmet-photos` (the real one is `garment-photos`).
-11. Delete live test data: the garment `TEST เสื้อผ้ายืด (ลบได้)` and the `ผ้ายืด` preset
+8. Delete the typo Storage bucket `garmet-photos` (the real one is `garment-photos`).
+9. Delete live test data: the garment `TEST เสื้อผ้ายืด (ลบได้)` and the `ผ้ายืด` preset
     (holds default values, not stretchy ones).
-12. Small code tidies: extract the file-extension sanitising duplicated in both garment routes;
+10. Small code tidies: extract the file-extension sanitising duplicated in both garment routes;
     make `ThresholdBand[]` `readonly` in `dimensions.ts`; note in `app/dashboard/layout.tsx`
     that an orphaned retailer row can be fixed in Supabase Studio.
+11. Fix the `tsc --noEmit` error in `lib/garment/colour-fabric-regression.test.ts:49` (narrow on `ok` before reading `present`).
 
 ### Later — ideas and phases, not started
 

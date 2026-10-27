@@ -1,18 +1,22 @@
 import { NextResponse } from 'next/server';
+import { t } from '@/lib/i18n/strings';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { FitRulesetSchema, RulesetNameSchema, firstIssueMessage } from '@/lib/fit/rule-schema';
 
 export async function GET() {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!user) return NextResponse.json({ error: t.loginRequired.th }, { status: 401 });
 
   const { data, error } = await supabase
     .from('fit_rulesets')
     .select('id, name, rule, created_at')
     .eq('retailer_id', user.id)
     .order('created_at', { ascending: true });
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error('fit_rulesets read failed:', error.message);
+    return NextResponse.json({ error: t.loadFailed.th }, { status: 500 });
+  }
 
   return NextResponse.json({ rulesets: data });
 }
@@ -20,7 +24,7 @@ export async function GET() {
 export async function POST(req: Request) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!user) return NextResponse.json({ error: t.loginRequired.th }, { status: 401 });
 
   const body = await req.json().catch(() => null);
   if (!body) return NextResponse.json({ error: 'ข้อมูลไม่ถูกต้อง' }, { status: 400 });
@@ -38,7 +42,10 @@ export async function POST(req: Request) {
     .insert({ retailer_id: user.id, name: name.data, rule: rule.data })
     .select('id, name, rule, created_at')
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error('fit_rulesets insert failed:', error.message);
+    return NextResponse.json({ error: t.saveFailed.th }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true, ruleset: data });
 }

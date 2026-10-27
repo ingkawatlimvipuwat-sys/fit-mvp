@@ -94,7 +94,9 @@ export async function POST(req: Request) {
   if (trueColour) uploadedPaths.push(trueColour.path);
 
   let fabricPhoto: PhotoUpload | null | 'failed' = await uploadPhotoField(supabase, user.id, form, 'fabric_photo');
-  if (fabricPhoto === null && copySource && fabricParse.present) {
+  // "Remove this photo" ticked on a duplicate: save the copy without the fabric photo.
+  const skipFabricCopy = form.get('fabric_photo_remove') === '1';
+  if (fabricPhoto === null && copySource && fabricParse.present && !skipFabricCopy) {
     fabricPhoto = await copyStoredObject(supabase, user.id, copySource.fabric_photo_url);
   }
   if (fabricPhoto === 'failed') {

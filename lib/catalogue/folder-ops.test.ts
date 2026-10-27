@@ -16,10 +16,10 @@ describe('checkFolderMove', () => {
     expect(checkFolderMove(MINE, 'linen', null)).toEqual({ ok: true });
   });
   it("another shop's (or unknown) folder is 404", () => {
-    expect(checkFolderMove(MINE, 'theirs', null)).toMatchObject({ ok: false, status: 404 });
+    expect(checkFolderMove(MINE, 'theirs', null)).toMatchObject({ ok: false, status: 404, error: t.itemNotFound.th });
   });
   it("another shop's (or unknown) destination is 404", () => {
-    expect(checkFolderMove(MINE, 'linen', 'theirs')).toMatchObject({ ok: false, status: 404 });
+    expect(checkFolderMove(MINE, 'linen', 'theirs')).toMatchObject({ ok: false, status: 404, error: t.itemNotFound.th });
   });
   it('a move into itself or below itself is 409 with the Thai message (rule 5)', () => {
     expect(checkFolderMove(MINE, 'shirts', 'short')).toEqual({ ok: false, status: 409, error: t.folderCycle.th });

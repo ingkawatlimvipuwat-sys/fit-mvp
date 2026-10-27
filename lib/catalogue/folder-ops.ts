@@ -11,9 +11,9 @@ export type OpResult = { ok: true } | { ok: false; status: 404 | 409 | 500; erro
  * nonexistent one. Rule 5 (into itself or below itself) is a 409.
  */
 export function checkFolderMove(folders: FolderRow[], id: string, newParentId: string | null): OpResult {
-  if (!folders.some(f => f.id === id)) return { ok: false, status: 404, error: 'not found' };
+  if (!folders.some(f => f.id === id)) return { ok: false, status: 404, error: t.itemNotFound.th };
   if (newParentId !== null && !folders.some(f => f.id === newParentId)) {
-    return { ok: false, status: 404, error: 'not found' };
+    return { ok: false, status: 404, error: t.itemNotFound.th };
   }
   if (wouldCreateCycle(folders, id, newParentId)) return { ok: false, status: 409, error: t.folderCycle.th };
   return { ok: true };

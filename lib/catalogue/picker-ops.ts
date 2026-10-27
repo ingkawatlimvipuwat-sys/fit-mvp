@@ -13,11 +13,11 @@ export function nextPosition(pickers: PickerDef[]): number {
 export function parseBackfill(raw: unknown, versionIds: string[]):
   { ok: true; values: Record<string, string> } | { ok: false; error: string } {
   if (raw === undefined || raw === null) return { ok: true, values: {} };
-  if (typeof raw !== 'object' || Array.isArray(raw)) return { ok: false, error: 'invalid values' };
+  if (typeof raw !== 'object' || Array.isArray(raw)) return { ok: false, error: t.invalidPickerValues.th };
   const known = new Set(versionIds);
   const values: Record<string, string> = {};
   for (const [id, v] of Object.entries(raw as Record<string, unknown>)) {
-    if (!known.has(id) || typeof v !== 'string' || v.trim().length > 60) return { ok: false, error: 'invalid values' };
+    if (!known.has(id) || typeof v !== 'string' || v.trim().length > 60) return { ok: false, error: t.invalidPickerValues.th };
     if (v.trim() !== '') values[id] = v.trim();
   }
   return { ok: true, values };

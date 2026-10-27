@@ -96,6 +96,8 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
 
   const [colours, setColours] = useState<Colour[]>(initial?.colours ?? []);
   const [fabric, setFabric] = useState<FabricFormState>(initial?.fabric ?? emptyFabricForm());
+  // Ticked = take the current fabric photo off the garment (a newly picked file still wins).
+  const [removeFabricPhoto, setRemoveFabricPhoto] = useState(false);
 
   // The garment as the form opened, so strandedDimensions() only warns about
   // measurements lost by the retailer's own changes (2026-10-26, #8).
@@ -118,6 +120,7 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
     measurements: seedMeasurements(initial?.measurements),
     colours: initial?.colours ?? [],
     fabric: initial?.fabric ?? emptyFabricForm(),
+    removeFabricPhoto: false,
   }));
 
   const [presets, setPresets] = useState<PresetOption[]>([]);
@@ -132,7 +135,7 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
   // enough for this MVP-sized, plain-object state.
   function isDirty(): boolean {
     const current = JSON.stringify({
-      name, category, sizeLabel, picks, ruleChoice, useOverride, override, measurements, colours, fabric,
+      name, category, sizeLabel, picks, ruleChoice, useOverride, override, measurements, colours, fabric, removeFabricPhoto,
     });
     return current !== initialSnapshot || (photoRef.current?.files?.length ?? 0) > 0;
   }
@@ -236,6 +239,7 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
     form.set('fabric', JSON.stringify(fabric));
     if (trueColourFile) form.set('true_colour_photo', trueColourFile);
     if (fabricPhotoFile) form.set('fabric_photo', fabricPhotoFile);
+    else if (removeFabricPhoto) form.set('fabric_photo_remove', '1');
 
     setLoading(true);
     try {
@@ -447,6 +451,8 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
         fabric={fabric}
         onChange={setFabric}
         currentPhotoUrl={initial?.fabric_photo_url ?? null}
+        removePhoto={removeFabricPhoto}
+        onRemovePhotoChange={setRemoveFabricPhoto}
       />
 
       {error && <p className="text-sm text-red-600">{error}</p>}

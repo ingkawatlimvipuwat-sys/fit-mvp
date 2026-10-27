@@ -23,6 +23,8 @@ describe('parseBackfill', () => {
     expect(parseBackfill({ v1: 5 }, ['v1']).ok).toBe(false);
     expect(parseBackfill({ v1: 'x'.repeat(61) }, ['v1']).ok).toBe(false);
     expect(parseBackfill([], ['v1']).ok).toBe(false);
+    expect(parseBackfill({ zzz: 'L' }, ['v1'])).toEqual({ ok: false, error: t.invalidPickerValues.th });
+    expect(parseBackfill([], ['v1'])).toEqual({ ok: false, error: t.invalidPickerValues.th });
   });
 });
 

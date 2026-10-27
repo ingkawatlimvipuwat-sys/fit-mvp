@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { t } from '@/lib/i18n/strings';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { FitRulesetSchema, RulesetNameSchema, firstIssueMessage } from '@/lib/fit/rule-schema';
 
@@ -6,7 +7,7 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
   const params = await props.params;
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!user) return NextResponse.json({ error: t.loginRequired.th }, { status: 401 });
 
   const body = await req.json().catch(() => null);
   if (!body) return NextResponse.json({ error: 'ข้อมูลไม่ถูกต้อง' }, { status: 400 });
@@ -36,8 +37,11 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
     .eq('retailer_id', user.id)
     .select('id, name, rule, created_at')
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  if (!data) return NextResponse.json({ error: 'not found' }, { status: 404 });
+  if (error) {
+    console.error('fit_rulesets update failed:', error.message);
+    return NextResponse.json({ error: t.saveFailed.th }, { status: 500 });
+  }
+  if (!data) return NextResponse.json({ error: t.itemNotFound.th }, { status: 404 });
 
   return NextResponse.json({ ok: true, ruleset: data });
 }
@@ -46,7 +50,7 @@ export async function DELETE(_req: Request, props: { params: Promise<{ id: strin
   const params = await props.params;
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!user) return NextResponse.json({ error: t.loginRequired.th }, { status: 401 });
 
   // `on delete set null` on garments.fit_ruleset_id means affected garments
   // silently revert to their built-in fit_profile. No orphans, no broken evals.
@@ -55,7 +59,10 @@ export async function DELETE(_req: Request, props: { params: Promise<{ id: strin
     .delete()
     .eq('id', params.id)
     .eq('retailer_id', user.id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error('fit_rulesets delete failed:', error.message);
+    return NextResponse.json({ error: t.saveFailed.th }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true });
 }

@@ -46,8 +46,7 @@ export default function CatalogueBrowser({ products, folders, tags, shopSlug }: 
     const r = await sendJson(url, method, body);
     setBusy(false);
     if (!r.ok) {
-      // Raw English codes from the API ('not found', 'invalid body') are not for the owner's eyes.
-      setMessage(r.error && r.error !== 'not found' && r.error !== 'invalid body' ? r.error : t.saveFailed[lang]);
+      setMessage(r.error ?? t.saveFailed[lang]);
       router.refresh(); // a 'not found' usually means the list is stale (item deleted elsewhere)
       return false;
     }

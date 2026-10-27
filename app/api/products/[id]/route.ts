@@ -19,11 +19,11 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
   const params = await props.params;
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!user) return NextResponse.json({ error: t.loginRequired.th }, { status: 401 });
 
   const body = PatchBody.safeParse(await req.json().catch(() => null));
   if (!body.success || (body.data.name === undefined && body.data.folder_id === undefined)) {
-    return NextResponse.json({ error: 'invalid body' }, { status: 400 });
+    return NextResponse.json({ error: t.requestInvalid.th }, { status: 400 });
   }
   const update: { name?: string; folder_id?: string | null } = {};
   if (body.data.name !== undefined) {
@@ -56,7 +56,7 @@ export async function DELETE(_req: Request, props: { params: Promise<{ id: strin
   const params = await props.params;
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!user) return NextResponse.json({ error: t.loginRequired.th }, { status: 401 });
 
   const found = await loadProductContext(supabase, user.id, params.id);
   if (!found.ok) return NextResponse.json({ error: found.error }, { status: found.status });

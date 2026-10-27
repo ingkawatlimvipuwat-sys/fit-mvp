@@ -10,6 +10,7 @@ import { loadProductContext } from '@/lib/catalogue/ownership';
 import { parsePicksField } from '@/lib/catalogue/parse';
 import { checkPicksForWrite } from '@/lib/catalogue/version-write';
 import { COLOUR_FABRIC_NOT_SAVED } from '@/lib/garment/save-outcome';
+import { fabricPhotoPlan } from '@/lib/garment/fabric-photo';
 
 export async function PATCH(req: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -110,8 +111,10 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
   // Set when any colour/fabric write fails: the garment row is already saved,
   // so the response stays 200 but carries a warning the form shows.
   let sideWriteFailed = false;
-  // Set only when the fabric update/insert (the write that points at a new photo) fails.
+  // Set only when the fabric update/insert/delete (the write that changes which photo the row points at) fails.
   let fabricWriteFailed = false;
+  // Set when this save takes the fabric photo off the garment; the object is only deleted once the write succeeded.
+  let removeOldFabricPhoto = false;
 
   // Replace-all: the submitted list IS the truth. Only when the field was
   // actually present — an absent field must not delete anything (Rule 2).
@@ -130,12 +133,19 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
   if (fabricParse.present) {
     const fabric = fabricParse.fabric;
     // A cleared-out fabric still has a reason to exist if it holds a photo.
-    const photoUrl = fabricPic ? fabricPic.url : existingFabric?.fabric_photo_url ?? null;
+    // A new file wins over the "remove this photo" tick; removing with no photo is a no-op.
+    const plan = fabricPhotoPlan({
+      newUploadUrl: fabricPic ? fabricPic.url : null,
+      removeRequested: form.get('fabric_photo_remove') === '1',
+      existingUrl: existingFabric?.fabric_photo_url ?? null,
+    });
+    removeOldFabricPhoto = plan.deleteExisting;
+    const photoUrl = plan.nextUrl;
 
     if (isFabricEmpty(fabric) && !photoUrl) {
       const { error } = await supabase
         .from('garment_fabric').delete().eq('garment_id', params.id);
-      if (error) { console.error('garment_fabric delete failed (reported to the user):', error); sideWriteFailed = true; }
+      if (error) { console.error('garment_fabric delete failed (reported to the user):', error); sideWriteFailed = true; fabricWriteFailed = true; }
     } else if (existingFabric) {
       // Deliberately an explicit update, NOT .upsert(). PostgREST's ON CONFLICT
       // column set is not obvious, and guessing it wrong would silently drop the
@@ -147,6 +157,7 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
         .update({
           ...fabric,
           ...(fabricPic ? { fabric_photo_url: fabricPic.url } : {}),
+          ...(plan.deleteExisting ? { fabric_photo_url: null } : {}),
           updated_at: new Date().toISOString(),
         })
         .eq('garment_id', params.id);
@@ -177,6 +188,11 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
     await removeStoredObject(fabricPic.path, user.id);
   } else if (fabricPic && existingFabric?.fabric_photo_url) {
     await removeStoredPhoto(existingFabric.fabric_photo_url, user.id);
+  }
+  // The retailer took the photo off. Only delete the object once the row no longer
+  // points at it; if the write failed the row still references it.
+  if (removeOldFabricPhoto && !fabricWriteFailed) {
+    await removeStoredPhoto(existingFabric?.fabric_photo_url ?? null, user.id);
   }
 
   return NextResponse.json(sideWriteFailed ? { ok: true, warning: COLOUR_FABRIC_NOT_SAVED } : { ok: true });
