@@ -74,3 +74,24 @@ describe('0006_product_id_not_null.sql (spec §4.2)', () => {
     expect(raw6.toLowerCase()).toContain('run once');
   });
 });
+
+const raw8 = readFileSync(join(process.cwd(), 'supabase/migrations/0008_picker_value_order.sql'), 'utf8');
+const sql8 = raw8.replace(/--.*$/gm, '').toLowerCase();
+
+describe('0008_picker_value_order.sql (Stage 3, additive)', () => {
+  it('is one transaction', () => {
+    expect(sql8.trim().startsWith('begin;')).toBe(true);
+    expect(sql8.trim().endsWith('commit;')).toBe(true);
+    expect(sql8.split('begin;')).toHaveLength(2);
+    expect(sql8.split('commit;')).toHaveLength(2);
+  });
+  it('adds value_order with a default, idempotently, so live code keeps working', () => {
+    expect(sql8).toMatch(/alter table public\.product_pickers\s+add column if not exists value_order text\[\] not null default '\{\}'/);
+  });
+  it('never drops, renames or tightens anything, and adds no policy', () => {
+    expect(sql8).not.toMatch(/\bdrop\b/);
+    expect(sql8).not.toMatch(/rename/);
+    expect(sql8).not.toMatch(/set not null/);
+    expect(sql8).not.toMatch(/create policy/);
+  });
+});

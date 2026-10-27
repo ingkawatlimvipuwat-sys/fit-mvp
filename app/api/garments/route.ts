@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase/server';
 import { parseGarmentFields } from '@/lib/garment/parse-form';
 import { checkRulesetOwnership } from '@/lib/garment/ruleset-ownership';
 import { parseColoursField, parseFabricField, isFabricEmpty } from '@/lib/garment/colour-fabric';
@@ -36,6 +36,11 @@ export async function POST(req: Request) {
   const productFields = { product_id: product.ctx.id, picks: picksParse.picks };
 
   // Duplicate: the files of this garment are copied (never shared) when the form sends no new file.
+  // The copy runs with the admin client: Storage has no read policy for owners (the bucket is
+  // public, reads go through public URLs), so a copy as the owner answers "Object not found".
+  // copyStoredObject only copies within the caller's own folder, and the source garment is
+  // ownership-checked below.
+  const copier = createSupabaseAdminClient();
   let copySource: { photo_url: string | null; true_colour_photo_url: string | null; fabric_photo_url: string | null } | null = null;
   const copyFromRaw = String(form.get('copy_from') ?? '').trim();
   if (copyFromRaw) {
@@ -70,7 +75,7 @@ export async function POST(req: Request) {
   // uploadPhotoField() returns null for exactly the "absent or empty" case.
   let uploaded: PhotoUpload | null | 'failed' = await uploadPhotoField(supabase, user.id, form, 'photo');
   if (uploaded === null && copySource) {
-    uploaded = await copyStoredObject(supabase, user.id, copySource.photo_url);
+    uploaded = await copyStoredObject(copier, user.id, copySource.photo_url);
   }
   if (uploaded === null) {
     return NextResponse.json({ error: t.photoRequired.th }, { status: 400 });
@@ -85,7 +90,7 @@ export async function POST(req: Request) {
 
   let trueColour: PhotoUpload | null | 'failed' = await uploadPhotoField(supabase, user.id, form, 'true_colour_photo');
   if (trueColour === null && copySource) {
-    trueColour = await copyStoredObject(supabase, user.id, copySource.true_colour_photo_url);
+    trueColour = await copyStoredObject(copier, user.id, copySource.true_colour_photo_url);
   }
   if (trueColour === 'failed') {
     await supabase.storage.from(PHOTO_BUCKET).remove(uploadedPaths).catch(() => {});
@@ -97,7 +102,7 @@ export async function POST(req: Request) {
   // "Remove this photo" ticked on a duplicate: save the copy without the fabric photo.
   const skipFabricCopy = form.get('fabric_photo_remove') === '1';
   if (fabricPhoto === null && copySource && fabricParse.present && !skipFabricCopy) {
-    fabricPhoto = await copyStoredObject(supabase, user.id, copySource.fabric_photo_url);
+    fabricPhoto = await copyStoredObject(copier, user.id, copySource.fabric_photo_url);
   }
   if (fabricPhoto === 'failed') {
     await supabase.storage.from(PHOTO_BUCKET).remove(uploadedPaths).catch(() => {});

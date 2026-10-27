@@ -31,7 +31,7 @@ export async function loadProductContext(
   if (!product) return fail404;
 
   const [{ data: pickers, error: pErr }, { data: versions, error: vErr }] = await Promise.all([
-    supabase.from('product_pickers').select('id, name, position')
+    supabase.from('product_pickers').select('id, name, position, value_order')
       .eq('product_id', productId).order('position', { ascending: true }),
     supabase.from('garments').select('id, picks, created_at, category, measurements')
       .eq('product_id', productId).eq('retailer_id', userId).order('created_at', { ascending: true }),

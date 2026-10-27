@@ -5,7 +5,8 @@ import { PHOTO_BUCKET, pathFromPublicUrl, storageKeyFor, type PhotoUpload } from
  * Copy one stored object to a new path under the same owner and return the new
  * public URL and path. Null for a null/unreadable url, 'failed' on error or
  * when the source is not under the caller's own prefix (never copy another
- * shop's file). Duplicate never shares one URL between two versions: replacing
+ * shop's file) — which is what makes it safe to pass the admin client, as the
+ * garment route does. Duplicate never shares one URL between two versions: replacing
  * or deleting one version's photo must not break the other (spec 5.4).
  */
 export async function copyStoredObject(

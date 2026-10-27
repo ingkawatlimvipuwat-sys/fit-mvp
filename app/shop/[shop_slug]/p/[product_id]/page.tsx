@@ -44,13 +44,13 @@ export default async function ProductPage(props: { params: Promise<Params> }) {
 
   const [
     { data: product, error: productError },
-    { data: pickerRows },
+    { data: pickerRows, error: pickerError },
     { data: versionRows },
     { data: otherProducts },
   ] = await Promise.all([
     supabase.from('products').select('id, name')
       .eq('id', params.product_id).eq('retailer_id', shop.id).single(),
-    supabase.from('product_pickers').select('id, name, position')
+    supabase.from('product_pickers').select('id, name, position, value_order')
       .eq('product_id', params.product_id).order('position', { ascending: true }),
     supabase.from('garments')
       .select('id, category, size_label, photo_url, true_colour_photo_url, picks, created_at')
@@ -64,6 +64,9 @@ export default async function ProductPage(props: { params: Promise<Params> }) {
     throw new Error('shop data unavailable: ' + productError.message);
   }
   if (!product) notFound();
+  // Without pickers every version looks complete and the first one is shown, so a
+  // failed picker read would give fit verdicts for a size the shopper never chose.
+  if (pickerError) throw new Error('shop data unavailable: ' + pickerError.message);
 
   const pickers = (pickerRows ?? []) as PickerDef[];
   const pickerIds = pickers.map(p => p.id);

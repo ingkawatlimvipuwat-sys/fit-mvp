@@ -2,13 +2,19 @@
 import Link from 'next/link';
 import { t } from '@/lib/i18n/strings';
 import { useLanguage } from '@/lib/hooks/useLanguage';
+import { DRAG_TYPE, type DragItem } from '@/lib/catalogue/folders';
 import type { ProductSummary } from '@/lib/catalogue/summary';
 import ActionsMenu from './ActionsMenu';
 
 export default function ProductGrid({
-  products, shopSlug, emptyText, onMove,
+  products, shopSlug, emptyText, onMove, draggable, draggingId, onDragStart, onDragEnd,
 }: {
   products: ProductSummary[]; shopSlug: string | null; emptyText: string; onMove: (p: ProductSummary) => void;
+  /** Cards can be picked up (computer, nothing saving). */
+  draggable?: boolean;
+  draggingId?: string | null;
+  onDragStart?: (item: DragItem) => void;
+  onDragEnd?: () => void;
 }) {
   const [lang] = useLanguage();
 
@@ -20,12 +26,24 @@ export default function ProductGrid({
     <ul className="grid grid-cols-2 gap-4 lg:grid-cols-3">
       {products.map(p => (
         // No overflow-hidden on the <li>: it would clip the ⋯ dropdown. The photo box clips instead.
-        <li key={p.id} className="rounded border bg-white">
-          <Link href={`/dashboard/product/${p.id}`} className="block">
+        <li
+          key={p.id}
+          className={`rounded border bg-white ${draggingId === p.id ? 'opacity-50' : ''}`}
+          draggable={draggable || undefined}
+          onDragStart={draggable ? e => {
+            e.dataTransfer.setData(DRAG_TYPE, p.id);
+            e.dataTransfer.effectAllowed = 'move';
+            const item: DragItem = { kind: 'product', id: p.id, name: p.name, folderId: p.folder_id };
+            setTimeout(() => onDragStart?.(item), 0); // a DOM change inside dragstart cancels the drag in Chrome
+          } : undefined}
+          onDragEnd={draggable ? onDragEnd : undefined}
+        >
+          {/* draggable={false} on the link and picture: the whole card moves, not the link URL or the image. */}
+          <Link href={`/dashboard/product/${p.id}`} className="block" draggable={false}>
             <div className="aspect-square overflow-hidden rounded-t bg-gray-100">
               {p.photo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={p.photo_url} alt={p.name} className="h-full w-full object-cover" />
+                <img src={p.photo_url} alt={p.name} className="h-full w-full object-cover" draggable={false} />
               ) : null}
             </div>
             <div className="p-3">

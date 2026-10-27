@@ -49,6 +49,8 @@ export interface ProductPicker {
   product_id: string;
   name: string;
   position: number;
+  /** Owner's order of this picker's values (migration 0008). Empty = first-used order. See orderedValues(). */
+  value_order: string[];
 }
 
 export interface Folder {

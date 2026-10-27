@@ -11,8 +11,10 @@ const SORT_TEXT = {
 const SORT_KEYS: SortKey[] = ['newest', 'oldest', 'az', 'za'];
 
 /** Search, tag filter, sort, ⚠ Needs attention and Clear. Every change goes up as a whole new view. */
-export default function CatalogueToolbar({ view, tags, onChange }: {
+export default function CatalogueToolbar({ view, tags, onChange, onManageTags }: {
   view: DashboardView; tags: TagRow[]; onChange: (next: DashboardView) => void;
+  /** Opens the Manage tags panel; the button is hidden when absent. */
+  onManageTags?: () => void;
 }) {
   const [lang] = useLanguage();
   const [draft, setDraft] = useState(view.q);
@@ -94,6 +96,11 @@ export default function CatalogueToolbar({ view, tags, onChange }: {
       >
         ⚠ {t.needsAttention[lang]}
       </button>
+      {onManageTags && (
+        <button type="button" onClick={onManageTags} className={`${control} text-gray-700`}>
+          🏷 {t.manageTags[lang]}
+        </button>
+      )}
       {isFiltered(view) && (
         <button
           type="button"
