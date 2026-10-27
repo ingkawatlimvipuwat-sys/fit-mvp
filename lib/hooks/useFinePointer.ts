@@ -13,8 +13,13 @@ export function useFinePointer(): boolean {
     const mq = window.matchMedia('(pointer: fine)');
     const update = () => setFine(mq.matches);
     update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
+    // Safari 13 and older only have the deprecated addListener.
+    if (typeof mq.addEventListener === 'function') {
+      mq.addEventListener('change', update);
+      return () => mq.removeEventListener('change', update);
+    }
+    mq.addListener(update);
+    return () => mq.removeListener(update);
   }, []);
   return fine;
 }
