@@ -73,7 +73,7 @@ export default function CatalogueToolbar({ view, tags, onChange, onManageTags }:
             type="button"
             aria-label={t.removeTag[lang].replace('{name}', x.name)}
             onClick={() => onChange({ ...view, tagIds: view.tagIds.filter(id => id !== x.id) })}
-            className="text-gray-500"
+            className="-my-2 -mr-2 p-2 text-gray-500"
           >
             ✕
           </button>

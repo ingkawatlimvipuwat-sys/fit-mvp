@@ -48,7 +48,7 @@ export default function ProductTags({ productId, tags, suggestions }: {
               disabled={busy}
               aria-label={t.removeTag[lang].replace('{name}', tag.name)}
               onClick={() => call(`/api/products/${productId}/tags/${tag.id}`, 'DELETE')}
-              className="text-gray-500 disabled:opacity-60"
+              className="-my-2 -mr-2 p-2 text-gray-500 disabled:opacity-60"
             >
               ✕
             </button>
@@ -63,7 +63,7 @@ export default function ProductTags({ productId, tags, suggestions }: {
             onChange={e => setDraft(e.target.value)}
             placeholder={t.addTagPlaceholder[lang]}
             aria-label={t.tags[lang]}
-            className="rounded border border-gray-300 px-2 py-0.5 text-xs"
+            className="rounded border border-gray-300 px-2 py-1.5 text-xs sm:py-0.5"
           />
           <datalist id="shop-tag-suggestions">
             {suggestions.map(s => <option key={s.id} value={s.name} />)}
