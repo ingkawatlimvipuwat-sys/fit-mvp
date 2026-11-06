@@ -28,11 +28,11 @@ export default function ActionsMenu({ trigger, ariaLabel, triggerClassName, item
       <summary
         aria-label={ariaLabel}
         className={`cursor-pointer list-none [&::-webkit-details-marker]:hidden ${
-          disabled ? 'pointer-events-none opacity-60 ' : ''}${triggerClassName ?? 'rounded px-2 text-gray-500 hover:bg-gray-100'}`}
+          disabled ? 'pointer-events-none opacity-60 ' : ''}${triggerClassName ?? 'rounded px-3 py-2 text-gray-500 hover:bg-gray-100 sm:px-2 sm:py-0'}`}
       >
         {trigger}
       </summary>
-      <ul className="absolute right-0 z-10 mt-1 w-44 rounded border bg-white py-1 shadow-lg">
+      <ul className="absolute right-0 z-10 mt-1 w-36 rounded border bg-white py-1 shadow-lg">
         {items.map(i => (
           <li key={i.text}>
             {i.href ? (

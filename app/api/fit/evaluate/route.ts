@@ -8,7 +8,8 @@ import { resolveRuleset } from '@/lib/fit/resolve';
 import { t } from '@/lib/i18n/strings';
 import { createFixedWindowLimiter, clientIpFrom } from '@/lib/rate-limit';
 import {
-  EVALUATE_PER_IP_PER_MINUTE, SESSION_WRITE_WINDOW_MS, decideSessionWrite, normaliseCustomerToken,
+  EVALUATE_PER_IP_PER_MINUTE, SESSION_WRITE_WINDOW_MS, countRecentShopSessions, decideSessionWrite,
+  normaliseCustomerToken,
 } from '@/lib/fit/session-gate';
 
 // Per server instance only (see lib/rate-limit.ts): a speed bump, not a guarantee.
@@ -47,7 +48,7 @@ export async function POST(req: Request) {
   const supabase = createSupabaseAdminClient();
   const { data: garment, error: gErr } = await supabase
     .from('garments')
-    .select('measurements, fit_profile, fit_ruleset_id, fit_rule_override')
+    .select('retailer_id, measurements, fit_profile, fit_ruleset_id, fit_rule_override')
     .eq('id', garment_id)
     .single();
   if (gErr || !garment) return NextResponse.json({ error: t.itemNotFound.th }, { status: 404 });
@@ -80,7 +81,7 @@ export async function POST(req: Request) {
   const now = Date.now();
   const since = new Date(now - SESSION_WRITE_WINDOW_MS).toISOString();
   const [countRes, lastRes] = await Promise.all([
-    supabase.from('fit_sessions').select('id', { count: 'exact', head: true }).gte('created_at', since),
+    countRecentShopSessions(supabase, garment.retailer_id, since),
     token
       ? supabase.from('fit_sessions')
           .select('customer_measurements, created_at')
