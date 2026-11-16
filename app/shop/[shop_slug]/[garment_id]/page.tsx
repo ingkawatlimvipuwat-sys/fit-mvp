@@ -101,7 +101,7 @@ export default async function HeroPage(props: { params: Promise<{ shop_slug: str
       <ShopHeader shopName={shop.shop_name} shopSlug={params.shop_slug} />
       <main className="mx-auto max-w-2xl px-4 py-4">
         <BackLink shopSlug={params.shop_slug} />
-        <div className="mt-3 aspect-square overflow-hidden rounded bg-gray-100">
+        <div className="mt-3 aspect-square overflow-hidden rounded-2xl bg-line">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={garment.photo_url} alt={garment.name} className="h-full w-full object-cover" />
         </div>

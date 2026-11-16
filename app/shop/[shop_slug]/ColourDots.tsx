@@ -18,14 +18,14 @@ export default function ColourDots({
           <li
             key={i}
             // A thin border so a white or near-white colour still reads as a dot.
-            className="h-3 w-3 rounded-full border border-gray-300"
+            className="h-3 w-3 rounded-full border border-control"
             style={{ backgroundColor: c.hex }}
             title={c.name}
           />
         ))}
       </ul>
       {extra > 0 && (
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-muted">
           {t.moreColours[lang].replace('{n}', String(extra))}
         </span>
       )}

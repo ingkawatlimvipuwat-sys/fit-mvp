@@ -97,21 +97,21 @@ export default async function ShopPage(props: { params: Promise<{ shop_slug: str
   return (
     <>
       <ShopHeader shopName={shop.shop_name} shopSlug={params.shop_slug} />
-      <main className="mx-auto max-w-4xl px-6 py-8">
+      <main className="mx-auto max-w-4xl px-4 py-5 sm:px-6 sm:py-8">
       {garments.length === 0 ? (
         <NoGarments />
       ) : (
-        <ul className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
           {garments.map(g => (
             <li key={g.key}>
-              <Link href={g.href} className="block overflow-hidden rounded border bg-white">
-                <div className="aspect-square bg-gray-100">
+              <Link href={g.href} className="block overflow-hidden rounded-[14px] border border-line bg-surface hover:border-control">
+                <div className="aspect-square bg-[#DDE1E6]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={g.photo_url} alt={g.name} className="h-full w-full object-cover" />
                 </div>
-                <div className="p-3 text-sm">
-                  {g.name}
-                  <div className="mt-1.5">
+                <div className="space-y-1.5 p-3">
+                  <div className="break-words font-semibold text-ink">{g.name}</div>
+                  <div>
                     <ColourDots colours={coloursByGarment.get(g.colourFrom) ?? []} />
                   </div>
                 </div>

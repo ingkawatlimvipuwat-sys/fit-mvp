@@ -38,11 +38,11 @@ export default function FabricPanel({ fabric }: { fabric: GarmentFabric }) {
           {chips.map(c => (
             <li
               key={c.group}
-              className="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm"
+              className="flex items-center gap-1.5 min-h-[36px] rounded-full border border-control bg-surface px-3 py-1.5 text-sm text-ink"
             >
               <svg
                 viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"
-                fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-500"
+                fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted"
               >
                 {ICONS[c.group]}
               </svg>
@@ -58,7 +58,7 @@ export default function FabricPanel({ fabric }: { fabric: GarmentFabric }) {
       {chips.some(c => CHIP_HINTS[c.group]) && (
         <div className="mt-2 space-y-0.5">
           {chips.filter(c => CHIP_HINTS[c.group]).map(c => (
-            <p key={c.group} className="text-xs text-gray-400">
+            <p key={c.group} className="text-xs text-muted">
               {t[c.group][lang]}: {t[CHIP_HINTS[c.group]!][lang]}
             </p>
           ))}
@@ -67,18 +67,18 @@ export default function FabricPanel({ fabric }: { fabric: GarmentFabric }) {
 
       {fabric.fabric_photo_url && (
         /* eslint-disable-next-line @next/next/no-img-element */
-        <img src={fabric.fabric_photo_url} alt="" className="mt-4 w-full rounded" />
+        <img src={fabric.fabric_photo_url} alt="" className="mt-4 w-full rounded-[14px]" />
       )}
 
       {rows.length > 0 && (
         <details className="mt-4">
-          <summary className="cursor-pointer text-sm text-gray-600">
+          <summary className="inline-flex min-h-[44px] cursor-pointer items-center text-sm font-medium text-accent">
             {t.fabricTechnicalDetails[lang]}
           </summary>
           <dl className="mt-2 text-sm">
             {rows.map(r => (
               <div key={r.key} className="flex gap-4 py-0.5">
-                <dt className="w-32 shrink-0 text-gray-500">{t[labelKey(r.key)][lang]}</dt>
+                <dt className="w-32 shrink-0 text-muted">{t[labelKey(r.key)][lang]}</dt>
                 {/* The retailer's own words, shown as-is. React escapes it. */}
                 <dd className="break-words">{r.value}</dd>
               </div>

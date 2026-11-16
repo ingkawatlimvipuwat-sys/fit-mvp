@@ -25,7 +25,7 @@ export default function DashboardHeader({ shopName, shopSlug }: { shopName: stri
         </div>
         <div className="order-2 flex items-center gap-2 py-2 sm:order-none">
           {shopSlug && <CopyPublicLink slug={shopSlug} />}
-          <LanguageToggle tone="light" />
+          <LanguageToggle />
           <LogoutButton />
         </div>
       </div>

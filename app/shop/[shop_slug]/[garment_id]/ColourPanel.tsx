@@ -19,14 +19,14 @@ export default function ColourPanel({
               {/* A thin border so white and near-white swatches still read as a
                   swatch rather than as a gap in the row. */}
               <span
-                className="block h-12 w-12 rounded border border-gray-300"
+                className="block h-12 w-12 rounded border border-control"
                 style={{ backgroundColor: c.hex }}
                 aria-hidden="true"
               />
-              <span className="mt-1 block break-words text-xs text-gray-700">{c.name}</span>
+              <span className="mt-1 block break-words text-xs text-ink">{c.name}</span>
               {/* The code itself, so a shopper can check or match the exact
                   colour rather than trusting their screen's rendering of it. */}
-              <span className="block font-mono text-[10px] uppercase text-gray-400">{c.hex}</span>
+              <span className="block font-mono text-[10px] uppercase text-muted">{c.hex}</span>
             </li>
           ))}
         </ul>
@@ -35,15 +35,15 @@ export default function ColourPanel({
       {trueColourPhotoUrl && (
         <figure className="mt-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={trueColourPhotoUrl} alt="" className="w-full rounded" />
-          <figcaption className="mt-1 text-xs text-gray-500">
+          <img src={trueColourPhotoUrl} alt="" className="w-full rounded-[14px]" />
+          <figcaption className="mt-1 text-xs text-muted">
             {t.trueColourCaption[lang]}
           </figcaption>
         </figure>
       )}
 
       {/* Honest, one line, not a banner. */}
-      <p className="mt-3 text-xs text-gray-400">{t.screenColourDisclaimer[lang]}</p>
+      <p className="mt-3 text-xs text-muted">{t.screenColourDisclaimer[lang]}</p>
     </div>
   );
 }
