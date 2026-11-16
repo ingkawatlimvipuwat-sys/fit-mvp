@@ -46,7 +46,8 @@ describe('a request with no colour or fabric fields', () => {
     expect(empty.ok && empty.present).toBe(true);
     expect(empty.ok && empty.present && empty.colours).toEqual([]);
 
-    expect(parseFabricField(cleared).ok && parseFabricField(cleared).present).toBe(true);
+    const fabric = parseFabricField(cleared);
+    expect(fabric.ok && fabric.present).toBe(true);
   });
 
   it('parses the garment fields it does carry without complaint', () => {
