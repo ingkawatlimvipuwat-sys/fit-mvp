@@ -1,7 +1,7 @@
 # UI redesign — design spec
 
 **Date:** 2026-11-16
-**Status:** Draft — direction chosen, three decisions open (see §8)
+**Status:** Approved 2026-11-16. Stages 1–3 built on `feature/ui-redesign`; stages 4–6 not started.
 **Why now:** the founder is preparing a demo and wants the app to look finished, not like a prototype.
 
 ## 1. Decision so far
@@ -159,7 +159,15 @@ Stages 1–2 are the minimum for the demo. If time is short, stop there: the sho
 new and the dashboard will still be the old look, which is acceptable if the demo is led from
 the shopper's phone.
 
-## 8. Decisions for the founder
+## 8. Decisions (settled by the founder, 2026-11-16)
+
+The founder accepted all three recommendations below: keep the ease bar, build the other-sizes
+row after the demo, and label try-on "Sample" rather than hide it. The demo date is still not known.
+
+As built, two details differ from §4: the summary is a count plus one line per verdict group
+("พอดี 3 จาก 4 จุด" / "พอดีตัว: ไหล่"), not a free sentence, so no new judgement text is invented; and
+the rule numbers travel in a sibling `rules` field of the response rather than inside each
+measurement, so the saved `result` shape is unchanged.
 
 1. **Ease bar — keep?** Recommended: yes. It is the one element that shows *how close* a fit is,
    and it only needs three numbers added to an existing response.
