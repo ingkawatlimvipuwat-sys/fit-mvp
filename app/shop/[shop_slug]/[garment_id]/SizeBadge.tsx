@@ -7,5 +7,5 @@ export default function SizeBadge({ sizeLabel }: { sizeLabel: string | null }) {
   const [lang] = useLanguage();
   const text = displaySizeLabel(sizeLabel, lang);
   if (!text) return null;
-  return <p className="mt-1 text-sm text-gray-600">{text}</p>;
+  return <p className="mt-1 text-sm text-muted">{text}</p>;
 }

@@ -6,6 +6,7 @@ import {
   availableValues, normPick, orderedValues, resolveVersion,
   type PickerDef, type Picks,
 } from '@/lib/catalogue/picks';
+import Chip from '@/app/components/ui/Chip';
 import FitChecker from '../../[garment_id]/FitChecker';
 import GarmentTabs from '../../[garment_id]/GarmentTabs';
 import TryOn from '../../[garment_id]/TryOn';
@@ -48,39 +49,32 @@ export default function ProductView({
 
   return (
     <>
-      <div className="mt-3 aspect-square overflow-hidden rounded bg-gray-100">
+      <div className="mt-1 aspect-square overflow-hidden rounded-2xl bg-line">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={shown.photo_url} alt={name} className="h-full w-full object-cover" />
       </div>
-      <h1 className="mt-4 text-2xl font-semibold">{name}</h1>
+      <h1 className="mt-4 text-[22px] font-semibold leading-snug">{name}</h1>
       <SizeBadge sizeLabel={selected?.size_label ?? null} />
 
       {pickers.map(p => {
         const ok = availableValues(versions, pickerIds, selection, p.id);
         return (
           <div key={p.id} className="mt-4">
-            <div className="text-sm font-medium text-gray-700">{p.name}</div>
+            <div className="text-[13px] font-semibold text-muted">{p.name}</div>
             <div className="mt-2 flex flex-wrap gap-2">
               {orderedValues(versions, p.id, p.value_order).map(value => {
                 const chosen = normPick(selection[p.id]) === normPick(value);
                 const enabled = ok.has(normPick(value));
                 return (
-                  <button
+                  <Chip
                     key={value}
-                    type="button"
                     disabled={!enabled && !chosen}
-                    aria-pressed={chosen}
+                    selected={chosen}
                     onClick={() => toggle(p.id, value)}
-                    className={`rounded border px-3 py-1.5 text-sm ${
-                      chosen
-                        ? 'border-gray-900 bg-gray-900 text-white'
-                        : enabled
-                          ? 'border-gray-300 bg-white text-gray-900'
-                          : 'border-gray-200 bg-gray-50 text-gray-300 line-through'
-                    }`}
+                    className={!enabled && !chosen ? '!border-dashed !bg-page !text-muted line-through' : ''}
                   >
                     {value}
-                  </button>
+                  </Chip>
                 );
               })}
             </div>
@@ -97,7 +91,11 @@ export default function ProductView({
       >
         {/* One FitChecker for the page's whole life, never keyed by version:
             it holds the shopper's typed measurements. */}
-        <FitChecker garmentId={selected?.id ?? null} dimensions={(selected ?? shown).dims} />
+        <FitChecker
+          garmentId={selected?.id ?? null}
+          dimensions={(selected ?? shown).dims}
+          sizeLabel={selected?.size_label ?? null}
+        />
       </GarmentTabs>
 
       <TryOn />

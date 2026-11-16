@@ -47,7 +47,7 @@ export default function GarmentTabs({
 
   return (
     <div className="mt-4">
-      <div role="tablist" className="flex gap-1 border-b">
+      <div role="tablist" className="flex gap-6 border-y border-line bg-surface px-4">
         {tabs.map(x => (
           <button
             key={x.key}
@@ -55,10 +55,10 @@ export default function GarmentTabs({
             type="button"
             aria-selected={activeTab === x.key}
             onClick={() => setTab(x.key)}
-            className={`px-4 py-2 text-sm ${
+            className={`h-12 ${
               activeTab === x.key
-                ? 'border-b-2 border-gray-900 font-medium text-gray-900'
-                : 'text-gray-500'
+                ? 'font-semibold text-ink shadow-[inset_0_-3px_0_#0B5C63]'
+                : 'font-medium text-muted'
             }`}
           >
             {x.label}
@@ -73,20 +73,20 @@ export default function GarmentTabs({
         not add a flex/grid class to these wrappers or it overrides that.
       */}
       <div hidden={activeTab !== 'fit'}>
-        {waiting && <p className="mt-3 text-sm text-gray-600">{pickFirst}</p>}
+        {waiting && <p className="mt-3 text-sm text-muted">{pickFirst}</p>}
         {children}
       </div>
       {hasColour && (
         <div hidden={activeTab !== 'colour'}>
           {waiting
-            ? <p className="mt-3 text-sm text-gray-600">{pickFirst}</p>
+            ? <p className="mt-3 text-sm text-muted">{pickFirst}</p>
             : <ColourPanel colours={colours} trueColourPhotoUrl={trueColourPhotoUrl} />}
         </div>
       )}
       {hasFabric && (waiting || fabric) && (
         <div hidden={activeTab !== 'fabric'}>
           {waiting
-            ? <p className="mt-3 text-sm text-gray-600">{pickFirst}</p>
+            ? <p className="mt-3 text-sm text-muted">{pickFirst}</p>
             : fabric && <FabricPanel fabric={fabric} />}
         </div>
       )}
