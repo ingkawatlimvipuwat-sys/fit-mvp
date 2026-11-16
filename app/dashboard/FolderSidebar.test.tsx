@@ -23,7 +23,7 @@ function mount(dragging: DragItem | null, extra: { hoverId?: string | null } = {
   );
   return spies;
 }
-const row = (name: string) => screen.getByText(`📁 ${name}`).closest('[data-drop-row]') as HTMLElement;
+const row = (name: string) => screen.getByText(name).closest('[data-drop-row]') as HTMLElement;
 const product: DragItem = { kind: 'product', id: 'p', name: 'P', folderId: 'linen' };
 const shirts: DragItem = { kind: 'folder', id: 'shirts', name: 'Shirts' };
 
@@ -48,13 +48,13 @@ describe('FolderSidebar drag-and-drop', () => {
   it('a folder is refused by its own subfolder, which turns red while hovered', () => {
     const s = mount(shirts, { hoverId: 'linen' });
     expect(fireEvent.dragOver(row('Linen'), { dataTransfer: dt() })).toBe(true);
-    expect(row('Linen').className).toContain('ring-red-300');
+    expect(row('Linen').className).toContain('ring-verdict-tight-fg');
     fireEvent.drop(row('Linen'), { dataTransfer: dt() });
     expect(s.onDropOn).not.toHaveBeenCalled();
   });
   it('an accepted row turns blue while hovered', () => {
     mount(shirts, { hoverId: 'trousers' });
-    expect(row('Trousers').className).toContain('ring-blue-400');
+    expect(row('Trousers').className).toContain('ring-accent');
   });
   it('with nothing being dragged, rows ignore drags (e.g. a file from the desktop)', () => {
     const s = mount(null);

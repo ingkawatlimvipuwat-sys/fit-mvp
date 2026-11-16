@@ -12,20 +12,19 @@ export default function DashboardNav() {
   const isFitRulesActive = pathname.startsWith('/dashboard/fit-rules');
 
   const tabClass = (active: boolean) =>
-    active
-      ? 'border-b-2 border-gray-900 px-1 py-3 text-sm font-medium text-gray-900'
-      : 'border-b-2 border-transparent px-1 py-3 text-sm text-gray-500 hover:text-gray-900';
+    `flex h-12 items-center px-3.5 text-base sm:h-[60px] ${
+      active
+        ? 'font-semibold text-ink shadow-[inset_0_-3px_0_theme(colors.accent.DEFAULT)]'
+        : 'font-medium text-muted hover:text-ink'}`;
 
   return (
-    <nav className="border-b bg-gray-50 px-6">
-      <div className="flex items-center gap-6">
-        <Link href="/dashboard" className={tabClass(isGarmentsActive)}>
-          {t.navGarments[lang]}
-        </Link>
-        <Link href="/dashboard/fit-rules" className={tabClass(isFitRulesActive)}>
-          {t.fitRulesNav[lang]}
-        </Link>
-      </div>
+    <nav className="flex gap-1">
+      <Link href="/dashboard" className={tabClass(isGarmentsActive)} aria-current={isGarmentsActive ? 'page' : undefined}>
+        {t.navGarments[lang]}
+      </Link>
+      <Link href="/dashboard/fit-rules" className={tabClass(isFitRulesActive)} aria-current={isFitRulesActive ? 'page' : undefined}>
+        {t.fitRulesNav[lang]}
+      </Link>
     </nav>
   );
 }

@@ -4,7 +4,6 @@ import { summariseProducts } from '@/lib/catalogue/summary';
 import type { FolderRow } from '@/lib/catalogue/folders';
 import { tagsInUse, tagUsage, type ProductTagRow, type TagRow } from '@/lib/catalogue/tags';
 import type { Category, MeasurementBag } from '@/lib/supabase/types';
-import CopyPublicLink from './CopyPublicLink';
 import CatalogueBrowser from './CatalogueBrowser';
 
 export const metadata = { title: 'แดชบอร์ด — Fit MVP' };
@@ -51,13 +50,7 @@ export default async function DashboardPage() {
   );
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-xl font-semibold">{retailer?.shop_name}</h1>
-
-      {retailer?.shop_slug && (
-        <CopyPublicLink slug={retailer.shop_slug} />
-      )}
-
+    <div>
       <Suspense fallback={null}>
         <CatalogueBrowser
           products={cards}

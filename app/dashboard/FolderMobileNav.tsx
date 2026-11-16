@@ -3,6 +3,7 @@ import { t } from '@/lib/i18n/strings';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { childFolders } from '@/lib/catalogue/folders';
 import ActionsMenu from './ActionsMenu';
+import { ChevronLeftIcon, FolderIcon } from './icons';
 import type { FolderNavProps } from './FolderSidebar';
 
 /** Phone only (spec §5.1): the folder list becomes a "‹ back" header plus the folders directly inside. */
@@ -20,13 +21,13 @@ export default function FolderMobileNav({ folders, currentId, onOpen, onRename, 
           <button
             type="button"
             onClick={() => onOpen(current.parent_id)}
-            className="shrink-0 rounded px-2 py-1 text-sm text-blue-700"
+            className="inline-flex min-h-[44px] shrink-0 items-center gap-1 rounded-[10px] pr-2 text-sm font-medium text-accent hover:text-accent-dark"
           >
-            ‹ {parentName}
+            <ChevronLeftIcon />
+            {parentName}
           </button>
-          <span className="min-w-0 grow truncate font-semibold">{current.name}</span>
+          <span className="min-w-0 grow truncate font-semibold text-ink">{current.name}</span>
           <ActionsMenu
-            trigger="⋯"
             ariaLabel={t.moreActions[lang]}
             items={[
               { text: t.renameFolder[lang], onSelect: () => onRename(current) },
@@ -36,16 +37,17 @@ export default function FolderMobileNav({ folders, currentId, onOpen, onRename, 
           />
         </div>
       ) : (
-        <h2 className="font-semibold">{t.allItems[lang]}</h2>
+        <h2 className="font-semibold text-ink">{t.allItems[lang]}</h2>
       )}
       {childFolders(folders, currentId).map(f => (
         <button
           key={f.id}
           type="button"
           onClick={() => onOpen(f.id)}
-          className="block w-full truncate rounded border bg-white px-3 py-2 text-left text-sm"
+          className="flex min-h-[44px] w-full items-center gap-2 rounded-[10px] border border-line bg-surface px-3 text-left text-base font-medium text-ink"
         >
-          📁 {f.name}
+          <FolderIcon />
+          <span className="truncate">{f.name}</span>
         </button>
       ))}
     </div>

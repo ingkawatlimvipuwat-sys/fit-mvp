@@ -3,6 +3,7 @@ import { t } from '@/lib/i18n/strings';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { DRAG_TYPE, dropVerdict, folderLines, type DragItem, type FolderRow } from '@/lib/catalogue/folders';
 import ActionsMenu from './ActionsMenu';
+import { FolderIcon } from './icons';
 
 export interface FolderNavProps {
   folders: FolderRow[];
@@ -34,11 +35,11 @@ export default function FolderSidebar({
   const verdict = (id: string | null) => (dragging ? dropVerdict(folders, dragging, id) : null);
 
   const rowClass = (active: boolean, id: string | null) => {
-    let c = `flex items-center rounded hover:bg-gray-100 ${active ? 'bg-blue-50 font-semibold' : ''}`;
+    let c = `flex min-h-[44px] items-center rounded-[10px] hover:bg-page ${active ? 'bg-accent-tint font-semibold' : 'font-medium'}`;
     if (hoverId !== undefined && hoverId === id) {
       const v = verdict(id);
-      if (v === 'ok') c += ' bg-blue-100 ring-2 ring-blue-400';
-      else if (v === 'cycle') c += ' bg-red-50 ring-2 ring-red-300';
+      if (v === 'ok') c += ' bg-accent-tint ring-2 ring-accent';
+      else if (v === 'cycle') c += ' bg-verdict-tight-bg ring-2 ring-verdict-tight-fg';
     }
     if (dragging?.kind === 'folder' && dragging.id === id) c += ' opacity-50';
     return c;
@@ -63,10 +64,11 @@ export default function FolderSidebar({
   });
 
   return (
-    <nav aria-label={t.folders[lang]} className="hidden w-48 shrink-0 space-y-0.5 text-sm sm:block">
-      <div className={rowClass(currentId === null, null)} style={{ paddingLeft: 4 }} {...dropProps(null)}>
-        <button type="button" onClick={() => onOpen(null)} className="min-w-0 grow truncate py-1 text-left">
-          📁 {t.allItems[lang]}
+    <nav aria-label={t.folders[lang]} className="hidden h-fit w-60 shrink-0 space-y-0.5 rounded-[14px] border border-line bg-surface p-2.5 text-base text-ink sm:block">
+      <div className={rowClass(currentId === null, null)} style={{ paddingLeft: 10 }} {...dropProps(null)}>
+        <button type="button" onClick={() => onOpen(null)} className="flex min-h-[44px] min-w-0 grow items-center gap-2 text-left">
+          <FolderIcon />
+          <span className="truncate">{t.allItems[lang]}</span>
         </button>
       </div>
       {folderLines(folders).map(f => (
@@ -74,7 +76,7 @@ export default function FolderSidebar({
         <div
           key={f.id}
           className={rowClass(f.id === currentId, f.id)}
-          style={{ paddingLeft: 4 + Math.min(f.depth, 6) * 12 }}
+          style={{ paddingLeft: 10 + Math.min(f.depth, 6) * 18 }}
           {...dropProps(f.id)}
           draggable={onDragStartFolder ? true : undefined}
           onDragStart={onDragStartFolder ? e => {
@@ -85,11 +87,11 @@ export default function FolderSidebar({
           } : undefined}
           onDragEnd={onDragEnd}
         >
-          <button type="button" onClick={() => onOpen(f.id)} className="min-w-0 grow truncate py-1 text-left">
-            📁 {f.name}
+          <button type="button" onClick={() => onOpen(f.id)} className="flex min-h-[44px] min-w-0 grow items-center gap-2 text-left">
+            <FolderIcon />
+            <span className="truncate">{f.name}</span>
           </button>
           <ActionsMenu
-            trigger="⋯"
             ariaLabel={t.moreActions[lang]}
             items={[
               { text: t.renameFolder[lang], onSelect: () => onRename(f) },

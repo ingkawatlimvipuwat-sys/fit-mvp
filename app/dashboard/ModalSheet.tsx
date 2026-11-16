@@ -24,16 +24,16 @@ export default function ModalSheet({ title, onClose, align = 'bottom', children 
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      className={`fixed inset-0 z-20 flex justify-center bg-black/40 sm:items-center sm:p-0 ${
+      className={`fixed inset-0 z-20 flex justify-center bg-ink/40 sm:items-center sm:p-0 ${
         align === 'top' ? 'items-start px-4 pt-[12vh]' : 'items-end'}`}
       onMouseDown={e => { pressedBackdrop.current = e.target === e.currentTarget; }}
       onClick={e => { if (e.target === e.currentTarget && pressedBackdrop.current) onClose(); }}
     >
       <div
-        className={`max-h-[80vh] w-full max-w-sm overflow-y-auto bg-white p-4 sm:rounded ${align === 'top' ? 'rounded' : 'rounded-t'}`}
+        className={`max-h-[80vh] w-full max-w-sm overflow-y-auto border border-line bg-surface p-4 text-ink sm:rounded-2xl ${align === 'top' ? 'rounded-2xl' : 'rounded-t-2xl'}`}
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="mb-3 font-semibold">{title}</h2>
+        <h2 className="mb-3 text-lg font-semibold">{title}</h2>
         {children}
       </div>
     </div>

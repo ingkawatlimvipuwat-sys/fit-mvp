@@ -2,6 +2,8 @@
 import { t } from '@/lib/i18n/strings';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import type { MoveTarget } from '@/lib/catalogue/folders';
+import Button from '../components/ui/Button';
+import { FolderIcon } from './icons';
 import ModalSheet from './ModalSheet';
 
 /** The "Move to…" chooser, used for products and folders. Disabled rows are the current place and, for a folder, itself and everything below it. */
@@ -19,18 +21,21 @@ export default function MoveToDialog({ title, targets, busy, onChoose, onClose }
               type="button"
               disabled={r.disabled || busy}
               onClick={() => onChoose(r.id)}
-              style={{ paddingLeft: 8 + Math.min(r.depth, 7) * 12 }}
-              className="block w-full rounded py-2 pr-2 text-left text-sm hover:bg-gray-100 disabled:text-gray-400 disabled:hover:bg-transparent"
+              style={{ paddingLeft: 10 + Math.min(r.depth, 7) * 14 }}
+              className="flex min-h-[44px] w-full items-center gap-2 rounded-[10px] pr-2 text-left text-base text-ink hover:bg-page disabled:text-muted disabled:opacity-60 disabled:hover:bg-transparent"
             >
-              {r.id === null ? t.topLevel[lang] : `📁 ${r.name}`}
-              {r.current ? ` · ${t.currentPlace[lang]}` : ''}
+              {r.id !== null && <FolderIcon />}
+              <span className="min-w-0 break-words">
+                {r.id === null ? t.topLevel[lang] : r.name}
+                {r.current ? ` · ${t.currentPlace[lang]}` : ''}
+              </span>
             </button>
           </li>
         ))}
       </ul>
-      <button type="button" onClick={onClose} className="mt-3 text-sm text-gray-600 underline">
+      <Button variant="ghost" onClick={onClose} className="mt-2">
         {t.cancel[lang]}
-      </button>
+      </Button>
     </ModalSheet>
   );
 }
