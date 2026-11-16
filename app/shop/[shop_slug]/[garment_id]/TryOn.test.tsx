@@ -37,7 +37,7 @@ describe('TryOn', () => {
     expect(screen.getByRole('button', { name: t.tryOnCamera.th })).toBeTruthy();
     expect(screen.getByRole('button', { name: t.tryOnUpload.th })).toBeTruthy();
     expect(screen.getByRole('button', { name: t.tryOnSubmit.th })).toHaveProperty('disabled', true);
-    expect(screen.queryByAltText(t.tryOnPhotoAlt.th)).toBeNull();
+    expect(screen.queryByAltText(t.tryOnSampleAlt.th)).toBeNull();
   });
 
   it('enables generate after a photo is chosen', () => {
@@ -53,7 +53,7 @@ describe('TryOn', () => {
     pickPhoto();
     fireEvent.click(screen.getByRole('button', { name: t.tryOnSubmit.th }));
     await act(() => vi.advanceTimersByTimeAsync(TRYON_FAKE_DELAY_MS));
-    const img = screen.getByAltText(t.tryOnPhotoAlt.th);
+    const img = screen.getByAltText(t.tryOnSampleAlt.th);
     expect(img.getAttribute('src')).toBe(TRYON_RESULT_SRC);
   });
 
@@ -64,7 +64,7 @@ describe('TryOn', () => {
     fireEvent.click(screen.getByRole('button', { name: t.tryOnSubmit.th }));
     await act(() => vi.advanceTimersByTimeAsync(TRYON_FAKE_DELAY_MS));
     fireEvent.click(screen.getByRole('button', { name: t.tryOnAgain.th }));
-    expect(screen.queryByAltText(t.tryOnPhotoAlt.th)).toBeNull();
+    expect(screen.queryByAltText(t.tryOnSampleAlt.th)).toBeNull();
     expect(screen.getByRole('button', { name: t.tryOnSubmit.th })).toHaveProperty('disabled', true);
   });
 });

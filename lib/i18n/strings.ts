@@ -278,6 +278,16 @@ export const t = {
   tryOnNeedPhoto: { th: 'กรุณาเลือกรูปก่อน', en: 'Please choose a photo first' },
   tryOnChangePhoto: { th: 'เปลี่ยนรูป', en: 'Change photo' },
 
+  tryOnSampleBadge: { th: 'ตัวอย่าง', en: 'Sample' },
+  tryOnSampleResult: { th: 'ภาพตัวอย่าง — ยังไม่ใช่รูปของคุณ', en: 'Sample image — not your photo yet' },
+  tryOnSampleAlt: { th: 'ภาพตัวอย่าง ไม่ใช่รูปของคุณ', en: 'Sample image, not a photo of you' },
+
+  // --- Fit form and result (redesign) ---
+  blankNotScored: { th: 'ช่องที่เว้นว่างจะไม่ถูกนำมาประเมิน', en: 'Blank fields are not scored.' },
+  fitSummaryAllGood: { th: 'พอดีทุกจุด', en: 'Good fit everywhere' },
+  fitSummaryCount: { th: 'พอดี {good} จาก {scored} จุด', en: '{good} of {scored} measurements fit well' },
+  editMeasurements: { th: 'แก้ไขขนาดของคุณ', en: 'Edit your measurements' },
+
   // --- Size helper (fit form) ---
   sizeHelperTitle:   { th: 'ไม่แน่ใจขนาดตัวเอง?', en: 'Not sure of your measurements?' },
   sizeHelperIntro:   {

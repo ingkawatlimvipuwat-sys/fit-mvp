@@ -99,7 +99,7 @@ export default async function HeroPage(props: { params: Promise<{ shop_slug: str
   return (
     <>
       <ShopHeader shopName={shop.shop_name} shopSlug={params.shop_slug} />
-      <main className="mx-auto max-w-2xl px-6 py-8">
+      <main className="mx-auto max-w-2xl px-4 py-4">
         <BackLink shopSlug={params.shop_slug} />
         <div className="mt-3 aspect-square overflow-hidden rounded bg-gray-100">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -115,6 +115,7 @@ export default async function HeroPage(props: { params: Promise<{ shop_slug: str
         >
           <FitChecker
             garmentId={garment.id}
+            sizeLabel={garment.size_label ?? null}
             dimensions={dims.map(d => ({
               key: d.key,
               labelTh: d.labelTh,

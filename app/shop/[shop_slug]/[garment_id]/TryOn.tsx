@@ -67,10 +67,15 @@ export default function TryOn() {
   }
 
   return (
-    <section className="mt-6 space-y-4 rounded border bg-white p-4">
+    <section className="mt-6 space-y-4 rounded-2xl border border-dashed border-field bg-surface p-4">
       <div>
-        <h2 className="text-lg font-medium">{t.tryOnTitle[lang]}</h2>
-        <p className="mt-1 text-sm text-gray-500">{t.tryOnHint[lang]}</p>
+        <h2 className="flex items-center gap-2 text-lg font-semibold">
+          {t.tryOnTitle[lang]}
+          <span className="rounded-full bg-line px-2 py-0.5 text-[11px] font-semibold text-verdict-loose-fg">
+            {t.tryOnSampleBadge[lang]}
+          </span>
+        </h2>
+        <p className="mt-1 text-sm text-muted">{t.tryOnHint[lang]}</p>
       </div>
 
       <input
@@ -118,14 +123,14 @@ export default function TryOn() {
                 <button
                   type="button"
                   onClick={() => cameraRef.current?.click()}
-                  className="rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800"
+                  className="min-h-[44px] rounded-[10px] border border-control bg-surface px-3 py-2 text-sm text-ink"
                 >
                   {t.tryOnCamera[lang]}
                 </button>
                 <button
                   type="button"
                   onClick={() => galleryRef.current?.click()}
-                  className="rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800"
+                  className="min-h-[44px] rounded-[10px] border border-control bg-surface px-3 py-2 text-sm text-ink"
                 >
                   {t.tryOnUpload[lang]}
                 </button>
@@ -137,7 +142,7 @@ export default function TryOn() {
             type="button"
             disabled={!previewUrl || loading}
             onClick={generate}
-            className="w-full rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-60"
+            className="h-[52px] w-full rounded-xl bg-accent px-4 font-semibold text-white hover:bg-accent-dark disabled:opacity-60 sm:h-12"
           >
             {loading ? t.tryOnWorking[lang] : t.tryOnSubmit[lang]}
           </button>
@@ -146,12 +151,12 @@ export default function TryOn() {
 
       {resultUrl && (
         <div ref={resultRef} className="space-y-3">
-          <p className="text-sm font-medium text-gray-800">{t.tryOnResult[lang]}</p>
+          <p className="text-sm font-semibold text-ink">{t.tryOnSampleResult[lang]}</p>
           <div className="aspect-[3/4] overflow-hidden rounded bg-gray-100">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={resultUrl}
-              alt={t.tryOnPhotoAlt[lang]}
+              alt={t.tryOnSampleAlt[lang]}
               className="h-full w-full object-cover object-top"
             />
           </div>
@@ -161,20 +166,20 @@ export default function TryOn() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={previewUrl} alt="" className="h-full w-full object-cover" />
               </div>
-              <span className="text-xs text-gray-500">{t.tryOnYourPhoto[lang]}</span>
+              <span className="text-xs text-muted">{t.tryOnYourPhoto[lang]}</span>
             </div>
           )}
           <button
             type="button"
             onClick={reset}
-            className="text-sm font-medium text-gray-700 underline"
+            className="min-h-[44px] text-sm font-semibold text-accent underline"
           >
             {t.tryOnAgain[lang]}
           </button>
         </div>
       )}
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-700">{error}</p>}
     </section>
   );
 }
@@ -183,7 +188,7 @@ function PersonIcon() {
   return (
     <svg
       viewBox="0 0 48 48"
-      className="h-12 w-12 text-gray-400"
+      className="h-12 w-12 text-field"
       fill="none"
       stroke="currentColor"
       strokeWidth="1.5"

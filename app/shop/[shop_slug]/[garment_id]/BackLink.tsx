@@ -6,7 +6,7 @@ import { useLanguage } from '@/lib/hooks/useLanguage';
 export default function BackLink({ shopSlug }: { shopSlug: string }) {
   const [lang] = useLanguage();
   return (
-    <Link href={`/shop/${shopSlug}`} className="inline-block text-sm text-gray-600 hover:text-gray-900">
+    <Link href={`/shop/${shopSlug}`} className="inline-flex min-h-[44px] items-center text-sm font-medium text-accent hover:text-accent-dark">
       ← {t.backToShop[lang]}
     </Link>
   );

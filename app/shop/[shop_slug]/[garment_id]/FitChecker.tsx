@@ -7,6 +7,13 @@ import { fillFromSize, estimateFromPartial } from '@/lib/fit/sizeEstimate';
 import type { BodyProfile } from '@/lib/config/sizeChart';
 import type { DimensionKey } from '@/lib/config/dimensions';
 import { keepSharedValues } from '@/lib/catalogue/keep-shared';
+import { summariseFit } from '@/lib/fit/summary';
+import { displaySizeLabel } from '@/lib/garment/size-label';
+import Button from '@/app/components/ui/Button';
+import Card from '@/app/components/ui/Card';
+import Chip from '@/app/components/ui/Chip';
+import Field from '@/app/components/ui/Field';
+import VerdictChip, { VERDICT_CHIP, VERDICT_TEXT } from '@/app/components/ui/VerdictChip';
 
 type DimInfo = {
   key: string;
@@ -20,14 +27,6 @@ interface FitResult {
   dimensions: Record<string, { verdict: Verdict; customer: number | null; garment: number | null; diff: number | null }>;
 }
 
-const VERDICT_COLOR: Record<Verdict, string> = {
-  too_tight: 'bg-red-100 text-red-800',
-  snug: 'bg-yellow-100 text-yellow-800',
-  good_fit: 'bg-green-100 text-green-800',
-  loose: 'bg-blue-100 text-blue-800',
-  unknown: 'bg-gray-100 text-gray-600',
-};
-
 // `diff` is customer minus garment (see lib/fit/engine.ts). A positive diff means the
 // garment is smaller than the customer; a negative diff means the garment is roomier.
 // This phrase is always a positive quantity so it reads the same direction as the
@@ -39,10 +38,12 @@ function diffPhrase(diff: number, lang: 'th' | 'en'): string {
 }
 
 export default function FitChecker({
-  garmentId, dimensions,
+  garmentId, dimensions, sizeLabel = null,
 }: {
   /** Null while a product page has no version picked yet; the check is then disabled. */
   garmentId: string | null; dimensions: DimInfo[];
+  /** Stored size code of the picked version (e.g. 'M'); shown next to "Overall" in the result. */
+  sizeLabel?: string | null;
 }) {
   const [lang] = useLanguage();
   const [values, setValues] = useState<Record<string, string>>({});
@@ -53,6 +54,7 @@ export default function FitChecker({
   const [profile, setProfile] = useState<BodyProfile>('women');
   const [sizeNote, setSizeNote] = useState<string | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const garmentDims = dimensions.map(d => d.key) as DimensionKey[];
 
@@ -97,6 +99,11 @@ export default function FitChecker({
   useEffect(() => {
     if (result) resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [result]);
+
+  function editMeasurements() {
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    formRef.current?.querySelector('input')?.focus({ preventScroll: true });
+  }
 
   function applySize(size: 'S' | 'M' | 'L' | 'XL') {
     const filled = fillFromSize(profile, size, garmentDims);
@@ -170,64 +177,64 @@ export default function FitChecker({
     }
   }
 
+  const summary = result ? summariseFit(result, dimensions.map(d => d.key)) : null;
+  const sizeText = displaySizeLabel(sizeLabel, lang);
+  const dimLabel = (key: string) => {
+    const d = dimensions.find(x => x.key === key);
+    return d ? (lang === 'th' ? d.labelTh : d.labelEn) : key;
+  };
+
   return (
-    <section className="mt-8 space-y-6">
-      <form className="space-y-4 rounded border bg-white p-4" onSubmit={onSubmit}>
-        <h2 className="text-lg font-medium">{t.yourMeasurements[lang]}</h2>
-        <div className="space-y-2 rounded bg-gray-50 p-3">
-          <p className="text-sm font-medium text-gray-700">{t.sizeHelperTitle[lang]}</p>
-          <p className="text-xs text-gray-500">{t.sizeHelperIntro[lang]}</p>
-          <div className="flex gap-2">
-            {(['women', 'men'] as const).map(p => (
-              <button
-                key={p} type="button" onClick={() => setProfile(p)}
-                className={`rounded border px-3 py-1 text-sm ${
-                  profile === p ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-300 bg-white text-gray-700'
-                }`}
-              >
-                {p === 'women' ? t.profileWomen[lang] : t.profileMen[lang]}
-              </button>
-            ))}
+    <section className="mt-6 space-y-4">
+      <form ref={formRef} className="space-y-4" onSubmit={onSubmit}>
+        <h2 className="text-lg font-semibold">{t.yourMeasurements[lang]}</h2>
+        <Card className="space-y-3 !rounded-[14px] !p-3.5">
+          <div>
+            <p className="font-semibold text-ink">{t.sizeHelperTitle[lang]}</p>
+            <p className="text-[13px] text-muted">{t.sizeHelperIntro[lang]}</p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {(['S', 'M', 'L', 'XL'] as const).map(s => (
-              <button
-                key={s} type="button" onClick={() => applySize(s)}
-                className="rounded border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-700"
-              >
-                {s}
-              </button>
-            ))}
-            <button
-              type="button" onClick={estimateRest}
-              className="rounded border border-gray-300 bg-white px-3 py-1 text-sm text-gray-700"
-            >
-              {t.estimateRest[lang]}
-            </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex overflow-hidden rounded-[10px] border border-control">
+              {(['women', 'men'] as const).map(p => (
+                <button
+                  key={p} type="button" onClick={() => setProfile(p)} aria-pressed={profile === p}
+                  className={`h-11 px-3.5 text-base first:border-0 [&:not(:first-child)]:border-l [&:not(:first-child)]:border-control ${
+                    profile === p ? 'bg-accent-tint font-semibold text-accent-dark' : 'bg-surface text-ink'
+                  }`}
+                >
+                  {p === 'women' ? t.profileWomen[lang] : t.profileMen[lang]}
+                </button>
+              ))}
+            </div>
+            <div className="ml-auto flex gap-1.5">
+              {(['S', 'M', 'L', 'XL'] as const).map(s => (
+                <Chip key={s} className="!px-0 w-11" onClick={() => applySize(s)} aria-pressed={undefined}>
+                  {s}
+                </Chip>
+              ))}
+            </div>
           </div>
-          {sizeNote && <p className="text-xs text-gray-600">{sizeNote}</p>}
-        </div>
+          {sizeNote && <p className="text-xs text-muted">{sizeNote}</p>}
+        </Card>
         {prefilled && (
-          <div className="flex items-center justify-between gap-3 rounded bg-gray-50 px-3 py-2">
-            <span className="text-sm text-gray-500">{t.prefilledNotice[lang]}</span>
-            <button
-              type="button"
+          <div className="flex items-center justify-between gap-3 rounded-xl bg-accent-tint px-3 py-2">
+            <span className="text-sm text-ink">{t.prefilledNotice[lang]}</span>
+            <Button
+              variant="ghost"
               onClick={() => { setValues({}); setPrefilled(false); }}
-              className="shrink-0 text-sm font-medium text-gray-700 underline"
+              className="shrink-0 !px-1 text-sm font-semibold"
             >
               {t.clearMeasurements[lang]}
-            </button>
+            </Button>
           </div>
         )}
-        {dimensions.map(d => (
-          <label key={d.key} className="block">
-            <span className="text-sm text-gray-700">
-              {lang === 'th' ? d.labelTh : d.labelEn} (cm)
-            </span>
-            <span className="block text-xs text-gray-500">
-              {lang === 'th' ? d.hintTh : d.hintEn}
-            </span>
-            <input
+        <div className="grid grid-cols-2 gap-x-3 gap-y-4">
+          {dimensions.map(d => (
+            <Field
+              key={d.key}
+              label={lang === 'th' ? d.labelTh : d.labelEn}
+              hint={lang === 'th' ? d.hintTh : d.hintEn}
+              unit={t.unitCm[lang]}
               type="number" step="0.1" min="1" max="300" inputMode="decimal"
               value={values[d.key] ?? ''}
               onChange={e => {
@@ -236,45 +243,88 @@ export default function FitChecker({
                 setPrefilled(false);
                 setSizeNote(null);
               }}
-              className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
             />
-          </label>
-        ))}
-        <button
-          type="submit" disabled={loading || garmentId === null}
-          className="w-full rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-60"
-        >
+          ))}
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[13px] text-muted">{t.blankNotScored[lang]}</p>
+          <Button variant="ghost" onClick={estimateRest} className="shrink-0 text-sm font-semibold">
+            {t.estimateRest[lang]}
+          </Button>
+        </div>
+        <Button type="submit" fullWidth disabled={loading || garmentId === null}>
           {loading ? '…' : t.checkFit[lang]}
-        </button>
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        </Button>
+        {error && <p className="text-sm text-red-700">{error}</p>}
       </form>
 
-      {result && (
-        <div ref={resultRef} className="space-y-3 rounded border bg-white p-4">
-          <div className={`inline-block rounded px-3 py-1 text-sm ${VERDICT_COLOR[result.overall]}`}>
-            {t.overall[lang]}: {verdictLabel[result.overall]}
-          </div>
-          <ul className="divide-y">
-            {dimensions.map(d => {
-              const r = result.dimensions[d.key];
-              const v = r?.verdict ?? 'unknown';
-              return (
-                <li key={d.key} className="flex items-start justify-between gap-3 py-2 text-sm">
-                  <span>{lang === 'th' ? d.labelTh : d.labelEn}</span>
-                  <span className="flex flex-col items-end gap-0.5 text-right">
-                    <span className={`rounded px-2 py-0.5 text-xs ${VERDICT_COLOR[v]}`}>
-                      {verdictLabel[v]}
-                    </span>
+      {result && summary && (
+        <div ref={resultRef} className="space-y-4">
+          <Card className="space-y-2.5 !p-5">
+            <p className="text-[13px] font-semibold text-muted">
+              {t.overall[lang]}{sizeText ? ` · ${sizeText}` : ''}
+            </p>
+            <div className="flex items-center gap-3">
+              <span className={`flex h-11 w-11 flex-none items-center justify-center rounded-full ${VERDICT_CHIP[result.overall]}`}>
+                <VerdictIcon verdict={result.overall} />
+              </span>
+              <h3 className={`text-[30px] font-bold leading-[1.15] ${VERDICT_TEXT[result.overall]}`}>
+                {verdictLabel[result.overall]}
+              </h3>
+            </div>
+            {summary.scored > 0 && (
+              <div className="space-y-1 text-ink">
+                <p>
+                  {summary.good === summary.scored
+                    ? t.fitSummaryAllGood[lang]
+                    : t.fitSummaryCount[lang]
+                        .replace('{good}', String(summary.good))
+                        .replace('{scored}', String(summary.scored))}
+                </p>
+                {summary.issues.map(g => (
+                  <p key={g.verdict} className="text-sm text-muted">
+                    {verdictLabel[g.verdict]}: {g.keys.map(dimLabel).join(', ')}
+                  </p>
+                ))}
+              </div>
+            )}
+          </Card>
+          <Card className="!px-4 !py-1">
+            <ul className="divide-y divide-line">
+              {dimensions.map(d => {
+                const r = result.dimensions[d.key];
+                const v = r?.verdict ?? 'unknown';
+                return (
+                  <li key={d.key} className="space-y-1.5 py-3.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold">{lang === 'th' ? d.labelTh : d.labelEn}</span>
+                      <VerdictChip verdict={v} label={verdictLabel[v]} />
+                    </div>
                     {r?.diff !== null && r?.diff !== undefined && (
-                      <span className="text-xs text-gray-500">{diffPhrase(r.diff, lang)}</span>
+                      <p className="text-[13px] text-muted">{diffPhrase(r.diff, lang)}</p>
                     )}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
+                  </li>
+                );
+              })}
+            </ul>
+          </Card>
+          <Button variant="secondary" fullWidth onClick={editMeasurements}>
+            {t.editMeasurements[lang]}
+          </Button>
         </div>
       )}
     </section>
   );
+}
+
+function VerdictIcon({ verdict }: { verdict: Verdict }) {
+  const common = {
+    width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor',
+    strokeWidth: 2.2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true,
+  };
+  if (verdict === 'good_fit') return <svg {...common}><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>;
+  if (verdict === 'snug') return <svg {...common}><path d="M4 12h16M8 8l-4 4 4 4M16 8l4 4-4 4" /></svg>;
+  if (verdict === 'too_tight') return <svg {...common}><path d="M5 5l14 14M19 5L5 19" /></svg>;
+  if (verdict === 'loose') return <svg {...common}><path d="M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4" /></svg>;
+  return <svg {...common}><path d="M8 9.5a4 4 0 118 0c0 2.5-4 3-4 5.5M12 19h.01" /></svg>;
 }

@@ -128,7 +128,7 @@ export default async function ProductPage(props: { params: Promise<Params> }) {
   return (
     <>
       <ShopHeader shopName={shop.shop_name} shopSlug={params.shop_slug} />
-      <main className="mx-auto max-w-2xl px-6 py-8">
+      <main className="mx-auto max-w-2xl px-4 py-4">
         <BackLink shopSlug={params.shop_slug} />
         <ProductView name={product.name} pickers={pickers} versions={versions} />
         <OtherGarments others={others} />

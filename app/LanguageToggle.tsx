@@ -13,14 +13,14 @@ export default function LanguageToggle({ tone = 'light' }: { tone?: 'light' | 'd
   const dark = tone === 'dark';
 
   return (
-    <div className={`flex overflow-hidden rounded border text-xs ${dark ? 'border-gray-600' : 'border-gray-300'}`}>
+    <div className={`flex overflow-hidden border text-xs ${dark ? 'rounded border-gray-600' : 'rounded-full border-control font-semibold'}`}>
       {(['th', 'en'] as const).map(l => {
         const active = lang === l;
         const style = active
-          ? (dark ? 'bg-white text-gray-900' : 'bg-gray-900 text-white')
-          : (dark ? 'text-gray-300 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-50');
+          ? (dark ? 'bg-white text-gray-900' : 'bg-ink text-white')
+          : (dark ? 'text-gray-300 hover:bg-white/10' : 'text-muted hover:bg-page');
         return (
-          <button key={l} onClick={() => setLang(l)} className={`px-3 py-1.5 ${style}`}>
+          <button key={l} onClick={() => setLang(l)} className={`${dark ? 'px-3 py-1.5' : 'px-3.5 py-2.5 text-[13px]'} ${style}`}>
             {l.toUpperCase()}
           </button>
         );
