@@ -22,17 +22,17 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 
 ---
 
-## Status snapshot (as of 2026-11-06, `main` at `281e79f`)
+## Status snapshot (as of 2026-11-16, `main` at `d9eab7f`)
 
 | Check | Result |
 |---|---|
-| Live site matches `main` | Yes. `main` is `281e79f` (PR #21, Catalogue Stage 3), merged and verified live 2026-10-27. Before it: PR #20 (Thai errors, fabric photo removal), PR #19 (docs), PR #18 (reliability fixes) |
-| Tests (`npm test`) | 494 passing, 48 files on `main`; 495 passing, 48 files on branch `feature/per-shop-save-cap`. `npx tsc --noEmit` reports one pre-existing error in a test file (`lib/garment/colour-fabric-regression.test.ts:49`, `present` on the failure branch of `FabricParse`); vitest and `next build` do not type-check that file, so it blocks nothing — see Housekeeping |
+| Live site matches `main` | Yes. `main` is `d9eab7f` (PR #22, per-shop save limit + phone polish), merged 2026-11-16 and verified live the same day (Vercel reported success for that commit and the new phone CSS rule is in the served stylesheet). Before it: PR #21 (Catalogue Stage 3), PR #20 (Thai errors, fabric photo removal), PR #19 (docs), PR #18 (reliability fixes) |
+| Tests (`npm test`) | 495 passing, 48 files on `main` and on branch `feature/health-check-2026-11-16`. `npx tsc --noEmit` is clean on that branch (the one old error, in `lib/garment/colour-fabric-regression.test.ts`, is fixed there) |
 | Build (`npm run build`) | Clean |
-| `npm audit --omit=dev` | 2 vulnerabilities (1 high, 1 moderate) — down from 1 critical + 2 high (~18 Next advisories) on 14.2. The remaining high is `postcss@8.4.31` bundled *inside* `next`'s own `node_modules` (build-time CSS processing only, not user input); our own `postcss` dep is 8.5.28, already patched. Clears when Next ships its own postcss bump, or on a future Next 16 upgrade. |
+| `npm audit --omit=dev` | On `main` (Next 15.5.26, zod 4.6.5): 4 vulnerabilities (1 critical, 3 high) — new advisories published since October against `next`, `zod` and `source-map-js`. Branch `feature/health-check-2026-11-16` moves to Next 15.5.29, zod 4.6.7, source-map-js 1.2.2 and React 19.3.1, which brings it back to 2 (1 high, 1 moderate): the `postcss@8.4.31` bundled *inside* `next` (build-time CSS only, not user input), which clears only on a Next 16 upgrade. None of the Next advisories is known to be reachable here (hosted on Vercel, image optimizer off, no Server Actions), but the patch is cheap |
 | Database migrations | 0001, 0002, 0003 and 0004 (size label) applied to the live database (0004 verified with a read-only select, 2026-10-07). 0005 (catalogue) applied to the live database by the founder before PR #14 merged, 2026-10-07. 0006 (`product_id` NOT NULL) applied to the live database on 2026-10-07, **after** PR #15 was merged — in that order on purpose: code from before PR #15 could still create a garment without a product, and 0006's backfill catches any such row before setting NOT NULL. **0007** (`fit_sessions_created_at_idx`, an index that keeps the fit-session write cap fast) run by the founder in the SQL editor on 2026-10-27, after PR #18 merged. **0008** (`product_pickers.value_order`, the owner's order of picker values) run by the founder in the SQL editor on 2026-10-27, **before** PR #21 merged, and checked read-only. All eight migrations are applied |
 | Supabase keys | Rotated 2026-10-12 to Supabase's new key format (see Environment). The legacy JWT `anon` / `service_role` keys are disabled |
-| Last health check | 2026-09-23 |
+| Last health check | 2026-11-16. Tests, build, type check, audit, live route probes (public pages 200, dashboard redirects to login, write routes refuse anonymous calls, bad input gets 400), Row-Level Security switched on for all 11 tables in the migration files (the live database itself was not inspected). Found: the new advisories above; the main checkout had Next 14 / React 18 in `node_modules` while `package.json` says 15 — local checks were running the wrong version until `npm ci` (run `npm ci` after any pull that changes `package-lock.json`); live pages that read data took about 7.5 seconds and came back empty at first, then answered normally later the same day — most likely the free-plan pause again |
 
 **Outage, 2026-10-26:** the Supabase free plan **paused the project** after about 12 days with no activity. Every live page that reads data (the shop pages, the dashboard, login) failed until the founder restored the project in the Supabase dashboard. Nothing was lost. **Decision (founder, 2026-10-26): stay on the free plan and restore by hand when it pauses** — no Pro upgrade, no keep-alive ping. See decisions-and-lessons.md §4.
 
@@ -60,7 +60,7 @@ It is a prototype with one shop, built on Next.js 15.5 and React 19 (upgraded 20
 | Reliability fixes | 2026-10-27 (PR #18; migration 0007, an index) | Six fixes: the public fit check is rate-limited and its fit-session saves are capped (#5); a failed shop-rule load shows an error instead of `…` (#6); a per-garment override starts from the rule in force, also on edit and duplicate (#7); the "Changing category will discard…" warning only blames the retailer's own changes (#8); garment validation errors are Thai, with no zod English or raw keys (#9); a colour or fabric save failure now reaches the retailer (#11) | `plans/2026-10-26-reliability-fixes.md` |
 | Thai errors everywhere + remove a fabric photo | 2026-10-27 (PR #20; no migration; checked on the preview by Claude in the founder's browser) | Products, folders, tags, options and fit rules now answer in Thai (`loginRequired`, `requestInvalid`, `itemNotFound`, `invalidProductName`, `invalidPickerName`, `invalidPickerValues`, `loadFailed`); fit-rule database errors are logged, never shown. The garment form has a **ลบรูปผ้านี้** tick under the fabric close-up: the row stops pointing at the photo, then the stored file is deleted (only after the write succeeded). Ticking it on a duplicate saves the copy without the photo. Decision logic: `lib/garment/fabric-photo.ts` | `plans/2026-10-27-thai-errors-and-fabric-photo-remove.md` |
 | Catalogue Stage 3 — drag-and-drop, value order, tag rename/delete, name boxes | 2026-10-27 (PR #21; migration 0008; also fixed Duplicate, broken since Stage 1) | On a computer, drag a product card or a folder onto a folder in the left list (or onto ทั้งหมด) to move it; phones keep ⋯ → Move to…. Picker values (Size S/M/L) can be reordered with ↑ ↓ on the product page and shoppers see them in that order (`orderedValues` in `lib/catalogue/picks.ts`). A **🏷 จัดการแท็ก / Manage tags** panel on the dashboard renames and deletes tags shop-wide (a taken name is refused, never merged; deleting removes the tag from every product but never deletes a product). New folder, Rename folder and tag rename use an in-page name box instead of `window.prompt` | `plans/2026-10-27-catalogue-stage-3.md`, `specs/2026-10-01-catalogue-organisation-design.md` §8 |
-| Per-shop save limit + phone polish — **built, not shipped — PR pending** | branch `feature/per-shop-save-cap`; no migration | The fit-session write cap counts each shop separately (through the garment; `countRecentShopSessions`), so one busy or attacked shop cannot stop another shop's saves. Phone check of 2026-11-06 (375px emulation, look-only) fixes: fields are 16px on phones so iPhones do not zoom in, the ⋯ menu no longer runs off the left edge, the copy-link button no longer wraps into three lines, bigger tap areas on ⋯, ✕ and the small links | — |
+| Per-shop save limit + phone polish | 2026-11-16 (PR #22; no migration) | The fit-session write cap counts each shop separately (through the garment; `countRecentShopSessions`), so one busy or attacked shop cannot stop another shop's saves. Phone check of 2026-11-06 (375px emulation, look-only) fixes: fields are 16px on phones so iPhones do not zoom in, the ⋯ menu no longer runs off the left edge, the copy-link button no longer wraps into three lines, bigger tap areas on ⋯, ✕ and the small links | — |
 | Try-on (stub) | 2026-10-03 | Shopper uploads or takes a photo; after a fake 0.9 s wait the page shows a fixed sample image (`public/try-on/result.png`). The photo never leaves the phone. No real try-on model yet | — |
 
 ---
@@ -71,35 +71,45 @@ One list, most important first. When you finish an item, delete it (git keeps th
 
 ### Now
 
-1. **Try-on leftovers.** The stub is live (PR #9). Still missing from the first try-on commit:
-   `scripts/local-db.mjs` and the Supabase local config that the `db:*` npm scripts call, so
-   those scripts fail. `package.json` lists `postcss` twice. Ask patriya-piyawiroj for the files
-   or delete the scripts.
+**The founder is preparing a demo (decided 2026-11-16).** Demo prep comes first.
+
+1. **Before the demo.** Check the Supabase project is not paused that morning (see the status
+   snapshot). Delete the live test garment `TEST เสื้อผ้ายืด (ลบได้)` and the `ผ้ายืด` preset —
+   both show on the real shop. Walk the whole flow once on a phone and once on a computer.
+   Proofread the Thai on the screens the demo will show.
+2. **Try-on is a stub.** The original design calls virtual try-on a core value, built in Phase 2
+   after the fit check is proven. Today the page shows one fixed sample image whatever photo is
+   given. For the demo, either say so out loud or hide the button — the founder's call.
+3. **No real-shopper evidence yet.** The original plan was to prove the fit check with real
+   shoppers before building try-on. The fit bands are still best guesses and nothing records
+   whether a verdict was right. Not needed for a demo; needed before claiming accuracy.
+4. **UI redesign.** Mockups first (founder asked 2026-11-16), then spec, plan, build.
+5. **Try-on leftovers.** The stub is live (PR #9). Still missing from the first try-on commit:
+   `scripts/local-db.mjs`, `supabase/config.toml` and `supabase/seed.sql`, which the
+   `setup:local` and `db:*` npm scripts need, so those scripts fail and there is no local
+   database on this PC. Ask patriya-piyawiroj for the files or delete the scripts.
 
 ### Before a second shop joins
 
-2. **Proofread the copy.** The English was written as a fallback nobody expected to see and has
+6. **Proofread the copy.** The English was written as a fallback nobody expected to see and has
    never been proofread; the Thai has not had a native-speaker pass.
 
 ### Worth doing soon
 
-3. **Walk the dashboard in a browser with a real login.** Not done since the 2026-08-18
+7. **Walk the dashboard in a browser with a real login.** Not done since the 2026-08-18
    redesign — the header, tabs, fit-rules load-failure notice and discard guards are backed only
    by a clean build.
-4. **Check colour fidelity on a real phone** — a real garment under daylight next to its
+8. **Check colour fidelity on a real phone** — a real garment under daylight next to its
    swatch on the live site. Planned after the 2026-09-11 deploy; not recorded as done.
 
 ### Housekeeping
 
-5. Delete old branches: `feature/phase-1` (last commit 2026-06-09; its work was rebuilt in
+9. Delete old branches: `feature/phase-1` (last commit 2026-06-09; its work was rebuilt in
     `main`) and the already-merged `origin/feature/custom-fit-rules`.
-6. Delete the typo Storage bucket `garmet-photos` (the real one is `garment-photos`).
-7. Delete live test data: the garment `TEST เสื้อผ้ายืด (ลบได้)` and the `ผ้ายืด` preset
-    (holds default values, not stretchy ones).
-8. Small code tidies: extract the file-extension sanitising duplicated in both garment routes;
+10. Delete the typo Storage bucket `garmet-photos` (the real one is `garment-photos`).
+11. Small code tidies: extract the file-extension sanitising duplicated in both garment routes;
     make `ThresholdBand[]` `readonly` in `dimensions.ts`; note in `app/dashboard/layout.tsx`
     that an orphaned retailer row can be fixed in Supabase Studio.
-9. Fix the `tsc --noEmit` error in `lib/garment/colour-fabric-regression.test.ts:49` (narrow on `ok` before reading `present`).
 
 ### Later — ideas and phases, not started
 
@@ -146,7 +156,7 @@ This is a working prototype. It is used in production but has rough edges that n
 | Types | `lib/config/dimensions.ts`: make `ThresholdBand[]` `readonly` |
 | Types | `lib/i18n/strings.ts`: apply `as const` for narrower literal types |
 | Dashboard | `app/dashboard/layout.tsx`: add comment noting orphan-retailer-row is recoverable via Supabase Studio |
-| Security | `npm audit`: 5 vulnerabilities from Next.js 14.2 — unreachable in this app; fix with Next.js 15 upgrade post-launch |
+| Security | `npm audit`: see the status snapshot; what remains needs a Next 16 upgrade |
 | FitChecker | `garmentMeasurements` prop removed to fix ESLint build failure. Re-add in Phase 2 for client-side comparison display |
 | ~~UX~~ | ~~No loading skeleton on shop browse page~~ — done, `loading.tsx` exists for browse and garment pages. Stale entry, verified live 2026-08-18. |
 | ~~UX~~ | ~~No back-navigation from hero page to shop browse page~~ — done, `BackLink.tsx` ships `← กลับไปหน้าร้าน`. Stale entry, verified live 2026-08-18. |
@@ -173,9 +183,8 @@ This is a working prototype. It is used in production but has rough edges that n
 - **Hosted Supabase project:** `fit-mvp` (Singapore region, free tier — it pauses after about a week with no activity and must be restored by hand; see the status snapshot) — **production only**,
   via Vercel env vars. Do not point `.env.local` at it.
 - **Migrations:** `supabase/migrations/` (`0001_initial.sql`, `0002_fit_rulesets.sql`,
-  `0003_colour_fabric.sql`). Applied automatically to the local stack. The hosted project is
-  still updated by hand through the Supabase SQL editor — local apply does not reach it. All
-  three are applied in production.
+  `0003_colour_fabric.sql` … `0008_picker_value_order.sql`). Applied automatically to the local stack. The hosted project is
+  still updated by hand through the Supabase SQL editor — local apply does not reach it. All eight are applied in production.
 - **GitHub repo:** `ingkawatlimvipuwat-sys/fit-mvp`
 - **Storage bucket:** `garment-photos` (public-read). Declared for local in
   `supabase/config.toml`; policies in `supabase/seed.sql`.
