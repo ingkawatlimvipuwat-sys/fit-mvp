@@ -138,8 +138,8 @@ export default function CatalogueBrowser({ products, folders, tags, allTags, sho
 
   return (
     <div className="space-y-4" onDragOver={dragging ? () => setHoverId(undefined) : undefined}>
-      <div className="flex items-start gap-2">
-        <div className="grow">
+      <div className="flex flex-col-reverse items-end gap-2 sm:flex-row sm:items-start">
+        <div className="w-full min-w-0 sm:w-auto sm:grow">
           {/* Filter changes replace the history entry, so Back does not step through every keystroke. */}
           <CatalogueToolbar
             view={view}
