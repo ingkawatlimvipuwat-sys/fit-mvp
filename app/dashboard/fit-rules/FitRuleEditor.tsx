@@ -6,11 +6,14 @@ import { DEFAULT_RULE } from '@/lib/fit/rules';
 import type { EaseRule, FitRuleset } from '@/lib/fit/rules';
 import { t } from '@/lib/i18n/strings';
 import { useLanguage, type Lang } from '@/lib/hooks/useLanguage';
+import Field from '@/app/components/ui/Field';
+import Notice from '@/app/components/ui/Notice';
+import CheckRow from '@/app/components/ui/CheckRow';
 
 // Matches VERDICT_COLOR in app/shop/[shop_slug]/[garment_id]/FitChecker.tsx
 const ZONE_COLOR = {
-  too_tight: 'bg-red-200', snug: 'bg-yellow-200',
-  good_fit: 'bg-green-200', loose: 'bg-blue-200',
+  too_tight: 'bg-verdict-tight-bg', snug: 'bg-verdict-snug-bg',
+  good_fit: 'bg-verdict-good-bg', loose: 'bg-verdict-loose-bg',
 } as const;
 
 const SCALE_MIN = -10, SCALE_MAX = 15;
@@ -21,14 +24,11 @@ function NumberField({ label, value, onChange }: {
   label: string; value: number; onChange: (n: number) => void;
 }) {
   return (
-    <label className="block">
-      <span className="text-sm text-gray-700">{label}</span>
-      <input
-        type="number" step="0.5" inputMode="decimal" value={value}
-        onChange={e => onChange(Number(e.target.value))}
-        className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
-      />
-    </label>
+    <Field
+      label={label}
+      type="number" step="0.5" inputMode="decimal" value={value}
+      onChange={e => onChange(Number(e.target.value))}
+    />
   );
 }
 
@@ -46,7 +46,7 @@ function Preview({ rule, lang }: { rule: EaseRule; lang: Lang }) {
 
   return (
     <div className="space-y-2">
-      <div className="flex h-6 w-full overflow-hidden rounded border">
+      <div className="flex h-6 w-full overflow-hidden rounded-[10px] border border-line">
         {zones.map(z => (
           <div
             key={z.verdict}
@@ -55,10 +55,10 @@ function Preview({ rule, lang }: { rule: EaseRule; lang: Lang }) {
           />
         ))}
       </div>
-      <div className="flex justify-between text-xs text-gray-500">
+      <div className="flex justify-between text-xs text-muted">
         <span>{SCALE_MIN} {t.unitCm[lang]}</span><span>0</span><span>+{SCALE_MAX} {t.unitCm[lang]}</span>
       </div>
-      <p className="text-sm text-gray-700">
+      <p className="text-sm text-ink">
         {t.fitRuleExample[lang]
           .replace('{body}', String(body))
           .replace('{garment}', garmentAtGoodFit.toFixed(1))}{' '}
@@ -93,24 +93,23 @@ export default function FitRuleEditor({ value, onChange }: {
       <NumberField label={t.fitRuleGoodTo[lang]}     value={base.goodTo}     onChange={n => setBase({ goodTo: n })} />
 
       <div>
-        <p className="mb-1 text-sm font-medium">{t.fitRulePreview[lang]}</p>
-        {parsed.success ? <Preview rule={base} lang={lang} /> : <p className="text-sm text-red-600">{error}</p>}
+        <p className="mb-1 text-sm font-semibold text-ink">{t.fitRulePreview[lang]}</p>
+        {parsed.success ? <Preview rule={base} lang={lang} /> : <Notice>{error}</Notice>}
       </div>
 
-      <details className="rounded border p-3">
-        <summary className="cursor-pointer text-sm font-medium">{t.fitRulePerDimension[lang]}</summary>
+      <details className="rounded-[14px] border border-line bg-page p-3">
+        <summary className="flex min-h-[44px] cursor-pointer items-center text-sm font-semibold text-ink">{t.fitRulePerDimension[lang]}</summary>
         <div className="mt-3 space-y-4">
           {DIMENSIONS.map(d => {
             const dimRule = value.perDimension[d.key];
             return (
-              <div key={d.key} className="rounded border p-3">
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox" checked={dimRule === undefined}
-                    onChange={e => setDim(d.key, e.target.checked ? null : { ...base })}
-                  />
-                  <span>{lang === 'th' ? d.labelTh : d.labelEn} — {t.fitRuleSameAsAbove[lang]}</span>
-                </label>
+              <div key={d.key} className="rounded-[10px] border border-line bg-surface p-3">
+                <CheckRow
+                  type="checkbox" checked={dimRule === undefined}
+                  onChange={e => setDim(d.key, e.target.checked ? null : { ...base })}
+                >
+                  {lang === 'th' ? d.labelTh : d.labelEn} — {t.fitRuleSameAsAbove[lang]}
+                </CheckRow>
                 {dimRule && (
                   <div className="mt-3 space-y-3">
                     <NumberField label={t.fitRuleTightBelow[lang]} value={dimRule.tightBelow} onChange={n => setDim(d.key, { ...dimRule, tightBelow: n })} />

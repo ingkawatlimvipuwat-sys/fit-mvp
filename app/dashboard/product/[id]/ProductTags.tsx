@@ -5,6 +5,9 @@ import { t } from '@/lib/i18n/strings';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { sendJson } from '@/lib/catalogue/send-json';
 import type { TagRow } from '@/lib/catalogue/tags';
+import Notice from '@/app/components/ui/Notice';
+import { CloseIcon } from '@/app/components/ui/icons';
+import { inputClass } from '@/app/components/ui/classes';
 
 export default function ProductTags({ productId, tags, suggestions }: {
   productId: string; tags: TagRow[]; suggestions: TagRow[];
@@ -38,19 +41,19 @@ export default function ProductTags({ productId, tags, suggestions }: {
   }
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
         {tags.map(tag => (
-          <span key={tag.id} className="inline-flex items-center gap-1 rounded-full border bg-gray-50 px-2 py-0.5 text-xs">
+          <span key={tag.id} className="inline-flex items-center rounded-full bg-[#EEF0F2] pl-3 text-sm text-[#2B313C]">
             <span className="break-all">{tag.name}</span>
             <button
               type="button"
               disabled={busy}
               aria-label={t.removeTag[lang].replace('{name}', tag.name)}
               onClick={() => call(`/api/products/${productId}/tags/${tag.id}`, 'DELETE')}
-              className="-my-2 -mr-2 p-2 text-gray-500 disabled:opacity-60"
+              className="inline-flex h-11 w-11 items-center justify-center text-muted hover:text-ink disabled:opacity-60"
             >
-              ✕
+              <CloseIcon />
             </button>
           </span>
         ))}
@@ -63,14 +66,14 @@ export default function ProductTags({ productId, tags, suggestions }: {
             onChange={e => setDraft(e.target.value)}
             placeholder={t.addTagPlaceholder[lang]}
             aria-label={t.tags[lang]}
-            className="rounded border border-gray-300 px-2 py-1.5 text-xs sm:py-0.5"
+            className={`${inputClass} w-44`}
           />
           <datalist id="shop-tag-suggestions">
             {suggestions.map(s => <option key={s.id} value={s.name} />)}
           </datalist>
         </form>
       </div>
-      {message && <p role="alert" className="text-xs text-red-600">{message}</p>}
+      {message && <Notice role="alert">{message}</Notice>}
     </div>
   );
 }

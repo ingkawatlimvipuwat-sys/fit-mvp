@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from 'react';
 import { t } from '@/lib/i18n/strings';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { moveItem } from '@/lib/catalogue/picks';
+import TextButton from '@/app/components/ui/TextButton';
+import Notice from '@/app/components/ui/Notice';
 
 /**
  * The order shoppers see one picker's values in, with ↑ ↓ buttons (phone and
@@ -51,23 +53,23 @@ export default function PickerValueOrder({ values, onSave }: {
     void flush();
   }
 
-  const arrow = 'h-9 w-9 shrink-0 rounded border border-gray-300 bg-white text-base disabled:opacity-30';
+  const arrow = 'h-11 w-11 shrink-0 rounded-[10px] border border-control bg-surface text-base text-ink hover:bg-page disabled:opacity-30';
   return (
-    <div className="pl-1 text-xs text-gray-600">
+    <div className="text-sm text-muted">
       {!open ? (
         <div className="flex flex-wrap items-center gap-x-2">
           <span className="break-words">{t.valueOrderLabel[lang]}: {order.join(' · ')}</span>
-          <button type="button" onClick={() => setOpen(true)} className="py-1 text-blue-700 underline">
+          <TextButton onClick={() => setOpen(true)} className="px-0">
             {t.reorderValues[lang]}
-          </button>
+          </TextButton>
         </div>
       ) : (
-        <div className="max-w-xs space-y-1">
+        <div className="max-w-xs space-y-2">
           <div>{t.valueOrderLabel[lang]}</div>
           <ol className="space-y-1">
             {order.map((value, i) => (
               <li key={value} className="flex items-center gap-2">
-                <span className="min-w-0 grow break-words text-sm text-gray-900">{value}</span>
+                <span className="min-w-0 grow break-words text-base text-ink">{value}</span>
                 <button type="button" disabled={i === 0} onClick={() => move(i, -1)}
                   aria-label={t.moveValueUp[lang].replace('{value}', value)} className={arrow}>↑</button>
                 <button type="button" disabled={i === order.length - 1} onClick={() => move(i, 1)}
@@ -75,12 +77,12 @@ export default function PickerValueOrder({ values, onSave }: {
               </li>
             ))}
           </ol>
-          <button type="button" onClick={() => setOpen(false)} className="py-1 text-blue-700 underline">
+          <TextButton onClick={() => setOpen(false)} className="px-0">
             {t.doneReorder[lang]}
-          </button>
+          </TextButton>
         </div>
       )}
-      {error && <p role="alert" className="text-red-600">{error}</p>}
+      {error && <Notice role="alert" className="mt-1">{error}</Notice>}
     </div>
   );
 }

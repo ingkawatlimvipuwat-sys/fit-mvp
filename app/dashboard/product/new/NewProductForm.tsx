@@ -4,6 +4,10 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { t } from '@/lib/i18n/strings';
 import { useLanguage } from '@/lib/hooks/useLanguage';
+import Button from '@/app/components/ui/Button';
+import Card from '@/app/components/ui/Card';
+import Field from '@/app/components/ui/Field';
+import Notice from '@/app/components/ui/Notice';
 
 export default function NewProductForm({ folderId }: { folderId: string | null }) {
   const router = useRouter();
@@ -35,24 +39,25 @@ export default function NewProductForm({ folderId }: { folderId: string | null }
   }
 
   return (
-    <form className="space-y-5" onSubmit={onSubmit}>
-      <h1 className="text-xl font-semibold">{t.newProduct[lang]}</h1>
-      <label className="block">
-        <span className="text-sm text-gray-700">{t.productName[lang]}</span>
-        <input
+    <form className="mx-auto max-w-xl space-y-4" onSubmit={onSubmit}>
+      <h1 className="text-xl font-semibold leading-snug">{t.newProduct[lang]}</h1>
+      <Card className="space-y-4">
+        <Field
+          label={t.productName[lang]}
           required maxLength={120} value={name} onChange={e => setName(e.target.value)}
-          className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
         />
-      </label>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="flex items-center gap-4">
-        <button
-          type="submit" disabled={loading}
-          className="rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-60"
-        >
+        {error && <Notice>{error}</Notice>}
+      </Card>
+      <div className="flex items-center gap-3">
+        <Button type="submit" disabled={loading}>
           {loading ? t.saving[lang] : t.save[lang]}
-        </button>
-        <Link href={folderId ? `/dashboard?folder=${folderId}` : '/dashboard'} className="text-sm text-gray-600 underline">{t.cancel[lang]}</Link>
+        </Button>
+        <Link
+          href={folderId ? `/dashboard?folder=${folderId}` : '/dashboard'}
+          className="inline-flex min-h-[44px] items-center px-2 text-sm font-medium text-accent underline-offset-2 hover:text-accent-dark hover:underline"
+        >
+          {t.cancel[lang]}
+        </Link>
       </div>
     </form>
   );

@@ -33,3 +33,6 @@ export function DotsIcon({ size = 20, className = 'shrink-0' }: P) {
     </svg>
   );
 }
+export function CloseIcon({ size = 16, className = 'shrink-0' }: P) {
+  return <svg {...base(size)} className={className}><path d="M6 6l12 12M18 6L6 18" /></svg>;
+}

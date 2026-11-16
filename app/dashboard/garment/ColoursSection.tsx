@@ -2,6 +2,10 @@
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { t } from '@/lib/i18n/strings';
 import type { Colour } from '@/lib/garment/colour-fabric';
+import Button from '@/app/components/ui/Button';
+import FileInput from '@/app/components/ui/FileInput';
+import TextButton from '@/app/components/ui/TextButton';
+import { inputClass } from '@/app/components/ui/classes';
 
 export default function ColoursSection({
   colours, onChange, currentPhotoUrl,
@@ -18,56 +22,52 @@ export default function ColoursSection({
   }
 
   return (
-    <details open className="rounded border p-4">
-      <summary className="cursor-pointer font-medium">{t.coloursSection[lang]}</summary>
+    <details open className="rounded-2xl border border-line bg-surface p-4">
+      <summary className="flex min-h-[44px] cursor-pointer items-center text-base font-semibold text-ink">{t.coloursSection[lang]}</summary>
 
       <ul className="mt-3 space-y-2">
         {colours.map((c, i) => (
-          <li key={i} className="flex items-center gap-2">
+          <li key={i} className="flex flex-wrap items-center gap-x-2">
             <input
               type="color"
               value={c.hex}
               onChange={e => update(i, { hex: e.target.value })}
-              className="h-9 w-12 rounded border"
+              className="h-11 w-14 rounded-[10px] border border-control bg-surface"
               aria-label={`${t.coloursSection[lang]} ${i + 1}`}
             />
             {/* The native picker swatch hides the value; the shopper page shows
                 this code, so the retailer should see the same thing here. */}
-            <span className="w-16 font-mono text-xs uppercase text-gray-500">{c.hex}</span>
+            <span className="w-16 font-mono text-xs uppercase text-muted">{c.hex}</span>
             <input
               type="text"
               value={c.name}
               maxLength={40}
               placeholder={t.colourName[lang]}
               onChange={e => update(i, { name: e.target.value })}
-              className="flex-1 rounded border px-2 py-1.5"
+              className={`${inputClass} grow basis-32`}
             />
-            <button
-              type="button"
-              onClick={() => onChange(colours.filter((_, j) => j !== i))}
-              className="px-2 py-1 text-sm text-red-600"
-            >
+            <TextButton tone="danger" onClick={() => onChange(colours.filter((_, j) => j !== i))}>
               {t.removeColour[lang]}
-            </button>
+            </TextButton>
           </li>
         ))}
       </ul>
 
-      <button
-        type="button"
+      <Button
+        variant="secondary"
+        className="mt-3 !h-11 !text-sm"
         onClick={() => onChange([...colours, { hex: '#000000', name: '' }])}
-        className="mt-3 rounded border px-3 py-1.5 text-sm"
       >
         {t.addColour[lang]}
-      </button>
+      </Button>
 
-      <label className="mt-4 block text-sm">
+      <label className="mt-4 block text-sm font-semibold text-ink">
         {t.trueColourPhoto[lang]}
         {currentPhotoUrl && (
           /* eslint-disable-next-line @next/next/no-img-element */
-          <img src={currentPhotoUrl} alt="" className="mt-1 h-20 w-20 rounded object-cover" />
+          <img src={currentPhotoUrl} alt="" className="mt-1 h-20 w-20 rounded-[10px] object-cover" />
         )}
-        <input type="file" name="true_colour_photo" accept="image/*" className="mt-1 block" />
+        <FileInput name="true_colour_photo" accept="image/*" />
       </label>
     </details>
   );
