@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import {
-  normaliseCustomerToken, sameMeasurements, decideSessionWrite,
+  normaliseCustomerToken, sameMeasurements, decideSessionWrite, countRecentShopSessions,
   SESSION_WRITE_CAP, DUPLICATE_WINDOW_MS,
 } from './session-gate';
 
@@ -58,5 +59,25 @@ describe('decideSessionWrite', () => {
     expect(decideSessionWrite({
       recentCount: 0, last: { customer_measurements: { chest_cm: 100 }, created_at: 'garbage' }, measurements, now,
     })).toBe('insert');
+  });
+});
+
+describe('countRecentShopSessions', () => {
+  it('counts one shop only, through an inner join on the garment', () => {
+    const calls: unknown[][] = [];
+    const query = {
+      select: (...a: unknown[]) => { calls.push(['select', ...a]); return query; },
+      eq: (...a: unknown[]) => { calls.push(['eq', ...a]); return query; },
+      gte: (...a: unknown[]) => { calls.push(['gte', ...a]); return query; },
+    };
+    const client = { from: (table: string) => { calls.push(['from', table]); return query; } };
+    countRecentShopSessions(client as unknown as SupabaseClient, 'shop-1', '2026-11-06T00:00:00.000Z');
+    expect(calls).toEqual([
+      ['from', 'fit_sessions'],
+      // Without !inner the filter below would not narrow the count at all.
+      ['select', 'id, garments!inner(retailer_id)', { count: 'exact', head: true }],
+      ['eq', 'garments.retailer_id', 'shop-1'],
+      ['gte', 'created_at', '2026-11-06T00:00:00.000Z'],
+    ]);
   });
 });

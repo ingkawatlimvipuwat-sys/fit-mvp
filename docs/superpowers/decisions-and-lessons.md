@@ -213,10 +213,11 @@ to the right section rather than to a new document.
   retries (a full, idempotent PATCH).
 - **`/api/fit/evaluate` is rate-limited in three layers (2026-10-26).** Per-IP 30 per minute, in
   memory (per instance, a speed bump only); a duplicate skip (same token + garment + measurements
-  within 10 minutes); and an app-wide write cap (120 `fit_sessions` rows per 10 minutes, counted in
-  the database). The verdict is always returned except on 429, and every gate fails open. What it
+  within 10 minutes); and a per-shop write cap (120 `fit_sessions` rows per shop per 10 minutes, counted in
+  the database through the garment; per-shop since 2026-11-06, so one busy or attacked shop cannot
+  stop another shop's saves). The verdict is always returned except on 429, and every gate fails open. What it
   does not stop: a many-IP flood still costs function invocations and database reads, and can crowd
-  out real shoppers' session saves (not their verdicts) while it lasts. Under a real attack, turn on
+  out that shop's real shoppers' session saves (not their verdicts) while it lasts. Under a real attack, turn on
   Vercel's Attack Challenge Mode (Vercel dashboard, project, Firewall). Optional migration 0007 adds
   an index on `fit_sessions.created_at` for the count.
 - **Refine messages in `lib/fit/rule-schema.ts` are string keys** (2026-10-26), mapped to Thai or

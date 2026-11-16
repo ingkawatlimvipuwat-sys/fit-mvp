@@ -72,7 +72,7 @@ export default function ProductGrid({
                 href={`/shop/${shopSlug}/p/${p.id}`}
                 target="_blank"
                 rel="noopener"
-                className="text-xs text-blue-700 underline"
+                className="inline-block py-2 text-xs text-blue-700 underline sm:py-0"
               >
                 {t.previewShop[lang]}
               </Link>

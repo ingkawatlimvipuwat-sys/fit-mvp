@@ -243,10 +243,10 @@ export default function ProductEditor({ productId, name: initialName, shopSlug, 
                 )}
               </div>
               <div className="flex shrink-0 items-center gap-3 text-xs">
-                <Link href={`/dashboard/garment/${v.id}/edit`} className="text-blue-700 underline">{t.edit[lang]}</Link>
+                <Link href={`/dashboard/garment/${v.id}/edit`} className="inline-block py-2 text-blue-700 underline sm:py-0">{t.edit[lang]}</Link>
                 <Link
                   href={`/dashboard/garment/new?product=${productId}&copy=${v.id}`}
-                  className="text-blue-700 underline"
+                  className="inline-block py-2 text-blue-700 underline sm:py-0"
                 >
                   {t.duplicateVersion[lang]}
                 </Link>
