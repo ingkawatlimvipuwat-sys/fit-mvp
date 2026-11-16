@@ -8,6 +8,8 @@ import type { BodyProfile } from '@/lib/config/sizeChart';
 import type { DimensionKey } from '@/lib/config/dimensions';
 import { keepSharedValues } from '@/lib/catalogue/keep-shared';
 import { summariseFit } from '@/lib/fit/summary';
+import { easeBar } from '@/lib/fit/ease-bar';
+import type { EaseRule } from '@/lib/fit/rules';
 import { displaySizeLabel } from '@/lib/garment/size-label';
 import Button from '@/app/components/ui/Button';
 import Card from '@/app/components/ui/Card';
@@ -48,6 +50,8 @@ export default function FitChecker({
   const [lang] = useLanguage();
   const [values, setValues] = useState<Record<string, string>>({});
   const [result, setResult] = useState<FitResult | null>(null);
+  // The rule behind each scored measurement; absent from older responses.
+  const [rules, setRules] = useState<Record<string, EaseRule | undefined>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [prefilled, setPrefilled] = useState(false);
@@ -168,6 +172,7 @@ export default function FitChecker({
       else if (!res.ok) setError(t.fitError[lang]);
       else {
         const j = await res.json();
+        setRules(j.rules ?? {});
         setResult(j.result);
       }
     } catch {
@@ -294,12 +299,29 @@ export default function FitChecker({
               {dimensions.map(d => {
                 const r = result.dimensions[d.key];
                 const v = r?.verdict ?? 'unknown';
+                const rule = rules[d.key];
+                // The engine's diff is customer minus garment; the bar is drawn in ease.
+                const bar = rule && r && r.diff !== null ? easeBar(-r.diff, rule) : null;
                 return (
                   <li key={d.key} className="space-y-1.5 py-3.5">
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-semibold">{lang === 'th' ? d.labelTh : d.labelEn}</span>
                       <VerdictChip verdict={v} label={verdictLabel[v]} />
                     </div>
+                    {bar && (
+                      <div aria-hidden="true" className="relative h-3">
+                        <div className="absolute inset-x-0 top-[3px] flex h-1.5 overflow-hidden rounded-full">
+                          <span className="bg-[#E8B49C]" style={{ width: bar.tight + '%' }} />
+                          <span className="bg-[#F0D79A]" style={{ width: bar.snug + '%' }} />
+                          <span className="bg-[#9CCBD0]" style={{ width: bar.good + '%' }} />
+                          <span className="bg-[#D9DDE2]" style={{ width: bar.loose + '%' }} />
+                        </div>
+                        <span
+                          className="absolute top-0 h-3 w-3 -translate-x-1/2 rounded-full bg-ink ring-[3px] ring-surface"
+                          style={{ left: bar.dot + '%' }}
+                        />
+                      </div>
+                    )}
                     {r?.diff !== null && r?.diff !== undefined && (
                       <p className="text-[13px] text-muted">{diffPhrase(r.diff, lang)}</p>
                     )}
@@ -307,6 +329,9 @@ export default function FitChecker({
                 );
               })}
             </ul>
+            {Object.keys(rules).length > 0 && (
+              <p className="border-t border-line py-3 text-xs text-muted">{t.easeBarCaption[lang]}</p>
+            )}
           </Card>
           <Button variant="secondary" fullWidth onClick={editMeasurements}>
             {t.editMeasurements[lang]}

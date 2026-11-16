@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createSupabaseAdminClient } from '@/lib/supabase/server';
-import { evaluateFit } from '@/lib/fit/engine';
+import { evaluateFit, rulesInForce } from '@/lib/fit/engine';
 import { DIMENSIONS, type DimensionKey } from '@/lib/config/dimensions';
 import type { MeasurementBag } from '@/lib/supabase/types';
 import { resolveRuleset } from '@/lib/fit/resolve';
@@ -114,5 +114,7 @@ export async function POST(req: Request) {
     console.warn('fit_sessions write cap reached; verdict returned without saving');
   }
 
-  return NextResponse.json({ result });
+  // `rules` is display-only (the shopper's tight-to-loose bar); the saved
+  // session keeps the whole ruleset in applied_rule.
+  return NextResponse.json({ result, rules: rulesInForce(ruleset, result) });
 }

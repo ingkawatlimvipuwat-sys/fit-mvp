@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { evaluateFit } from './engine';
+import { evaluateFit, rulesInForce } from './engine';
 import { fitProfileByKey } from '@/lib/config/fit-profiles';
 
 /** Test helper: look up a built-in profile's ruleset by key. */
@@ -78,5 +78,19 @@ describe('evaluateFit — overall verdict (worst wins)', () => {
   it('overall = unknown when no dimension can be scored', () => {
     const r = evaluateFit({}, {}, rulesetFor('regular'));
     expect(r.overall).toBe('unknown');
+  });
+});
+
+describe('rulesInForce', () => {
+  it('returns the rule behind each scored dimension and skips unscored ones', () => {
+    const ruleset = {
+      base: { tightBelow: -2, goodFrom: 0, goodTo: 3 },
+      perDimension: { chest_cm: { tightBelow: -6, goodFrom: -4, goodTo: 0 } },
+    };
+    const result = evaluateFit({ chest_cm: 97, waist_cm: 80 }, { chest_cm: 100, waist_cm: 78, hip_cm: 90 }, ruleset);
+    const rules = rulesInForce(ruleset, result);
+    expect(rules.chest_cm).toEqual(ruleset.perDimension.chest_cm);
+    expect(rules.waist_cm).toEqual(ruleset.base);
+    expect(rules.hip_cm).toBeUndefined();
   });
 });

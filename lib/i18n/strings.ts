@@ -283,6 +283,10 @@ export const t = {
   tryOnSampleAlt: { th: 'ภาพตัวอย่าง ไม่ใช่รูปของคุณ', en: 'Sample image, not a photo of you' },
 
   // --- Fit form and result (redesign) ---
+  easeBarCaption: {
+    th: 'จุดบนแถบแสดงว่าเสื้อผ้าตัวนี้อยู่ตรงไหนระหว่างคับกับหลวม ตามกฎของร้าน',
+    en: 'The dot shows where this garment sits between tight and loose, by the shop’s rule.',
+  },
   blankNotScored: { th: 'ช่องที่เว้นว่างจะไม่ถูกนำมาประเมิน', en: 'Blank fields are not scored.' },
   fitSummaryAllGood: { th: 'พอดีทุกจุด', en: 'Good fit everywhere' },
   fitSummaryCount: { th: 'พอดี {good} จาก {scored} จุด', en: '{good} of {scored} measurements fit well' },
