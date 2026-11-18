@@ -3,15 +3,16 @@ import { useEffect, useRef, useState } from 'react';
 import { t } from '@/lib/i18n/strings';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 
-/** Stub result until a real VTO model is wired. Served from public/. */
-export const TRYON_RESULT_SRC = '/try-on/result.png';
-export const TRYON_FAKE_DELAY_MS = 900;
+const POLL_MS = 2000;
+const POLL_LIMIT = 45;
 
-export default function TryOn() {
+export default function TryOn({ garmentId }: { garmentId: string }) {
   const [lang] = useLanguage();
   const galleryRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
+  const runId = useRef(0);
+  const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -24,40 +25,97 @@ export default function TryOn() {
   }, [previewUrl]);
 
   useEffect(() => {
+    return () => { runId.current += 1; };
+  }, []);
+
+  useEffect(() => {
+    runId.current += 1;
+    setResultUrl(null);
+    setError(null);
+    setLoading(false);
+  }, [garmentId]);
+
+  useEffect(() => {
     if (resultUrl) resultRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
   }, [resultUrl]);
 
-  function onFile(file: File | undefined) {
-    if (!file || !file.type.startsWith('image/')) {
+  function onFile(next: File | undefined) {
+    if (!next || (!next.type.startsWith('image/') && next.type !== '')) {
       setError(t.tryOnNeedPhoto[lang]);
       return;
     }
+    const url = URL.createObjectURL(next);
+    runId.current += 1;
     setError(null);
     setResultUrl(null);
+    setLoading(false);
+    setFile(next);
     setPreviewUrl(prev => {
-      if (prev) URL.revokeObjectURL(prev);
-      return URL.createObjectURL(file);
+      if (prev && prev !== url) URL.revokeObjectURL(prev);
+      return url;
     });
   }
 
   async function generate() {
-    if (!previewUrl) {
+    if (!file) {
       setError(t.tryOnNeedPhoto[lang]);
       return;
     }
+    const run = ++runId.current;
     setError(null);
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, TRYON_FAKE_DELAY_MS));
-      setResultUrl(TRYON_RESULT_SRC);
+      const form = new FormData();
+      form.set('garment_id', garmentId);
+      form.set('photo', file);
+      const started = await fetch('/api/try-on', { method: 'POST', body: form });
+      const startBody = await started.json().catch(() => null);
+      if (run !== runId.current) return;
+      if (!started.ok) {
+        setError(messageFor(startBody?.code, lang));
+        return;
+      }
+      if (typeof startBody?.imageUrl === 'string') {
+        setResultUrl(startBody.imageUrl);
+        return;
+      }
+      if (typeof startBody?.historyId !== 'string') {
+        setError(t.tryOnFailed[lang]);
+        return;
+      }
+      for (let i = 0; i < POLL_LIMIT; i++) {
+        await new Promise(resolve => setTimeout(resolve, POLL_MS));
+        if (run !== runId.current) return;
+        const polled = await fetch(`/api/try-on?id=${encodeURIComponent(startBody.historyId)}`);
+        const pollBody = await polled.json().catch(() => null);
+        if (run !== runId.current) return;
+        if (pollBody?.code === 'unavailable' || polled.status === 503) {
+          setError(t.tryOnUnavailable[lang]);
+          return;
+        }
+        if (pollBody?.status === 'ready' && typeof pollBody.imageUrl === 'string') {
+          setResultUrl(pollBody.imageUrl);
+          return;
+        }
+        if (pollBody?.status === 'failed' || !polled.ok) {
+          setError(t.tryOnFailed[lang]);
+          return;
+        }
+      }
+      setError(t.tryOnFailed[lang]);
+    } catch {
+      if (run === runId.current) setError(t.tryOnFailed[lang]);
     } finally {
-      setLoading(false);
+      if (run === runId.current) setLoading(false);
     }
   }
 
   function reset() {
+    runId.current += 1;
+    setLoading(false);
     setResultUrl(null);
     setError(null);
+    setFile(null);
     setPreviewUrl(prev => {
       if (prev) URL.revokeObjectURL(prev);
       return null;
@@ -69,12 +127,7 @@ export default function TryOn() {
   return (
     <section className="mt-6 space-y-4 rounded-2xl border border-dashed border-field bg-surface p-4">
       <div>
-        <h2 className="flex items-center gap-2 text-lg font-semibold">
-          {t.tryOnTitle[lang]}
-          <span className="rounded-full bg-line px-2 py-0.5 text-[11px] font-semibold text-verdict-loose-fg">
-            {t.tryOnSampleBadge[lang]}
-          </span>
-        </h2>
+        <h2 className="text-lg font-semibold">{t.tryOnTitle[lang]}</h2>
         <p className="mt-1 text-sm text-muted">{t.tryOnHint[lang]}</p>
       </div>
 
@@ -140,7 +193,7 @@ export default function TryOn() {
 
           <button
             type="button"
-            disabled={!previewUrl || loading}
+            disabled={!file || loading}
             onClick={generate}
             className="h-[52px] w-full rounded-xl bg-accent px-4 font-semibold text-white hover:bg-accent-dark disabled:opacity-60 sm:h-12"
           >
@@ -151,12 +204,12 @@ export default function TryOn() {
 
       {resultUrl && (
         <div ref={resultRef} className="space-y-3">
-          <p className="text-sm font-semibold text-ink">{t.tryOnSampleResult[lang]}</p>
+          <p className="text-sm font-semibold text-ink">{t.tryOnResult[lang]}</p>
           <div className="aspect-[3/4] overflow-hidden rounded bg-gray-100">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={resultUrl}
-              alt={t.tryOnSampleAlt[lang]}
+              alt={t.tryOnPhotoAlt[lang]}
               className="h-full w-full object-cover object-top"
             />
           </div>
@@ -182,6 +235,12 @@ export default function TryOn() {
       {error && <p className="text-sm text-red-700">{error}</p>}
     </section>
   );
+}
+
+function messageFor(code: string | undefined, lang: 'th' | 'en'): string {
+  if (code === 'unavailable') return t.tryOnUnavailable[lang];
+  if (code === 'too_large') return t.tryOnTooLarge[lang];
+  return t.tryOnFailed[lang];
 }
 
 function PersonIcon() {
