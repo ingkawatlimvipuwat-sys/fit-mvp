@@ -126,7 +126,7 @@ export default async function HeroPage(props: { params: Promise<{ shop_slug: str
           />
         </GarmentTabs>
 
-        <TryOn />
+        <TryOn garmentId={garment.id} />
 
         <OtherGarments
           others={(others ?? []).map(o => ({ ...o, href: `/shop/${params.shop_slug}/${o.id}` }))}

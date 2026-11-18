@@ -41,7 +41,13 @@ to the right section rather than to a new document.
 ## 2. Product decisions — do not reopen without new evidence
 
 - **Fit intelligence is the product, not pictures.** Virtual try-on is Phase 2, layered on top
-  of a proven fit engine. Do not pull it forward.
+  of a proven fit engine. Do not pull new picture features forward.
+- **The shopper try-on block calls OpenArt** (founder, 2026-11-18). This is the exception to
+  the line above. `POST /api/try-on` uploads the shopper's photo and the garment photo and
+  starts an image-to-image generation. It spends that OpenArt account's credits. When the
+  account is out of credits, or `OPENART_TOKEN` is missing, the shopper sees "service is
+  temporarily unavailable" and nothing about credits. The token stays on the server (Vercel
+  env, never `NEXT_PUBLIC_`). The picture is not stored in the database.
 - **Prove the core loop before adding features.** This is the smallest honest version of a real
   product.
 - **Thai first, English second. Retailer content is never translated** — shop names and garment

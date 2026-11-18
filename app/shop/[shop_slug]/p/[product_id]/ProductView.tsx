@@ -98,7 +98,7 @@ export default function ProductView({
         />
       </GarmentTabs>
 
-      <TryOn />
+      <TryOn garmentId={shown.id} />
     </>
   );
 }
