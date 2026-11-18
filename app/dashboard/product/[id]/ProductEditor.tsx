@@ -8,6 +8,13 @@ import { versionLabel, type PickerDef } from '@/lib/catalogue/picks';
 import type { TagRow } from '@/lib/catalogue/tags';
 import ProductTags from './ProductTags';
 import PickerValueOrder from './PickerValueOrder';
+import Button from '@/app/components/ui/Button';
+import Card from '@/app/components/ui/Card';
+import LinkButton from '@/app/components/ui/LinkButton';
+import Notice from '@/app/components/ui/Notice';
+import TextButton from '@/app/components/ui/TextButton';
+import { WarningIcon, ChevronLeftIcon } from '@/app/components/ui/icons';
+import { inputClass } from '@/app/components/ui/classes';
 
 export interface VersionRow {
   id: string;
@@ -123,56 +130,58 @@ export default function ProductEditor({ productId, name: initialName, shopSlug, 
     missing_measurement: t.attentionMissingMeasurement[lang],
     missing_pick: t.attentionMissingPick[lang],
   } as const;
-  const inputClass = 'rounded border border-gray-300 px-2 py-1 text-sm';
 
   return (
     <div className="space-y-6">
-      <Link href="/dashboard" className="text-sm text-gray-600 underline">{t.backToDashboard[lang]}</Link>
+      <Link href="/dashboard" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-medium text-accent hover:text-accent-dark">
+        <ChevronLeftIcon size={16} />
+        {t.backToDashboard[lang]}
+      </Link>
 
-      <div className="space-y-3">
+      <Card className="space-y-3">
         <input
           aria-label={t.productName[lang]}
           value={name} maxLength={120}
           onChange={e => setName(e.target.value)} onBlur={saveName}
-          className="block w-full rounded border border-transparent px-2 py-1 text-xl font-semibold hover:border-gray-300"
+          className="block h-12 w-full rounded-[10px] border border-field bg-surface px-3 text-xl font-semibold text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
         />
         <ProductTags productId={productId} tags={tags} suggestions={tagSuggestions} />
-        <div className="flex flex-wrap items-center gap-3 text-sm">
+        <div className="flex flex-wrap items-center gap-3">
           {shopSlug && (
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              className="!h-11 !text-sm"
               onClick={async () => {
                 await navigator.clipboard.writeText(link);
                 setCopied(true);
                 setTimeout(() => setCopied(false), 1500);
               }}
-              className="rounded border px-3 py-1"
             >
               {copied ? '✓' : t.copyShopperLink[lang]}
-            </button>
+            </Button>
           )}
-          <button type="button" disabled={busy} onClick={deleteProduct} className="text-red-600 disabled:opacity-60">
+          <TextButton tone="danger" disabled={busy} onClick={deleteProduct}>
             {t.deleteGarment[lang]}
-          </button>
+          </TextButton>
         </div>
-      </div>
+      </Card>
 
-      {message && <p className="text-sm text-red-600" role="alert">{message}</p>}
+      {message && <Notice role="alert">{message}</Notice>}
 
-      <section className="space-y-2 rounded border bg-white p-4">
-        <ul className="space-y-2">
+      <Card className="space-y-3">
+        <ul className="space-y-4">
           {pickers.map(p => (
             <li key={p.id} className="space-y-1">
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-x-3">
                 <input
                   aria-label={t.pickerName[lang]}
                   defaultValue={p.name} maxLength={30}
                   onBlur={e => renamePicker(p, e.target.value)}
-                  className={inputClass}
+                  className={`${inputClass} grow sm:grow-0`}
                 />
-                <button type="button" onClick={() => removePicker(p)} className="text-xs text-red-600">
+                <TextButton tone="danger" onClick={() => removePicker(p)}>
                   {t.removePicker[lang]}
-                </button>
+                </TextButton>
               </div>
               <PickerValueOrder values={valuesByPicker[p.id] ?? []} onSave={order => saveValueOrder(p, order)} />
             </li>
@@ -180,73 +189,76 @@ export default function ProductEditor({ productId, name: initialName, shopSlug, 
         </ul>
 
         {adding ? (
-          <form onSubmit={addPicker} className="space-y-3 border-t pt-3">
+          <form onSubmit={addPicker} className="space-y-3 border-t border-line pt-3">
             <input
               required autoFocus aria-label={t.pickerName[lang]} placeholder={t.pickerName[lang]}
               value={newPicker} maxLength={30} onChange={e => setNewPicker(e.target.value)}
-              className={inputClass}
+              className={`${inputClass} w-full sm:w-auto`}
             />
             {versions.length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs text-gray-600">{t.pickerValuesPrompt[lang]}</p>
+                <p className="text-sm text-muted">{t.pickerValuesPrompt[lang]}</p>
                 {versions.map(v => (
-                  <label key={v.id} className="flex items-center gap-3 text-sm">
-                    <span className="w-32 shrink-0 truncate">{versionLabel(v.picks, pickers) || '—'}</span>
+                  <label key={v.id} className="flex items-center gap-3 text-sm text-ink">
+                    <span className="w-24 shrink-0 truncate sm:w-32">{versionLabel(v.picks, pickers) || '—'}</span>
                     <input
                       value={backfill[v.id] ?? ''} maxLength={60}
                       onChange={e => setBackfill(b => ({ ...b, [v.id]: e.target.value }))}
-                      className={inputClass}
+                      className={`${inputClass} grow`}
                     />
                   </label>
                 ))}
               </div>
             )}
             <div className="flex items-center gap-3">
-              <button type="submit" disabled={busy} className="rounded bg-gray-900 px-3 py-1 text-sm text-white disabled:opacity-60">
+              <Button type="submit" disabled={busy}>
                 {t.save[lang]}
-              </button>
-              <button type="button" onClick={() => { setAdding(false); setBackfill({}); }} className="text-sm text-gray-600 underline">
+              </Button>
+              <Button variant="ghost" onClick={() => { setAdding(false); setBackfill({}); }}>
                 {t.cancel[lang]}
-              </button>
+              </Button>
             </div>
           </form>
         ) : (
-          <button type="button" onClick={() => setAdding(true)} className="text-sm text-blue-700 underline">
+          <TextButton onClick={() => setAdding(true)} className="px-0">
             {t.addPicker[lang]}
-          </button>
+          </TextButton>
         )}
-      </section>
+      </Card>
 
       <section className="space-y-3">
-        {versions.length === 0 && <p className="text-sm text-gray-600">{t.noVersions[lang]}</p>}
+        {versions.length === 0 && <p className="text-sm text-muted">{t.noVersions[lang]}</p>}
         <ul className="space-y-2">
           {versions.map(v => (
-            <li key={v.id} className="flex items-center gap-3 rounded border bg-white p-3">
-              <div className="h-12 w-12 shrink-0 overflow-hidden rounded bg-gray-100">
+            <li key={v.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[14px] border border-line bg-surface p-3">
+              <div className="h-12 w-12 shrink-0 overflow-hidden rounded-[10px] bg-[#DDE1E6]">
                 {v.photo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={v.photo_url} alt="" className="h-full w-full object-cover" />
                 ) : null}
               </div>
-              <div className="min-w-0 grow">
-                <div className="flex items-center gap-2 text-sm font-medium">
+              <div className="min-w-0 grow basis-40">
+                <div className="flex items-center gap-2 text-sm font-semibold text-ink">
                   {v.colour && (
-                    <span className="inline-block h-3 w-3 rounded-full border" style={{ backgroundColor: v.colour }} />
+                    <span className="inline-block h-3 w-3 shrink-0 rounded-full border border-control" style={{ backgroundColor: v.colour }} />
                   )}
                   {versionLabel(v.picks, pickers) || '—'}
                 </div>
-                <div className="truncate text-xs text-gray-500">
+                <div className="truncate text-xs text-muted">
                   {v.measurements.map(m => `${lang === 'th' ? m.labelTh : m.labelEn} ${m.value}`).join(' · ')}
                 </div>
                 {v.reasons.length > 0 && (
-                  <div className="text-xs text-amber-700">⚠ {v.reasons.map(r => reasonText[r]).join(', ')}</div>
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-verdict-tight-fg">
+                    <WarningIcon size={14} />
+                    {v.reasons.map(r => reasonText[r]).join(', ')}
+                  </div>
                 )}
               </div>
-              <div className="flex shrink-0 items-center gap-3 text-xs">
-                <Link href={`/dashboard/garment/${v.id}/edit`} className="inline-block py-2 text-blue-700 underline sm:py-0">{t.edit[lang]}</Link>
+              <div className="flex shrink-0 items-center">
+                <Link href={`/dashboard/garment/${v.id}/edit`} className="inline-flex min-h-[44px] items-center px-2 text-sm font-medium text-accent underline-offset-2 hover:text-accent-dark hover:underline">{t.edit[lang]}</Link>
                 <Link
                   href={`/dashboard/garment/new?product=${productId}&copy=${v.id}`}
-                  className="inline-block py-2 text-blue-700 underline sm:py-0"
+                  className="inline-flex min-h-[44px] items-center px-2 text-sm font-medium text-accent underline-offset-2 hover:text-accent-dark hover:underline"
                 >
                   {t.duplicateVersion[lang]}
                 </Link>
@@ -255,14 +267,11 @@ export default function ProductEditor({ productId, name: initialName, shopSlug, 
           ))}
         </ul>
         {versions.length > 0 && pickers.length === 0 ? (
-          <p className="text-sm text-amber-700">{t.addPickersFirst[lang]}</p>
+          <Notice tone="warn">{t.addPickersFirst[lang]}</Notice>
         ) : (
-          <Link
-            href={`/dashboard/garment/new?product=${productId}`}
-            className="inline-block rounded bg-gray-900 px-4 py-2 text-sm text-white"
-          >
+          <LinkButton href={`/dashboard/garment/new?product=${productId}`}>
             {t.addVersion[lang]}
-          </Link>
+          </LinkButton>
         )}
       </section>
     </div>

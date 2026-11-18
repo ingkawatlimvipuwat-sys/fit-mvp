@@ -260,7 +260,7 @@ export default function FitChecker({
         <Button type="submit" fullWidth disabled={loading || garmentId === null}>
           {loading ? '…' : t.checkFit[lang]}
         </Button>
-        {error && <p className="text-sm text-red-700">{error}</p>}
+        {error && <p className="text-sm font-medium text-verdict-tight-fg">{error}</p>}
       </form>
 
       {result && summary && (

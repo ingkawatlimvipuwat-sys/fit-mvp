@@ -7,6 +7,11 @@ import type { FitRuleset } from '@/lib/fit/rules';
 import { t } from '@/lib/i18n/strings';
 import { useLanguage, type Lang } from '@/lib/hooks/useLanguage';
 import type { FitRulesetRow } from '@/lib/supabase/types';
+import Button from '@/app/components/ui/Button';
+import Card from '@/app/components/ui/Card';
+import Field from '@/app/components/ui/Field';
+import Notice from '@/app/components/ui/Notice';
+import TextButton from '@/app/components/ui/TextButton';
 
 const EMPTY: FitRuleset = { base: DEFAULT_RULE, perDimension: {} };
 
@@ -114,78 +119,63 @@ export default function FitRulesManager({ initial, counts, loadFailed = false }:
   if (editing) {
     const valid = editing.name.trim() !== '' && isRulesetValid(editing.rule);
     content = (
-      <div className="space-y-4 rounded border bg-white p-4">
-        <label className="block">
-          <span className="text-sm text-gray-700">{t.fitRuleName[lang]}</span>
-          <input
-            value={editing.name} placeholder={t.fitRuleNamePlaceholder[lang]} maxLength={60}
-            onChange={e => setEditing({ ...editing, name: e.target.value })}
-            className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
-          />
-        </label>
+      <Card className="space-y-4">
+        <Field
+          label={t.fitRuleName[lang]}
+          value={editing.name} placeholder={t.fitRuleNamePlaceholder[lang]} maxLength={60}
+          onChange={e => setEditing({ ...editing, name: e.target.value })}
+        />
 
         <FitRuleEditor value={editing.rule} onChange={rule => setEditing({ ...editing, rule })} />
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <Notice>{error}</Notice>}
         <div className="flex gap-2">
-          <button
-            onClick={save} disabled={!valid || busy}
-            className="rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-60"
-          >
+          <Button onClick={save} disabled={!valid || busy}>
             {busy ? '…' : t.save[lang]}
-          </button>
-          <button onClick={cancelEditing} className="rounded border px-4 py-2">
+          </Button>
+          <Button variant="secondary" onClick={cancelEditing}>
             {t.cancel[lang]}
-          </button>
+          </Button>
         </div>
-      </div>
+      </Card>
     );
   } else {
     content = (
       <div className="space-y-4">
-        <button
-          onClick={() => startEditing({ id: null, name: '', rule: EMPTY })}
-          className="rounded bg-gray-900 px-4 py-2 text-white"
-        >
+        <Button onClick={() => startEditing({ id: null, name: '', rule: EMPTY })}>
           {t.fitRuleNew[lang]}
-        </button>
+        </Button>
 
-        {!loadFailed && initial.length === 0 && <p className="text-sm text-gray-600">{t.fitRuleNone[lang]}</p>}
+        {!loadFailed && initial.length === 0 && <p className="text-sm text-muted">{t.fitRuleNone[lang]}</p>}
 
         <ul className="space-y-2">
           {initial.map(r => (
-            <li key={r.id} className="flex items-center justify-between rounded border bg-white p-3">
-              <div>
-                <p className="font-medium">{r.name}</p>
-                <p className="text-sm text-gray-600">{summarize(r.rule, lang)}</p>
-                <p className="text-xs text-gray-500">{t.fitRuleGarmentCount[lang]}: {counts[r.id] ?? 0}</p>
+            <li key={r.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-[14px] border border-line bg-surface p-3">
+              <div className="min-w-0">
+                <p className="break-words font-semibold text-ink">{r.name}</p>
+                <p className="text-sm text-muted">{summarize(r.rule, lang)}</p>
+                <p className="text-xs text-muted">{t.fitRuleGarmentCount[lang]}: {counts[r.id] ?? 0}</p>
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => startEditing({ id: r.id, name: r.name, rule: r.rule })}
-                  className="rounded border px-3 py-1 text-sm"
-                >
+              <div className="flex items-center">
+                <TextButton onClick={() => startEditing({ id: r.id, name: r.name, rule: r.rule })}>
                   {t.edit[lang]}
-                </button>
-                <button
-                  onClick={() => remove(r.id)} disabled={busy}
-                  className="rounded border border-red-300 px-3 py-1 text-sm text-red-700 disabled:opacity-60"
-                >
+                </TextButton>
+                <TextButton tone="danger" onClick={() => remove(r.id)} disabled={busy}>
                   {t.delete[lang]}
-                </button>
+                </TextButton>
               </div>
             </li>
           ))}
         </ul>
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <Notice>{error}</Notice>}
       </div>
     );
   }
 
   return (
     <div className="space-y-5">
-      <h1 className="text-xl font-semibold">{t.fitRules[lang]}</h1>
-      {loadFailed && <p className="text-sm text-red-600">{t.fitRulesLoadFailed[lang]}</p>}
+      <h1 className="text-xl font-semibold leading-snug">{t.fitRules[lang]}</h1>
+      {loadFailed && <Notice>{t.fitRulesLoadFailed[lang]}</Notice>}
       {content}
     </div>
   );

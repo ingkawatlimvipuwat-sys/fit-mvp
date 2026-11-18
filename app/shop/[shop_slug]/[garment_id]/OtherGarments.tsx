@@ -12,19 +12,19 @@ export default function OtherGarments({ others }: { others: OtherGarment[] }) {
 
   return (
     <section className="mt-8">
-      <h2 className="text-sm font-medium text-gray-700">{t.otherGarments[lang]}</h2>
-      <div className="mt-3 flex gap-3 overflow-x-auto">
+      <h2 className="text-sm font-semibold text-ink">{t.otherGarments[lang]}</h2>
+      <div className="mt-3 flex gap-3 overflow-x-auto pb-1">
         {others.map(g => (
           <Link
             key={g.id}
             href={g.href}
-            className="flex w-24 shrink-0 flex-col gap-1"
+            className="flex min-h-[44px] w-24 shrink-0 flex-col gap-1"
           >
-            <div className="h-24 w-24 overflow-hidden rounded bg-gray-100">
+            <div className="h-24 w-24 overflow-hidden rounded-[10px] bg-[#DDE1E6]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={g.photo_url} alt={g.name} className="h-full w-full object-cover" />
             </div>
-            <span className="truncate text-xs">{g.name}</span>
+            <span className="truncate text-xs text-ink">{g.name}</span>
           </Link>
         ))}
       </div>

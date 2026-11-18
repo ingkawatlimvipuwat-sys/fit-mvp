@@ -21,6 +21,13 @@ import { presetOptionsFor } from '@/lib/fit/preset-options';
 import type { PresetOption, PresetsStatus } from '@/lib/fit/preset-options';
 import type { PickerDef } from '@/lib/catalogue/picks';
 import { emptyFabricForm, type FabricFormState, type Colour } from '@/lib/garment/colour-fabric';
+import Button from '@/app/components/ui/Button';
+import Card from '@/app/components/ui/Card';
+import CheckRow from '@/app/components/ui/CheckRow';
+import Field from '@/app/components/ui/Field';
+import FileInput from '@/app/components/ui/FileInput';
+import Notice from '@/app/components/ui/Notice';
+import Select from '@/app/components/ui/Select';
 
 /** Numeric measurements come in as numbers; form inputs need strings. Shared
  * by the `measurements` state initializer and the dirty-check baseline below
@@ -268,67 +275,59 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
   }
 
   return (
-    <form className="space-y-5" onSubmit={onSubmit}>
-      <h1 className="text-xl font-semibold">{isEdit ? t.editGarment[lang] : t.addGarment[lang]}</h1>
+    <form className="mx-auto max-w-2xl space-y-4" onSubmit={onSubmit}>
+      <h1 className="text-xl font-semibold leading-snug">{isEdit ? t.editGarment[lang] : t.addGarment[lang]}</h1>
 
+      <Card className="space-y-4">
       {productCtx ? (
         <>
-          <p className="text-sm text-gray-600">{productCtx.name}</p>
+          <p className="text-base font-semibold text-ink">{productCtx.name}</p>
           {productCtx.pickers.map(pk => (
-            <label key={pk.id} className="block">
-              <span className="text-sm text-gray-700">{pk.name}</span>
-              <input
+            <div key={pk.id}>
+              <Field
+                label={pk.name}
                 required list={`picker-values-${pk.id}`}
                 value={picks[pk.id] ?? ''}
                 onChange={e => setPicks(prev => ({ ...prev, [pk.id]: e.target.value }))}
-                className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
               />
               <datalist id={`picker-values-${pk.id}`}>
                 {(productCtx.usedValues[pk.id] ?? []).map(v => <option key={v} value={v} />)}
               </datalist>
-            </label>
+            </div>
           ))}
         </>
       ) : (
-        <label className="block">
-          <span className="text-sm text-gray-700">{t.garmentName[lang]}</span>
-          <input
-            required value={name} onChange={e => setName(e.target.value)}
-            className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
-          />
-        </label>
+        <Field
+          label={t.garmentName[lang]}
+          required value={name} onChange={e => setName(e.target.value)}
+        />
       )}
 
-      <label className="block">
-        <span className="text-sm text-gray-700">{t.category[lang]}</span>
-        <select
-          required value={category}
-          onChange={e => setCategory(e.target.value as Category)}
-          className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
-        >
-          <option value="top">{t.catTop[lang]}</option>
-          <option value="bottom">{t.catBottom[lang]}</option>
-          <option value="dress">{t.catDress[lang]}</option>
-        </select>
-      </label>
+      <Select
+        label={t.category[lang]}
+        required value={category}
+        onChange={e => setCategory(e.target.value as Category)}
+      >
+        <option value="top">{t.catTop[lang]}</option>
+        <option value="bottom">{t.catBottom[lang]}</option>
+        <option value="dress">{t.catDress[lang]}</option>
+      </Select>
 
-      <label className="block">
-        <span className="text-sm text-gray-700">{t.sizeLabel[lang]}</span>
-        <select
-          value={sizeLabel} onChange={e => setSizeLabel(e.target.value)}
-          className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
-        >
-          <option value="">{t.sizeNone[lang]}</option>
-          {SIZE_LABELS.map(c => <option key={c} value={c}>{sizeLabelText(c, lang)}</option>)}
-        </select>
-      </label>
+      <Select
+        label={t.sizeLabel[lang]}
+        value={sizeLabel} onChange={e => setSizeLabel(e.target.value)}
+      >
+        <option value="">{t.sizeNone[lang]}</option>
+        {SIZE_LABELS.map(c => <option key={c} value={c}>{sizeLabelText(c, lang)}</option>)}
+      </Select>
+      </Card>
 
-      <label className="block">
-        <span className="text-sm text-gray-700">{t.fitProfile[lang]}</span>
-        <select
+      <Card className="space-y-4">
+      <div>
+        <Select
+          label={t.fitProfile[lang]}
           value={ruleChoice} onChange={e => { setRuleChoice(e.target.value); setOverrideNotice(null); }}
           disabled={useOverride}
-          className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 disabled:opacity-60"
         >
           <optgroup label={t.fitRuleBuiltIn[lang]}>
             {FIT_PROFILES.map(p => (
@@ -346,15 +345,14 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
               ))}
             </optgroup>
           )}
-        </select>
+        </Select>
         {presetsStatus === 'failed' && (
-          <span className="mt-1 block text-sm text-red-600">{t.fitRulesLoadFailed[lang]}</span>
+          <Notice className="mt-2">{t.fitRulesLoadFailed[lang]}</Notice>
         )}
-      </label>
+      </div>
 
-      <div className="space-y-3 rounded border p-4">
-        <label className="flex items-center gap-2 text-sm">
-          <input
+      <div className="space-y-3 rounded-[14px] border border-line bg-page p-4">
+        <CheckRow
             type="checkbox"
             checked={useOverride}
             onChange={e => {
@@ -394,10 +392,10 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
                 setRuleChoice(`profile:${initial?.profileKey ?? 'regular'}`);
               }
             }}
-          />
-          <span>{t.fitRuleOverride[lang]}</span>
-        </label>
-        {overrideNotice && <p className="text-sm text-red-600">{overrideNotice}</p>}
+        >
+          {t.fitRuleOverride[lang]}
+        </CheckRow>
+        {overrideNotice && <Notice>{overrideNotice}</Notice>}
         {useOverride && (
           <FitRuleEditor
             value={override}
@@ -408,38 +406,40 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
           />
         )}
       </div>
+      </Card>
 
+      <Card>
       <label className="block">
-        <span className="text-sm text-gray-700">{isEdit || copyFrom ? t.replacePhoto[lang] : t.photo[lang]}</span>
+        <span className="text-sm font-semibold text-ink">{isEdit || copyFrom ? t.replacePhoto[lang] : t.photo[lang]}</span>
         {(isEdit || copyFrom) && initial?.photo_url && (
           <span className="mt-2 flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={initial.photo_url} alt={t.currentPhoto[lang]}
-              className="h-16 w-16 rounded object-cover"
+              className="h-16 w-16 rounded-[10px] object-cover"
             />
-            <span className="text-xs text-gray-500">{t.photoKeepCurrent[lang]}</span>
+            <span className="text-xs text-muted">{t.photoKeepCurrent[lang]}</span>
           </span>
         )}
-        <input
-          ref={photoRef} required={!isEdit && !copyFrom} type="file" accept="image/*"
-          className="mt-1 block w-full text-sm"
+        <FileInput
+          ref={photoRef} required={!isEdit && !copyFrom} accept="image/*"
         />
       </label>
+      </Card>
 
-      <fieldset className="space-y-3 rounded border p-4">
-        <legend className="px-2 text-sm font-medium">{t.garmentMeasurements[lang]}</legend>
+      <fieldset className="rounded-2xl border border-line bg-surface p-4">
+        <legend className="px-2 text-base font-semibold text-ink">{t.garmentMeasurements[lang]}</legend>
+        <div className="grid gap-4 sm:grid-cols-2">
         {dims.map(d => (
-          <label key={d.key} className="block">
-            <span className="text-sm text-gray-700">{lang === 'th' ? d.labelTh : d.labelEn} (cm)</span>
-            <input
-              type="number" step="0.1" min="1" max="300" inputMode="decimal"
-              value={measurements[d.key] ?? ''}
-              onChange={e => setMeasurements(m => ({ ...m, [d.key]: e.target.value }))}
-              className="mt-1 block w-full rounded border border-gray-300 px-3 py-2"
-            />
-          </label>
+          <Field
+            key={d.key}
+            label={`${lang === 'th' ? d.labelTh : d.labelEn} (cm)`}
+            type="number" step="0.1" min="1" max="300" inputMode="decimal"
+            value={measurements[d.key] ?? ''}
+            onChange={e => setMeasurements(m => ({ ...m, [d.key]: e.target.value }))}
+          />
         ))}
+        </div>
       </fieldset>
 
       <ColoursSection
@@ -455,18 +455,15 @@ export default function GarmentForm({ mode, initial, copyFrom, productCtx }: Gar
         onRemovePhotoChange={setRemoveFabricPhoto}
       />
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <Notice>{error}</Notice>}
 
-      <div className="flex items-center gap-4">
-        <button
-          type="submit" disabled={loading}
-          className="rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-60"
-        >
+      <div className="flex items-center gap-3">
+        <Button type="submit" disabled={loading}>
           {loading ? t.saving[lang] : t.save[lang]}
-        </button>
+        </Button>
         <Link
           href={productCtx ? `/dashboard/product/${productCtx.id}` : '/dashboard'}
-          className="text-sm text-gray-600 underline"
+          className="inline-flex min-h-[44px] items-center px-2 text-sm font-medium text-accent underline-offset-2 hover:text-accent-dark hover:underline"
           onClick={e => {
             // Only prompt when there's actually something to lose — a confirm
             // on an untouched form is worse than none.

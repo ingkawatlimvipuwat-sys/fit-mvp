@@ -1,4 +1,5 @@
-import Link from 'next/link';
+import LinkButton from '@/app/components/ui/LinkButton';
+import PageShell from '@/app/components/ui/PageShell';
 import { t } from '@/lib/i18n/strings';
 
 /**
@@ -9,18 +10,18 @@ import { t } from '@/lib/i18n/strings';
  */
 export default function ShopNotFound() {
   return (
-    <main className="mx-auto max-w-xl px-6 py-20">
-      <h1 className="text-3xl font-semibold">{t.notFoundShopTitle.th}</h1>
-      <p className="mt-1 text-sm text-gray-400">{t.notFoundShopTitle.en}</p>
+    <PageShell>
+      <h1 className="text-3xl font-semibold leading-tight">{t.notFoundShopTitle.th}</h1>
+      <p className="mt-1 text-sm text-muted">{t.notFoundShopTitle.en}</p>
 
-      <p className="mt-3 text-gray-600">{t.notFoundShopBody.th}</p>
-      <p className="mt-1 text-sm text-gray-400">{t.notFoundShopBody.en}</p>
+      <p className="mt-3 text-muted">{t.notFoundShopBody.th}</p>
+      <p className="mt-1 text-sm text-muted">{t.notFoundShopBody.en}</p>
 
       <div className="mt-8">
-        <Link href="/" className="rounded bg-gray-900 px-4 py-2 text-white">
+        <LinkButton href="/">
           {t.backToHome.th}
-        </Link>
+        </LinkButton>
       </div>
-    </main>
+    </PageShell>
   );
 }

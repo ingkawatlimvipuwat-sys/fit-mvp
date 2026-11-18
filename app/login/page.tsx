@@ -6,6 +6,10 @@ import { createSupabaseBrowserClient } from '@/lib/supabase/browser';
 import { t } from '@/lib/i18n/strings';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import LanguageToggle from '@/app/LanguageToggle';
+import Button from '@/app/components/ui/Button';
+import Card from '@/app/components/ui/Card';
+import Field from '@/app/components/ui/Field';
+import Notice from '@/app/components/ui/Notice';
 
 function LoginForm() {
   const router = useRouter();
@@ -48,43 +52,35 @@ function LoginForm() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-6 py-16">
-      <div className="flex items-center justify-between">
-        <Link href="/" className="text-sm text-gray-500 hover:text-gray-900">
+    <main className="mx-auto max-w-md px-4 py-8 sm:py-16">
+      <div className="flex items-center justify-between gap-3">
+        <Link href="/" className="inline-flex min-h-[44px] items-center text-sm font-medium text-accent hover:text-accent-dark">
           ← {t.backToHome[lang]}
         </Link>
         <LanguageToggle />
       </div>
-      <h1 className="mt-4 text-2xl font-semibold">{t.login[lang]}</h1>
+      <Card className="mt-4 p-6">
+      <h1 className="text-2xl font-semibold leading-tight">{t.login[lang]}</h1>
       {loginRequired && (
-        <p className="mt-4 rounded bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        <Notice tone="warn" className="mt-4">
           {t.loginRequired[lang]}
-        </p>
+        </Notice>
       )}
       <form className="mt-8 space-y-4" onSubmit={onSubmit}>
-        <label className="block">
-          <span className="text-sm text-gray-700">{t.email[lang]}</span>
-          <input required name="email" type="email" autoComplete="email" className="mt-1 block w-full rounded border border-gray-300 px-3 py-2" />
-        </label>
-        <label className="block">
-          <span className="text-sm text-gray-700">{t.password[lang]}</span>
-          <input required name="password" type="password" autoComplete="current-password" className="mt-1 block w-full rounded border border-gray-300 px-3 py-2" />
-        </label>
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-60"
-        >
+        <Field required name="email" type="email" autoComplete="email" label={t.email[lang]} />
+        <Field required name="password" type="password" autoComplete="current-password" label={t.password[lang]} />
+        {error && <Notice>{error}</Notice>}
+        <Button type="submit" fullWidth disabled={loading}>
           {loading ? '…' : t.loginSubmit[lang]}
-        </button>
+        </Button>
       </form>
-      <p className="mt-4 text-sm text-gray-600">
+      <p className="mt-4 text-sm text-muted">
         {t.noAccountYet[lang]}{' '}
-        <Link href="/signup" className="underline text-gray-900">
+        <Link href="/signup" className="inline-flex min-h-[44px] items-center font-medium text-accent underline underline-offset-2 hover:text-accent-dark">
           {t.signup[lang]}
         </Link>
       </p>
+      </Card>
     </main>
   );
 }

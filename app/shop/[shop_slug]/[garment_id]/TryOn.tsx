@@ -152,7 +152,7 @@ export default function TryOn({ garmentId }: { garmentId: string }) {
       {!resultUrl && (
         <>
           {previewUrl ? (
-            <div className="relative overflow-hidden rounded bg-gray-100">
+            <div className="relative overflow-hidden rounded-2xl bg-line">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={previewUrl}
@@ -163,14 +163,14 @@ export default function TryOn({ garmentId }: { garmentId: string }) {
                 <button
                   type="button"
                   onClick={() => galleryRef.current?.click()}
-                  className="absolute bottom-3 right-3 rounded bg-white/90 px-3 py-1.5 text-xs font-medium text-gray-800 shadow-sm"
+                  className="absolute bottom-3 right-3 min-h-[44px] rounded-[10px] border border-control bg-surface px-3 text-sm font-medium text-ink"
                 >
                   {t.tryOnChangePhoto[lang]}
                 </button>
               )}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center rounded border border-dashed border-gray-300 bg-gray-50 px-4 py-10 text-center">
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-line bg-page px-4 py-10 text-center">
               <PersonIcon />
               <div className="mt-4 grid w-full max-w-sm grid-cols-2 gap-2">
                 <button
@@ -205,7 +205,7 @@ export default function TryOn({ garmentId }: { garmentId: string }) {
       {resultUrl && (
         <div ref={resultRef} className="space-y-3">
           <p className="text-sm font-semibold text-ink">{t.tryOnResult[lang]}</p>
-          <div className="aspect-[3/4] overflow-hidden rounded bg-gray-100">
+          <div className="aspect-[3/4] overflow-hidden rounded-2xl bg-line">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={resultUrl}
@@ -215,7 +215,7 @@ export default function TryOn({ garmentId }: { garmentId: string }) {
           </div>
           {previewUrl && (
             <div className="flex items-center gap-3">
-              <div className="h-14 w-14 overflow-hidden rounded border bg-gray-100">
+              <div className="h-14 w-14 overflow-hidden rounded-[10px] border border-line bg-line">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={previewUrl} alt="" className="h-full w-full object-cover" />
               </div>
@@ -232,7 +232,7 @@ export default function TryOn({ garmentId }: { garmentId: string }) {
         </div>
       )}
 
-      {error && <p className="text-sm text-red-700">{error}</p>}
+      {error && <p className="text-sm font-medium text-verdict-tight-fg">{error}</p>}
     </section>
   );
 }
