@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { t } from '@/lib/i18n/strings';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import type { TagUsage } from '@/lib/catalogue/tags';
+import Button from '../components/ui/Button';
 import ModalSheet from './ModalSheet';
 import NameForm from './NameForm';
 
@@ -33,11 +34,11 @@ export default function ManageTagsDialog({ tags, onRename, onDelete, onClose }: 
 
   return (
     <ModalSheet title={t.manageTags[lang]} onClose={onClose} align="top">
-      {error && <p role="alert" className="mb-2 text-sm text-red-600">{error}</p>}
+      {error && <p role="alert" className="mb-2 text-sm font-medium text-verdict-tight-fg">{error}</p>}
       {tags.length === 0 ? (
-        <p className="text-sm text-gray-600">{t.noTagsYet[lang]}</p>
+        <p className="text-sm text-muted">{t.noTagsYet[lang]}</p>
       ) : (
-        <ul className="divide-y">
+        <ul className="divide-y divide-line">
           {tags.map(tag => (
             <li key={tag.id} className="py-2">
               {renaming === tag.id ? (
@@ -56,15 +57,15 @@ export default function ManageTagsDialog({ tags, onRename, onDelete, onClose }: 
               ) : (
                 <div className="flex items-center gap-2">
                   <div className="min-w-0 grow">
-                    <div className="break-all text-sm">{tag.name}</div>
-                    <div className="text-xs text-gray-500">
+                    <div className="break-all text-base font-medium text-ink">{tag.name}</div>
+                    <div className="text-sm text-muted">
                       {tag.count > 0 ? t.tagUsedOn[lang].replace('{n}', String(tag.count)) : t.tagUnused[lang]}
                     </div>
                   </div>
                   <button
                     type="button"
                     aria-label={t.renameTagNamed[lang].replace('{name}', tag.name)}
-                    className="px-2 py-2 text-sm text-blue-700 underline"
+                    className="inline-flex min-h-[44px] items-center px-2 text-sm font-medium text-accent underline underline-offset-2 hover:text-accent-dark disabled:opacity-60"
                     disabled={busy}
                     onClick={() => { setError(null); setRenaming(tag.id); }}
                   >
@@ -73,7 +74,7 @@ export default function ManageTagsDialog({ tags, onRename, onDelete, onClose }: 
                   <button
                     type="button"
                     aria-label={t.deleteTagNamed[lang].replace('{name}', tag.name)}
-                    className="px-2 py-2 text-sm text-red-600"
+                    className="inline-flex min-h-[44px] items-center px-2 text-sm font-medium text-verdict-tight-fg disabled:opacity-60"
                     disabled={busy}
                     onClick={() => remove(tag)}
                   >
@@ -85,9 +86,9 @@ export default function ManageTagsDialog({ tags, onRename, onDelete, onClose }: 
           ))}
         </ul>
       )}
-      <button type="button" onClick={onClose} className="mt-3 text-sm text-gray-600 underline">
+      <Button variant="secondary" onClick={onClose} fullWidth className="mt-3">
         {t.close[lang]}
-      </button>
+      </Button>
     </ModalSheet>
   );
 }

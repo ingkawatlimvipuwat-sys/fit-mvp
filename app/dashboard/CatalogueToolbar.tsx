@@ -4,13 +4,14 @@ import { t } from '@/lib/i18n/strings';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { isFiltered, type DashboardView, type SortKey } from '@/lib/catalogue/browse';
 import type { TagRow } from '@/lib/catalogue/tags';
+import { SearchIcon, TagIcon, WarningIcon } from './icons';
 
 const SORT_TEXT = {
   newest: t.sortNewest, oldest: t.sortOldest, az: t.sortNameAZ, za: t.sortNameZA,
 } as const;
 const SORT_KEYS: SortKey[] = ['newest', 'oldest', 'az', 'za'];
 
-/** Search, tag filter, sort, ⚠ Needs attention and Clear. Every change goes up as a whole new view. */
+/** Search, tag filter, sort, Needs attention and Clear. Every change goes up as a whole new view. */
 export default function CatalogueToolbar({ view, tags, onChange, onManageTags }: {
   view: DashboardView; tags: TagRow[]; onChange: (next: DashboardView) => void;
   /** Opens the Manage tags panel; the button is hidden when absent. */
@@ -42,19 +43,22 @@ export default function CatalogueToolbar({ view, tags, onChange, onManageTags }:
     .map(id => tags.find(x => x.id === id))
     .filter((x): x is TagRow => x !== undefined);
   const unselected = tags.filter(x => !view.tagIds.includes(x.id));
-  const control = 'rounded border border-gray-300 bg-white px-2 py-1 text-sm';
+  const control = 'h-11 rounded-[10px] border border-control bg-surface px-3 text-base text-ink hover:bg-page';
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <input
-        type="search"
-        value={draft}
-        maxLength={100}
-        onChange={e => setDraft(e.target.value)}
-        placeholder={t.searchProducts[lang]}
-        aria-label={t.searchProducts[lang]}
-        className={`${control} min-w-[8rem] grow`}
-      />
+    <div className="flex flex-wrap items-center gap-2 rounded-[14px] border border-line bg-surface p-2.5">
+      <label className="flex h-11 min-w-[8rem] grow basis-52 items-center gap-2 rounded-[10px] border border-field bg-surface px-3 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/30">
+        <SearchIcon className="shrink-0 text-muted" />
+        <input
+          type="search"
+          value={draft}
+          maxLength={100}
+          onChange={e => setDraft(e.target.value)}
+          placeholder={t.searchProducts[lang]}
+          aria-label={t.searchProducts[lang]}
+          className="min-w-0 grow bg-transparent text-base text-ink outline-none"
+        />
+      </label>
       {unselected.length > 0 && (
         <select
           value=""
@@ -67,13 +71,13 @@ export default function CatalogueToolbar({ view, tags, onChange, onManageTags }:
         </select>
       )}
       {selected.map(x => (
-        <span key={x.id} className="inline-flex items-center gap-1 rounded-full border border-blue-300 bg-blue-50 px-2 py-0.5 text-xs">
+        <span key={x.id} className="inline-flex min-h-[44px] items-center gap-1 rounded-full border border-accent bg-accent-tint pl-3.5 pr-1 text-base font-semibold text-accent-dark">
           <span className="break-all">{x.name}</span>
           <button
             type="button"
             aria-label={t.removeTag[lang].replace('{name}', x.name)}
             onClick={() => onChange({ ...view, tagIds: view.tagIds.filter(id => id !== x.id) })}
-            className="-my-2 -mr-2 p-2 text-gray-500"
+            className="inline-flex h-11 w-9 items-center justify-center text-muted hover:text-ink"
           >
             ✕
           </button>
@@ -91,14 +95,16 @@ export default function CatalogueToolbar({ view, tags, onChange, onManageTags }:
         type="button"
         aria-pressed={view.attention}
         onClick={() => onChange({ ...view, attention: !view.attention })}
-        className={`rounded border px-2 py-1 text-sm ${
-          view.attention ? 'border-amber-400 bg-amber-100 text-amber-800' : 'border-gray-300 bg-white text-gray-700'}`}
+        className={`inline-flex h-11 items-center gap-2 rounded-[10px] border px-3 text-base text-ink ${
+          view.attention ? 'border-verdict-tight-fg bg-verdict-tight-bg font-semibold' : 'border-control bg-surface hover:bg-page'}`}
       >
-        ⚠ {t.needsAttention[lang]}
+        <WarningIcon size={18} className="shrink-0 text-verdict-tight-fg" />
+        {t.needsAttention[lang]}
       </button>
       {onManageTags && (
-        <button type="button" onClick={onManageTags} className={`${control} text-gray-700`}>
-          🏷 {t.manageTags[lang]}
+        <button type="button" onClick={onManageTags} className={`${control} inline-flex items-center gap-2`}>
+          <TagIcon />
+          {t.manageTags[lang]}
         </button>
       )}
       {isFiltered(view) && (
@@ -111,7 +117,7 @@ export default function CatalogueToolbar({ view, tags, onChange, onManageTags }:
             setDraft('');
             onChange({ ...view, q: '', tagIds: [], attention: false });
           }}
-          className="text-sm text-gray-600 underline"
+          className="inline-flex h-11 items-center px-2 text-base font-medium text-accent underline underline-offset-2 hover:text-accent-dark"
         >
           {t.clearFilters[lang]}
         </button>

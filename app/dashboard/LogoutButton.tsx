@@ -15,7 +15,7 @@ export default function LogoutButton() {
         router.push('/login');
         router.refresh();
       }}
-      className="text-sm text-gray-300 hover:text-white"
+      className="inline-flex h-11 items-center whitespace-nowrap px-2 text-sm font-medium text-muted hover:text-ink sm:px-3 sm:text-base"
     >
       {t.logout[lang]}
     </button>

@@ -138,8 +138,8 @@ export default function CatalogueBrowser({ products, folders, tags, allTags, sho
 
   return (
     <div className="space-y-4" onDragOver={dragging ? () => setHoverId(undefined) : undefined}>
-      <div className="flex items-start gap-2">
-        <div className="grow">
+      <div className="flex flex-col-reverse items-end gap-2 sm:flex-row sm:items-start">
+        <div className="w-full min-w-0 sm:w-auto sm:grow">
           {/* Filter changes replace the history entry, so Back does not step through every keystroke. */}
           <CatalogueToolbar
             view={view}
@@ -151,7 +151,7 @@ export default function CatalogueBrowser({ products, folders, tags, allTags, sho
         <ActionsMenu
           trigger={t.newMenu[lang]}
           ariaLabel={t.newMenu[lang]}
-          triggerClassName="rounded bg-gray-900 px-4 py-2 text-sm text-white"
+          triggerClassName="inline-flex h-12 items-center whitespace-nowrap rounded-xl bg-accent px-5 text-base font-semibold text-white hover:bg-accent-dark"
           disabled={busy}
           items={[
             { text: t.newFolder[lang], onSelect: newFolder },
@@ -159,10 +159,10 @@ export default function CatalogueBrowser({ products, folders, tags, allTags, sho
           ]}
         />
       </div>
-      {message && <p role="alert" className="text-sm text-red-600">{message}</p>}
-      {notice && <p role="status" className="text-sm text-gray-700">{notice}</p>}
+      {message && <p role="alert" className="text-sm font-medium text-verdict-tight-fg">{message}</p>}
+      {notice && <p role="status" className="text-sm text-muted">{notice}</p>}
       <FolderMobileNav {...folderProps} />
-      <div className="flex gap-6">
+      <div className="flex gap-4 sm:gap-6">
         <FolderSidebar
           {...folderProps}
           dragging={dragging}
@@ -213,8 +213,8 @@ export default function CatalogueBrowser({ products, folders, tags, allTags, sho
       {dragging && (
         <div
           role="status"
-          className={`pointer-events-none fixed inset-x-0 bottom-4 z-30 mx-auto w-fit max-w-[90vw] rounded px-3 py-2 text-sm text-white shadow-lg ${
-            hoverVerdict === 'cycle' ? 'bg-red-600' : 'bg-gray-900/90'}`}
+          className={`pointer-events-none fixed inset-x-0 bottom-4 z-30 mx-auto w-fit max-w-[90vw] rounded-xl px-3 py-2 text-sm text-white shadow-lg ${
+            hoverVerdict === 'cycle' ? 'bg-verdict-tight-fg' : 'bg-ink/90'}`}
         >
           {hoverVerdict === 'cycle' ? t.folderCycle[lang] : hoverVerdict === 'here' ? t.dropAlreadyHere[lang] : t.dragHint[lang]}
         </div>

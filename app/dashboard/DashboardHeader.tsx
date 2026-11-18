@@ -3,23 +3,32 @@ import Link from 'next/link';
 import { t } from '@/lib/i18n/strings';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import LanguageToggle from '../LanguageToggle';
+import CopyPublicLink from './CopyPublicLink';
+import DashboardNav from './DashboardNav';
 import LogoutButton from './LogoutButton';
 
-export default function DashboardHeader({ shopName }: { shopName: string | null }) {
+/** White header: shop name + badge, the Products / Shop rules tabs, then link, language and log out. */
+export default function DashboardHeader({ shopName, shopSlug }: { shopName: string | null; shopSlug: string | null }) {
   const [lang] = useLanguage();
 
   return (
-    <header className="flex items-center justify-between border-b border-gray-800 bg-gray-900 px-6 py-3 text-white">
-      <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-        {shopName ?? t.dashboardTitle[lang]}
-        <span className="rounded bg-white/15 px-2 py-0.5 text-xs font-normal">
-          {t.dashboardBadge[lang]}
-        </span>
-      </Link>
-      <nav className="flex items-center gap-4">
-        <LanguageToggle tone="dark" />
-        <LogoutButton />
-      </nav>
+    <header className="border-b border-line bg-surface">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-0 px-4 sm:px-6">
+        <Link href="/dashboard" className="flex min-h-[52px] min-w-0 items-center gap-2.5 text-[17px] font-semibold text-ink">
+          <span className="min-w-0 truncate">{shopName ?? t.dashboardTitle[lang]}</span>
+          <span className="shrink-0 whitespace-nowrap rounded-full bg-[#EEF0F2] px-2.5 py-0.5 text-xs font-semibold text-[#2B313C]">
+            {t.dashboardBadge[lang]}
+          </span>
+        </Link>
+        <div className="order-3 w-full sm:order-none sm:w-auto sm:grow">
+          <DashboardNav />
+        </div>
+        <div className="order-2 flex items-center gap-2 py-2 sm:order-none">
+          {shopSlug && <CopyPublicLink slug={shopSlug} />}
+          <LanguageToggle tone="light" />
+          <LogoutButton />
+        </div>
+      </div>
     </header>
   );
 }

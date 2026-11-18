@@ -5,6 +5,7 @@ import { useLanguage } from '@/lib/hooks/useLanguage';
 import { DRAG_TYPE, type DragItem } from '@/lib/catalogue/folders';
 import type { ProductSummary } from '@/lib/catalogue/summary';
 import ActionsMenu from './ActionsMenu';
+import { WarningIcon } from './icons';
 
 export default function ProductGrid({
   products, shopSlug, emptyText, onMove, draggable, draggingId, onDragStart, onDragEnd,
@@ -19,7 +20,7 @@ export default function ProductGrid({
   const [lang] = useLanguage();
 
   if (products.length === 0) {
-    return <p className="text-gray-600">{emptyText}</p>;
+    return <p className="rounded-[14px] border border-line bg-surface p-6 text-center text-muted">{emptyText}</p>;
   }
 
   return (
@@ -28,7 +29,7 @@ export default function ProductGrid({
         // No overflow-hidden on the <li>: it would clip the ⋯ dropdown. The photo box clips instead.
         <li
           key={p.id}
-          className={`rounded border bg-white ${draggingId === p.id ? 'opacity-50' : ''}`}
+          className={`rounded-[14px] border border-line bg-surface ${draggingId === p.id ? 'opacity-50' : ''}`}
           draggable={draggable || undefined}
           onDragStart={draggable ? e => {
             e.dataTransfer.setData(DRAG_TYPE, p.id);
@@ -40,45 +41,47 @@ export default function ProductGrid({
         >
           {/* draggable={false} on the link and picture: the whole card moves, not the link URL or the image. */}
           <Link href={`/dashboard/product/${p.id}`} className="block" draggable={false}>
-            <div className="aspect-square overflow-hidden rounded-t bg-gray-100">
+            <div className="aspect-square overflow-hidden rounded-t-[13px] bg-[#DDE1E6]">
               {p.photo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={p.photo_url} alt={p.name} className="h-full w-full object-cover" draggable={false} />
               ) : null}
             </div>
-            <div className="p-3">
-              <div className="break-words text-sm font-medium">{p.name}</div>
-              <div className="text-xs text-gray-500">
+            <div className="space-y-1.5 p-3">
+              <div className="break-words font-semibold text-ink">{p.name}</div>
+              <div className="text-sm text-muted">
                 {t.versionsCount[lang].replace('{n}', String(p.versionCount))}
               </div>
               {p.tags.length > 0 && (
-                <div className="mt-1 flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-1.5">
                   {p.tags.slice(0, 3).map(tag => (
-                    <span key={tag.id} className="break-all rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                    <span key={tag.id} className="break-all rounded-full bg-[#EEF0F2] px-2.5 py-0.5 text-xs text-[#2B313C]">
                       {tag.name}
                     </span>
                   ))}
-                  {p.tags.length > 3 && <span className="text-xs text-gray-500">+{p.tags.length - 3}</span>}
+                  {p.tags.length > 3 && <span className="text-xs text-muted">+{p.tags.length - 3}</span>}
                 </div>
               )}
               {p.needsAttention && (
-                <div className="mt-1 text-xs text-amber-700">⚠ {t.needsAttention[lang]}</div>
+                <div className="flex items-center gap-1.5 text-sm font-semibold text-verdict-tight-fg">
+                  <WarningIcon />
+                  {t.needsAttention[lang]}
+                </div>
               )}
             </div>
           </Link>
-          <div className="flex items-center justify-between border-t px-3 py-2">
+          <div className="flex items-center justify-between border-t border-line pl-3 pr-1">
             {shopSlug ? (
               <Link
                 href={`/shop/${shopSlug}/p/${p.id}`}
                 target="_blank"
                 rel="noopener"
-                className="inline-block py-2 text-xs text-blue-700 underline sm:py-0"
+                className="inline-flex min-h-[44px] items-center text-sm font-medium text-accent underline-offset-2 hover:text-accent-dark hover:underline"
               >
                 {t.previewShop[lang]}
               </Link>
             ) : <span />}
             <ActionsMenu
-              trigger="⋯"
               ariaLabel={t.moreActions[lang]}
               items={[{ text: t.moveTo[lang], onSelect: () => onMove(p) }]}
             />

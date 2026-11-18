@@ -20,7 +20,7 @@ export default function LanguageToggle({ tone = 'light' }: { tone?: 'light' | 'd
           ? (dark ? 'bg-white text-gray-900' : 'bg-ink text-white')
           : (dark ? 'text-gray-300 hover:bg-white/10' : 'text-muted hover:bg-page');
         return (
-          <button key={l} onClick={() => setLang(l)} className={`${dark ? 'px-3 py-1.5' : 'px-3.5 py-2.5 text-[13px]'} ${style}`}>
+          <button key={l} onClick={() => setLang(l)} className={`${dark ? 'px-3 py-1.5' : 'min-h-[44px] px-3.5 text-[13px]'} ${style}`}>
             {l.toUpperCase()}
           </button>
         );

@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { LanguageProvider } from '@/lib/hooks/useLanguage';
 import DashboardHeader from './DashboardHeader';
-import DashboardNav from './DashboardNav';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createSupabaseServerClient();
@@ -22,10 +21,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <LanguageProvider>
-      <div className="min-h-screen bg-gray-50">
-        <DashboardHeader shopName={retailer?.shop_name ?? null} />
-        <DashboardNav />
-        <main className="mx-auto max-w-4xl p-6">{children}</main>
+      <div className="min-h-screen bg-page text-ink">
+        <DashboardHeader shopName={retailer?.shop_name ?? null} shopSlug={retailer?.shop_slug ?? null} />
+        <main className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-6">{children}</main>
       </div>
     </LanguageProvider>
   );

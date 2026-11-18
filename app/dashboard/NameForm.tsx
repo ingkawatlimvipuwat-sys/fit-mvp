@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { t } from '@/lib/i18n/strings';
 import { useLanguage } from '@/lib/hooks/useLanguage';
+import Button from '../components/ui/Button';
 
 /**
  * A name box with a submit and a Cancel button, used instead of window.prompt
@@ -37,9 +38,9 @@ export default function NameForm({ label, initial = '', maxLength, submitText, o
   }
 
   return (
-    <form onSubmit={submit} className="space-y-2">
+    <form onSubmit={submit} className="space-y-3">
       <label className="block text-sm">
-        <span className="text-gray-700">{label}</span>
+        <span className="font-semibold text-ink">{label}</span>
         <input
           ref={input}
           value={draft}
@@ -48,18 +49,17 @@ export default function NameForm({ label, initial = '', maxLength, submitText, o
           onChange={e => setDraft(e.target.value)}
           // stopPropagation: inside a dialog, Escape cancels this box only, not the whole dialog.
           onKeyDown={e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); onCancel(); } }}
-          className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 text-base"
+          className="mt-1 block h-12 w-full rounded-[10px] border border-field bg-surface px-3 text-base text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
         />
       </label>
-      {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+      {error && <p role="alert" className="text-sm font-medium text-verdict-tight-fg">{error}</p>}
       <div className="flex items-center gap-3">
-        <button type="submit" disabled={busy || !trimmed}
-          className="rounded bg-gray-900 px-4 py-2 text-sm text-white disabled:opacity-60">
+        <Button type="submit" disabled={busy || !trimmed}>
           {submitText}
-        </button>
-        <button type="button" onClick={onCancel} className="px-1 py-2 text-sm text-gray-600 underline">
+        </Button>
+        <Button variant="ghost" onClick={onCancel}>
           {t.cancel[lang]}
-        </button>
+        </Button>
       </div>
     </form>
   );
