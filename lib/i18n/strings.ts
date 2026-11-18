@@ -261,7 +261,7 @@ export const t = {
   colourInvalid: { th: 'ข้อมูลสีไม่ถูกต้อง', en: 'Invalid colour data' },
   fabricInvalid: { th: 'ข้อมูลเนื้อผ้าไม่ถูกต้อง', en: 'Invalid fabric data' },
 
-  // --- Virtual try-on (stub: returns a hardcoded result image) ---
+  // --- Virtual try-on (OpenArt). Out of credits uses tryOnUnavailable. ---
   tryOnTitle: { th: 'ลองสวม', en: 'Try on' },
   tryOnHint: {
     th: 'ถ่ายหรืออัปโหลดรูปเต็มตัว เพื่อดูภาพคุณใส่สินค้านี้',
@@ -277,10 +277,9 @@ export const t = {
   tryOnAgain: { th: 'ลองรูปอื่น', en: 'Try another photo' },
   tryOnNeedPhoto: { th: 'กรุณาเลือกรูปก่อน', en: 'Please choose a photo first' },
   tryOnChangePhoto: { th: 'เปลี่ยนรูป', en: 'Change photo' },
-
-  tryOnSampleBadge: { th: 'ตัวอย่าง', en: 'Sample' },
-  tryOnSampleResult: { th: 'ภาพตัวอย่าง — ยังไม่ใช่รูปของคุณ', en: 'Sample image — not your photo yet' },
-  tryOnSampleAlt: { th: 'ภาพตัวอย่าง ไม่ใช่รูปของคุณ', en: 'Sample image, not a photo of you' },
+  tryOnUnavailable: { th: 'บริการนี้ไม่พร้อมให้ใช้ชั่วคราว', en: 'Service is temporarily unavailable' },
+  tryOnFailed: { th: 'สร้างรูปไม่สำเร็จ ลองอีกครั้ง', en: 'Could not create the photo. Please try again.' },
+  tryOnTooLarge: { th: 'รูปใหญ่เกินไป ลองรูปที่เล็กกว่า', en: 'That photo is too large. Try a smaller one.' },
 
   // --- Fit form and result (redesign) ---
   easeBarCaption: {
